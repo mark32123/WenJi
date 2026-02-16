@@ -1,0 +1,22 @@
+# ================= 根目录 =================
+.DS_Store
+*.log
+.env
+chat-history.json
+chat-memory.json
+
+# ================= IDEA 配置（不提交）=================
+.idea/
+*.iml
+*.iws
+
+# ================= Backend (Java/Maven) =================
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# ================= Frontend (Vue/Node) =================
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
