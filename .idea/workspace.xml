@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="9bf8cb9c-57aa-4cda-b40a-0d686289e8b0" name="更改" comment="refactor: 重构为前后端分离结构 (Monorepo)&#10;&#10;- 移动后端代码至 /backend 目录&#10;- 移动前端代码至 /frontend 目录&#10;- 更新 .gitignore 忽略构建产物&#10;- 重置 .idea 配置以适应新结构">
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/WenJi.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/HELP.md" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;bingege-0729&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/bingege-0729/WenJi.git&quot;,
+    &quot;accountId&quot;: &quot;c10404ae-4343-4ea3-9220-9168bc8ae3c7&quot;
+  }
+}</component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="39kkYczgNs5I8vsssqqTxwfpG24" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "Spring Boot.WenjiApplication.executor": "Run",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/Back-end_Development/project/WenJi/backend/main/resource",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "模块",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Back-end_Development\project\WenJi\backend\main\resource" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Back-end_Development\project\WenJi\backend" />
+      <recent name="D:\Back-end_Development\project\WenJi" />
+      <recent name="D:\Back-end_Development\project\WenJi\src" />
+      <recent name="D:\Back-end_Development\project\WenJi\backend\main\resource" />
+      <recent name="D:\Back-end_Development\project\WenJi\backend\main" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="WenjiApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="ALTERNATIVE_JRE_PATH" value="23" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <module name="wenji" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.example.WenjiApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.26830.84" />
+        <option value="bundled-js-predefined-d6986cc7102b-3aa1da707db6-JavaScript-IU-252.26830.84" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="9bf8cb9c-57aa-4cda-b40a-0d686289e8b0" name="更改" comment="" />
+      <created>1771247506117</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1771247506117</updated>
+      <workItem from="1771247507718" duration="3953000" />
+      <workItem from="1771251568840" duration="26000" />
+      <workItem from="1771251600962" duration="106000" />
+      <workItem from="1771251709747" duration="359000" />
+      <workItem from="1771252072066" duration="125000" />
+      <workItem from="1771255063056" duration="428000" />
+      <workItem from="1771288289134" duration="228000" />
+      <workItem from="1771288611493" duration="112000" />
+    </task>
+    <task id="LOCAL-00001" summary="refactor: 重构为前后端分离结构 (Monorepo)&#10;&#10;- 移动后端代码至 /backend 目录&#10;- 移动前端代码至 /frontend 目录&#10;- 更新 .gitignore 忽略构建产物&#10;- 重置 .idea 配置以适应新结构">
+      <option name="closed" value="true" />
+      <created>1771250759458</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1771250759458</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="refactor: 重构为前后端分离结构 (Monorepo)&#10;&#10;- 移动后端代码至 /backend 目录&#10;- 移动前端代码至 /frontend 目录&#10;- 更新 .gitignore 忽略构建产物&#10;- 重置 .idea 配置以适应新结构" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor: 重构为前后端分离结构 (Monorepo)&#10;&#10;- 移动后端代码至 /backend 目录&#10;- 移动前端代码至 /frontend 目录&#10;- 更新 .gitignore 忽略构建产物&#10;- 重置 .idea 配置以适应新结构" />
+  </component>
+</project>
