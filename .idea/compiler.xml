@@ -8,12 +8,12 @@
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.36/lombok-1.18.36.jar" />
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.36/lombok-1.18.36.jar" />
         </processorPath>
-        <module name="wenji" />
+        <module name="backend" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="wenji" target="17" />
       <module name="WenJi" target="17" />
       <module name="WenJi (1)" target="17" />
     </bytecodeTargetLevel>
@@ -21,6 +21,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="WenJi" options="-parameters" />
+      <module name="backend" options="-parameters" />
       <module name="wenji" options="-parameters" />
     </option>
   </component>

@@ -93,7 +93,7 @@
     <configuration name="WenjiApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <option name="ALTERNATIVE_JRE_PATH" value="23" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
-      <module name="wenji" />
+      <module name="backend" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.example.WenjiApplication" />
       <method v="2">
         <option name="Make" enabled="true" />
