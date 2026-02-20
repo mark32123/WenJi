@@ -260,3 +260,16 @@ CREATE TABLE user_preference (
 
 1-31-2026
 ## 完成用户信息删除功能
+
+
+2-19-2026
+## 修改实体类Result错误返回的返回值
+
+2-20-2026
+**后端**
+## 将注册登录功能合二为一，同时添加验证码机制
+## 添加缓存redis，存储用户每次登录/注册时点击获取验证码，5分钟后失效 ，(CaptchaController、CaptchaUtils、RedisConstants)
+## 将实体类验证信息是否合法直接集成到RegexUtils中
+## 拦截器修改不拦截获取验证码信息
+## 在yaml文件中设置redis等基础信息
+![img.png](img.png)

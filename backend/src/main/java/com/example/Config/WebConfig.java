@@ -15,12 +15,16 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry){
         registry.addInterceptor(loginInterceptor)//添加拦截器，但是要避免拦截登录和注册接口
                 .addPathPatterns("/**")//拦截所有接口
-                .excludePathPatterns("/user/register",
-                        "/user/login",
+                .excludePathPatterns("/user/login",
+                        "/user/captcha",
                         "/"
                 );
     }
 
+    /**
+     * 跨域配置
+     * @param registry
+     */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")

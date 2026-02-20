@@ -1,19 +1,20 @@
 package com.example.Service.Impl;
 
 import com.example.Common.Result;
-import com.example.DTO.UserLoginDTO;
-import com.example.DTO.UserRegistDTO;
+import com.example.DTO.LoginFormDTO;
 import com.example.DTO.UserUpdateDTO;
 import com.example.Mapper.UserMapper;
 import com.example.Pojo.User;
 import com.example.Service.UserService;
-import com.example.Utils.JwtUtils;
+import com.example.Utils.CaptchaUtils;
 import com.example.Utils.Md5Util;
+import com.example.Utils.RegexUtils;
 import com.example.VO.UserInfoVO;
 import com.example.VO.UserLoginVO;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,9 +22,14 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.example.Common.Result.error;
 import static com.example.Config.LevelConfig.getLevelByExp;
+import static com.example.Utils.JwtUtils.generateToken;
+import static com.example.Utils.RedisConstants.CAPTCHA_PREFIX;
 
 @Service
+@Transactional
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     @Autowired
@@ -33,91 +39,116 @@ public class UserServiceImpl implements UserService {
     private StringRedisTemplate stringRedisTemplate;
     /**
      * 用户注册/登录
-     * @Param userRegisterDTO
-     * @Return
+     *
+     * @param loginFormDTO 登录/注册信息
+     * @return 登录结果
      */
     @Override
-    @Transactional
-    public void register(UserRegistDTO userRegistDTO) {
-        //两次确认密码
-        String rePassword = userRegistDTO.getRePassword();
-        String password = userRegistDTO.getPassword();
-        if(!java.util.Objects.equals(rePassword, password)){
-            throw new RuntimeException("两次输入的密码不一致");
+    public Result<?> login(LoginFormDTO loginFormDTO) {
+        // 1. 判断用户名是否存在
+        User user = null;
+        try {
+            user = userMapper.selectByUserName(loginFormDTO.getUsername());
+            if(user!=null){
+                return handlerLogin(user,loginFormDTO);
+            }else{
+                return handlerRegister(loginFormDTO);
+            }
+        } catch (Exception e) {
+            log.error("认证处理异常",e);
+            throw new RuntimeException("认证失败,请稍后重试");
         }
-        String Password = Md5Util.getMD5String(userRegistDTO.getPassword());
+    }
 
-        userMapper.register(userRegistDTO.getUsername(), userRegistDTO.getPhone(), Password);
+
+    private Result<UserLoginVO>handlerLogin(User user, LoginFormDTO loginFormDTO){
+        // 2.1 用户存在，验证密码和验证码
+        String encryptedPassword = Md5Util.getMD5String(loginFormDTO.getPassword());
+        // 验证验证码（需要从前端传入captchaKey）
+        if (isCaptchaValid(loginFormDTO.getCaptchaKey(), loginFormDTO.getCaptcha())
+                && encryptedPassword.equals(user.getPassword())) {
+
+            // 生成JWT token
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("userId", user.getUserId());
+            claims.put("username", user.getUsername());
+            String token = generateToken(claims);
+
+            UserLoginVO userLoginVO = new UserLoginVO();
+            userLoginVO.setUserId(user.getUserId());
+            userLoginVO.setAccessToken(token);
+            userLoginVO.setLastLoginTime(LocalDateTime.now());
+
+            log.info("用户登录成功：{}", user.getUsername());
+            return Result.success(userLoginVO);
+        } else {
+            return error("密码错误或验证码错误，请重试", null);
+        }
+    }
+
+    private Result<Void> handlerRegister(LoginFormDTO loginFormDTO){
+        // 2.2 用户不存在，执行注册
+        // 验证密码一致性
+        if (!loginFormDTO.getPassword().equals(loginFormDTO.getRePassword())) {
+            return error("密码不一致", null);
+        }
+
+        // 验证手机号格式
+        if (RegexUtils.isPhoneInvalid(loginFormDTO.getPhone())) {
+            return error("手机号格式错误", null);
+        }
+
+        // 执行注册
+        String encryptedPassword = Md5Util.getMD5String(loginFormDTO.getPassword());
+        userMapper.register(loginFormDTO.getUsername(), loginFormDTO.getPhone(), encryptedPassword);
+
+        log.info("用户注册成功：{}", loginFormDTO.getUsername());
+        return Result.success(); // 注册成功返回空结果
     }
 
     /**
-     * 用户登录
-     * @Param LoginDTO
-     * @Return
+     * 验证验证码
+     * @param captchaKey    图形验证码
+     * @param userInput     用户输入的验证码
+     * @return              验证结果
      */
-    @Override
-    public Result<UserLoginVO> login(UserLoginDTO userLoginDTO) {
-        //查找用户是否存在
-        User user = userMapper.selectByUserName(userLoginDTO.getUsername());
-        if(user == null){
-            return Result.error("用户不存在");
+    private boolean isCaptchaValid(String captchaKey, String userInput) {
+        if(captchaKey==null||userInput==null){
+            return false;
+        }
+        // 获取Redis中的验证码
+        String redisCaptcha = stringRedisTemplate.opsForValue().get(CAPTCHA_PREFIX + captchaKey);
+        // 验证码不存在或过期
+        if (redisCaptcha == null) {
+            return false;
         }
 
-        String newPassword = Md5Util.getMD5String(userLoginDTO.getPassword());
+        boolean isValid = redisCaptcha.equalsIgnoreCase(userInput);
 
-        //检查密码是否错误
-        if(!newPassword.equals(user.getPassword())){
-            return Result.error("密码错误");
+        // 验证成功后删除验证码（一次性使用）
+        if (isValid) {
+            stringRedisTemplate.delete(CAPTCHA_PREFIX + captchaKey);
         }
 
-        //账号被禁用
-        if(user.getStatus().equals("0")){
-            return Result.error("用户被禁用,请联系管理员");
-        }
-
-        //更新最后登录时间
-        userMapper.setUserLastLoginTime(user);
-        
-        //创建包含用户信息的Map生成Token
-        Map<String, Object> claims = new HashMap<>();
-        // 不要在JWT中包含密码信息，这是不安全的, 因为JWT的payload部分是明文可见的
-        claims.put("userId", user.getUserId());
-        claims.put("username", userLoginDTO.getUsername());
-
-        String token = JwtUtils.generateToken(claims);
-        
-        // 将token存储到Redis中，设置过期时间与JWT过期时间一致（24小时）
-        ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
-        operations.set(token, token, java.time.Duration.ofHours(24)); // 存储token并设置24小时过期
-        
-        UserLoginVO userLoginVO = UserLoginVO.builder()
-                .userId(user.getUserId())
-                .accessToken(token)
-                .lastLoginTime(LocalDateTime.now())
-                .build();
-        return Result.success(userLoginVO);
+        return isValid;
     }
 
     /**
      * 获取用户信息
-     * @Param userId
-     * @Return
+     * @param userId 用户ID
+     * @return 用户信息
      */
     @Override
     public UserInfoVO getByUserId(Integer userId) {
-        UserInfoVO userInfoVO = userMapper.getByUserId(userId);
-        return userInfoVO;
+        return userMapper.getByUserId(userId);
     }
-
 
     /**
      * 修改用户信息
      *
-     * @Param userId
-     * @Return
+     * @param userId 用户ID
      */
     @Override
-    @Transactional
     public void updateById(Integer userId, UserUpdateDTO userUpdateDTO) {
         // 检查用户是否存在
         User existingUser = userMapper.selectByUserId(userId);
@@ -154,8 +185,7 @@ public class UserServiceImpl implements UserService {
     }
     /**
      * 删除用户
-     * @Param userId
-     * @Return
+     * @param userId 用户ID
      */
     @Override
     public void removeUserById(Integer userId) {

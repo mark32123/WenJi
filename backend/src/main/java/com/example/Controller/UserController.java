@@ -1,11 +1,9 @@
-package com.example.Controller.User;
+package com.example.Controller;
 
 import com.example.Common.Result;
-import com.example.DTO.UserLoginDTO;
-import com.example.DTO.UserRegistDTO;
+import com.example.DTO.LoginFormDTO;
 import com.example.DTO.UserUpdateDTO;
 import com.example.Mapper.UserMapper;
-import com.example.Pojo.User;
 import com.example.Service.UserService;
 import com.example.VO.UserInfoVO;
 import com.example.VO.UserLoginVO;
@@ -26,40 +24,23 @@ public class UserController {
     @Autowired
     private UserMapper userMapper;
     /**
-     * 用户注册
-     * @Param RegisterDTO
-     * @Return
-     */
-    @PostMapping("/register")
-    public Result register(@Validated @RequestBody UserRegistDTO userRegistDTO){
-        log.info("用户注册：用户名：{}",userRegistDTO.getUsername());
-        //判断是否已注册
-        User user = userMapper.selectByUserName(userRegistDTO.getUsername());
-        if(user != null){
-            return Result.error("用户名已被注册");
-        }
-        userService.register(userRegistDTO);
-        return Result.success();
-    }
-    /**
-     * 用户登录
-     * @Param LoginDTO
-     * @Return
+     * 用户登录/注册
+     * @param loginFormDTO 登录信息
+     * @return 登录结果
      */
     @PostMapping("/login")
-    public Result<UserLoginVO> login(@Validated @RequestBody UserLoginDTO userLoginDTO){
-        log.info("用户登录：{}",userLoginDTO);
-        Result<UserLoginVO> result = userService.login(userLoginDTO);
-        return result;
+    public Result<?> login(@Validated @RequestBody LoginFormDTO loginFormDTO){
+        return userService.login(loginFormDTO);
     }
+
 
     /**
      * 获取用户信息
-     * @Param userId
-     * @Return
+     * @param userId 用户ID
+     * @return UserInfoVO
      */
     @GetMapping("/info/{userId}")
-    public Result getById(@PathVariable Integer userId){
+    public Result<UserInfoVO> getById(@PathVariable Integer userId){
         UserInfoVO userInfo = userService.getByUserId(userId);
         log.info("获取用户信息：{}",userInfo);
         return Result.success(userInfo);
@@ -86,7 +67,7 @@ public class UserController {
      * @Return
      */
     @DeleteMapping("/deleteUserInfo/{userId}")
-    public Result removeUserById(@PathVariable Integer userId){
+    public Result<Void> removeUserById(@PathVariable Integer userId){
         if(userService.getByUserId(userId)==null){
             return Result.error("用户不存在");
         }

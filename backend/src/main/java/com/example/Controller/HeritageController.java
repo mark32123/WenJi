@@ -1,4 +1,4 @@
-package com.example.Controller.User;
+package com.example.Controller;
 
 import com.example.Common.Result;
 import com.example.Service.SiteService;
