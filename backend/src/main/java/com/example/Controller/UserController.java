@@ -3,14 +3,17 @@ package com.example.Controller;
 import com.example.Common.Result;
 import com.example.DTO.LoginFormDTO;
 import com.example.DTO.UserUpdateDTO;
-import com.example.Mapper.UserMapper;
 import com.example.Service.UserService;
+import com.example.Utils.ThreadLocalUtil;
 import com.example.VO.UserInfoVO;
-import com.example.VO.UserLoginVO;
+import io.micrometer.common.util.StringUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 
 @RestController
@@ -21,8 +24,40 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private UserMapper userMapper;
+
+    /**
+     * 获取当前用户ID
+     * @return 用户ID
+     */
+    private Long getCurrentUserId(){
+        Map<String,Object> claims = ThreadLocalUtil.get();
+        if(claims==null){
+            return null;
+        }
+        return (Long) claims.get("userId");
+    }
+
+    /**
+     * 从请求中获取token
+     * @param request 请求对象
+     * @return token
+     **/
+    private String getTokenFromRequest(HttpServletRequest request){
+        String token = request.getHeader("Authorization");
+
+        if(token == null){
+            token = request.getHeader("authorization");
+        }
+
+        //处理Bearer前缀
+        if(token != null && token.startsWith("Bearer ")){
+            token = token.substring(7);
+        }
+
+        return token != null ? token.trim() : null;
+    }
+
+
     /**
      * 用户登录/注册
      * @param loginFormDTO 登录信息
@@ -35,24 +70,45 @@ public class UserController {
 
 
     /**
-     * 获取用户信息
-     * @param userId 用户ID
-     * @return UserInfoVO
+     * 登出当前账号
+     * @return 登出结果
      */
-    @GetMapping("/info/{userId}")
-    public Result<UserInfoVO> getById(@PathVariable Integer userId){
-        UserInfoVO userInfo = userService.getByUserId(userId);
-        log.info("获取用户信息：{}",userInfo);
-        return Result.success(userInfo);
+    @PostMapping("/logout")
+    public Result<Void> logout(HttpServletRequest  request){
+        String token = getTokenFromRequest(request);
+        if(StringUtils.isBlank(token)){
+            return Result.error("未提供有效的令牌");
+        }
+        return userService.logout(token);
+    }
+
+
+    /**
+     * 获取当前用户信息
+     * @param request 请求对象
+     * @return UserInfoVO 用户信息
+     */
+    @GetMapping("/currentUserInfo")
+    public Result<UserInfoVO> getUserProfile(HttpServletRequest request){
+        Long userId=getCurrentUserId();
+        if(userId==null){
+            return Result.error("未登录",null);
+        }
+        String token=getTokenFromRequest(request);
+        return userService.getUserProfile(userId,token);
     }
 
     /**
      * 修改用户信息
-     * @Param userId
-     * @Return
+     * @param userUpdateDTO 修改信息
+     * @return UserInfoVO 修改后的用户信息
      */
-    @PutMapping("/updateUserInfo/{userId}")
-    public Result<UserInfoVO> updateUserInfoById(@PathVariable Integer userId, @Validated @RequestBody UserUpdateDTO userUpdateDTO){
+    @PutMapping("/updateUserInfo")
+    public Result<UserInfoVO> updateUserInfoById(@Validated @RequestBody UserUpdateDTO userUpdateDTO){
+        Long userId=getCurrentUserId();
+        if(userId==null){
+            return Result.error("未登录",null);
+        }
         log.info("修改用户信息：{}",userUpdateDTO);
         //执行更新
         userService.updateById(userId,userUpdateDTO);
@@ -63,15 +119,14 @@ public class UserController {
 
     /**
      * 注销用户信息
-     * @Param userId
-     * @Return
+     * @return 删除用户信息
      */
-    @DeleteMapping("/deleteUserInfo/{userId}")
-    public Result<Void> removeUserById(@PathVariable Integer userId){
-        if(userService.getByUserId(userId)==null){
-            return Result.error("用户不存在");
+    @DeleteMapping("/deleteUserInfo")
+    public Result<Void> removeUserById(){
+        Long userId=getCurrentUserId();
+        if(userId==null){
+            return Result.error("未登录",null);
         }
-        log.info("注销用户：{}",userId);
         userService.removeUserById(userId);
         return Result.success();
     }

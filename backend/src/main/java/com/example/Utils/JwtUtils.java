@@ -37,16 +37,6 @@ public class JwtUtils {
                 .compact();
     }
 
-    /**
-     * 通过用户名生成 JWT 令牌
-     * @param username 用户名
-     * @return 生成的 JWT 令牌字符串
-     */
-    public static String generateToken(String username){
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("username", username);
-        return generateToken(claims);
-    }
 
     /**
      * 解析 JWT 令牌

@@ -273,3 +273,162 @@ CREATE TABLE user_preference (
 ## 拦截器修改不拦截获取验证码信息
 ## 在yaml文件中设置redis等基础信息
 ![img.png](img.png)
+---
+2-22-2026
+# 总结
+## 完善测试用户登录注册功能
+## 修改用户修改个人信息url、注销用户url、获取用户信息url
+## 通过ThreadLocal进行用户信息的存取
+
+# UserController 接口文档更新
+
+## 基础信息
+- **基础路径**: `/user`
+- **认证方式**: Bearer Token (除登录接口外都需要认证)
+- **返回格式**: 统一使用 `Result<T>` 对象
+
+## 1. 用户登录/注册
+**POST** `/user/login`
+
+### 请求头
+Authorization: Bearer <token>
+### 请求参数 (LoginFormDTO)
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| phone | String | 是 | 手机号 |
+| username | String | 是 | 用户名 |
+| password | String | 是 | 密码 |
+| rePassword | String | 否 | 确认密码(注册时必填) |
+| captcha | String | 否 | 验证码 |
+| captchaKey | String | 否 | 验证码标识 |
+
+### 成功响应示例
+```json 
+{
+       "code": 1, 
+       "msg": "成功",
+       "data": { 
+          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", 
+          "userInfo": { 
+            "username": "testuser", 
+            "phone": "13800138000", 
+            "email": "test@example.com", 
+            "avatarUrl": "https://example.com/avatar.jpg", 
+            "level": "见习学徒", 
+            "createTime": "2026-02-22 10:30:00", 
+            "lastLoginTime": "2026-02-22 10:30:00", 
+            "isRealNameVerified": 0, 
+            "experience": 0
+          }
+       }
+}
+```
+---
+
+## 2. 用户登出
+**POST** `/user/logout`
+
+### 请求头
+Authorization: Bearer <token>
+
+---
+
+## 3. 获取当前用户信息
+**GET** `/user/currentUserInfo`
+
+### 请求头
+Authorization: Bearer <token>
+
+### 响应数据 (UserInfoVO)
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| username | String | 用户名 |
+| gender | String | 性别 |
+| phone | String | 手机号 |
+| realName | String | 真实姓名 |
+| email | String | 邮箱 |
+| avatarUrl | String | 头像URL |
+| level | String | 等级 |
+| createTime | String | 创建时间 (yyyy-MM-dd HH:mm:ss) |
+| updateTime | String | 更新时间 (yyyy-MM-dd HH:mm:ss) |
+| lastLoginTime | String | 最后登录时间 (yyyy-MM-dd HH:mm:ss) |
+| isRealNameVerified | Integer | 是否实名认证 (0:未认证, 1:已认证) |
+| experience | Integer | 经验值 |
+
+### 成功响应示例
+```json
+{
+  "code": 1,
+  "msg": "成功",
+  "data": {
+    "username": "testuser",
+    "gender": "男",
+    "phone": "13800138000",
+    "realName": "张三",
+    "email": "test@example.com",
+    "avatarUrl": "https://example.com/avatar.jpg",
+    "level": "见习学徒",
+    "createTime": "2026-02-22 10:30:00",
+    "updateTime": "2026-02-22 10:30:00",
+    "lastLoginTime": "2026-02-22 10:30:00",
+    "isRealNameVerified": 1,
+    "experience": 100
+  }
+}
+```
+---
+
+## 4. 修改用户信息
+**PUT** `/user/updateUserInfo`
+
+### 请求头
+Authorization: Bearer <token>
+
+### 请求参数 (UserUpdateDTO)
+| 字段名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| username | String | 是 | 用户名 |
+| gender | String | 否 | 性别 |
+| password | String | 否 | 原密码(修改密码时必填) |
+| newPassword | String | 否 | 新密码 |
+| rePassword | String | 否 | 确认新密码 |
+| phone | String | 否 | 手机号(需符合正则格式) |
+| realName | String | 否 | 真实姓名 |
+| email | String | 否 | 邮箱(需符合邮箱格式) |
+| avatarUrl | String | 否 | 头像URL |
+| level | String | 否 | 等级 |
+| birthday | String | 否 | 生日 (yyyy-MM-dd) |
+| updateTime | String | 否 | 更新时间 (yyyy-MM-dd HH:mm:ss) |
+| lastLoginTime | String | 否 | 最后登录时间 (yyyy-MM-dd HH:mm:ss) |
+| isRealNameVerified | Integer | 否 | 是否实名认证 |
+| experience | Integer | 否 | 经验值 |
+
+### 成功响应示例
+```json
+{
+    "code": 1, 
+    "msg": "成功", 
+    "data": { 
+        "username": "updateduser", 
+        "gender": "女", 
+        "phone": "13900139000", 
+        "realName": "李四", 
+        "email": "updated@example.com", 
+        "avatarUrl": "https://example.com/new_avatar.jpg", 
+        "level": "初级学者", 
+        "createTime": "2026-02-22 10:30:00", 
+        "updateTime": "2026-02-22 11:00:00", 
+        "lastLoginTime": "2026-02-22 11:00:00", 
+        "isRealNameVerified": 1, 
+        "experience": 200 
+        } 
+}
+```
+
+---
+
+## 5. 注销用户
+**DELETE** `/user/deleteUserInfo`
+
+### 请求头
+Authorization: Bearer <token>

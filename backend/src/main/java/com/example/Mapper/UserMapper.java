@@ -34,7 +34,7 @@ public interface UserMapper {
      * @return UserInfoVO
      */
     @Select("select username,real_name,gender,phone,birthday,avatar_url,level,experience,is_real_name_verified,last_login_time,create_time,update_time from user where user_id=#{userId}")
-    UserInfoVO getByUserId(@Param("userId") Integer userId);
+    UserInfoVO getByUserId(@Param("userId") Long userId);
 
     /**
      * 更新用户最后登录时间
@@ -48,10 +48,9 @@ public interface UserMapper {
      *
      * @param userId 用户ID
      * @param userUpdateDTO 修改的用户信息
-     * @return 修改后的用户信息
      */
 
-    void updateById(@Param("userId") Integer userId, @Param("userUpdateDTO") @RequestBody @Validated UserUpdateDTO userUpdateDTO);
+    void updateById(@Param("userId") Long userId, @Param("userUpdateDTO") @RequestBody @Validated UserUpdateDTO userUpdateDTO);
 
 
     /**
@@ -60,11 +59,11 @@ public interface UserMapper {
      * @return 用户信息
      */
     @Select("SELECT * FROM user WHERE user_id = #{userId}")
-    User selectByUserId(Integer userId);
+    User selectByUserId(Long userId);
     /**
      * 删除用户
      * @param userId 用户ID
      */
     @Delete("DELETE FROM user WHERE user_id = #{userId}")
-    void removeUserById(Integer userId);
+    void removeUserById(Long userId);
 }

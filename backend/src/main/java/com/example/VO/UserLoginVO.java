@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class UserLoginVO {
-    private Integer userId;
+    private Long userId;
     private String accessToken;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime lastLoginTime;
