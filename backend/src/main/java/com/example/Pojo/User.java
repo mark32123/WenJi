@@ -1,5 +1,7 @@
 package com.example.Pojo;
 
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +16,9 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@TableName("user")
 public class User {
+    @TableId
     private Long userId;// 用户id
     @NotBlank
     private String username;// 用户名
@@ -22,8 +26,6 @@ public class User {
     private String gender;// 性别
     private String phone;// 手机号
     private String realName;// 真实姓名
-    @Email
-    private String email;// 邮箱
     private String avatarUrl;// 头像
     private String level;// 等级 见习学徒
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

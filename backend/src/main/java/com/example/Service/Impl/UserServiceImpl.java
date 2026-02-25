@@ -1,5 +1,6 @@
 package com.example.Service.Impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.Common.Result;
 import com.example.DTO.LoginFormDTO;
 import com.example.DTO.UserUpdateDTO;
@@ -55,7 +56,9 @@ public class UserServiceImpl implements UserService {
         // 1. 判断用户名是否存在
         User user;
         try {
-            user = userMapper.selectByUserName(loginFormDTO.getUsername());
+            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("username", loginFormDTO.getUsername());
+            user = userMapper.selectOne(queryWrapper);
             if(user!=null){
                 return handlerLogin(user,loginFormDTO);
             }else{
@@ -125,8 +128,8 @@ public class UserServiceImpl implements UserService {
     private Result<Void> handlerRegister(@RequestBody LoginFormDTO loginFormDTO){
         // 2.2 用户不存在，执行注册
         // 验证密码一致性
-        if (!loginFormDTO.getPassword().equals(loginFormDTO.getRePassword())) {
-            return error("密码不一致", null);
+        if (loginFormDTO.getPassword()!=null&&!loginFormDTO.getPassword().equals(loginFormDTO.getRePassword())) {
+            return error("密码为空或不一致", null);
         }
 
         // 验证手机号格式
@@ -135,7 +138,10 @@ public class UserServiceImpl implements UserService {
         }
 
         // 执行注册
-        String encryptedPassword = Md5Util.getMD5String(loginFormDTO.getPassword());
+        String encryptedPassword = null;
+        if (loginFormDTO.getPassword() != null) {
+            encryptedPassword = Md5Util.getMD5String(loginFormDTO.getPassword());
+        }
         userMapper.register(loginFormDTO.getUsername(), loginFormDTO.getPhone(), encryptedPassword);
 
         log.info("用户注册成功：{}", loginFormDTO.getUsername());
@@ -208,7 +214,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void updateById(Long userId, UserUpdateDTO userUpdateDTO) {
         // 检查用户是否存在
-        User existingUser = userMapper.selectByUserId(userId);
+        User existingUser=userMapper.selectById(userId);
         if(existingUser == null) {
             throw new RuntimeException("用户不存在");
         }
@@ -247,7 +253,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void removeUserById(Long userId) {
         try {
-            userMapper.removeUserById(userId);
+            userMapper.deleteById(userId);
             log.info("用户删除成功，用户ID：{}",userId);
         } catch (RuntimeException e) {
             log.error("用户删除失败，用户ID：{}",userId,e);

@@ -34,7 +34,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     /**
      * 跨域配置
-     * @param
+     * @param  registry 跨域注册
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {

@@ -4,20 +4,34 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9bf8cb9c-57aa-4cda-b40a-0d686289e8b0" name="更改" comment="1.将注册登录功能合二为一，同时添加验证码机制&#10;2.添加缓存redis，存储用户每次登录/注册时点击获取验证码，5分钟后失效 ，(CaptchaController、CaptchaUtils、RedisConstants)&#10;3.将实体类验证信息是否合法直接集成到RegexUtils中&#10;4.拦截器修改不拦截获取验证码信息&#10;5.在yaml文件中设置redis等基础信息">
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Interceptor/RefreshTokenInterceptor.java" afterDir="false" />
+    <list default="true" id="9bf8cb9c-57aa-4cda-b40a-0d686289e8b0" name="更改" comment="对User业务进行MP的业务代码改造">
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Config/MybatisConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/application-test.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/test/java/com/example/WebConfigTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/logs.md" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/logs.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Config/WebConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Config/WebConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/UserController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Interceptor/LoginInterceptor.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Interceptor/LoginInterceptor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/AI/ChatHistoryController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/AI/ChatHistoryController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/HeritageSiteMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/HeritageSiteMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/OpeningHoursMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/OpeningHoursMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/RegionMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/RegionMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/SiteImageMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/SiteImageMapper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/UserMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/UserMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/Entity/AI/AIChatMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/Entity/AI/AIChatMessage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/Entity/AI/AIChatSession.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/Entity/AI/AIChatSession.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/HeritageSite.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/HeritageSite.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/ImageRecognitionLog.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/ImageRecognitionLog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/OpeningHours.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/OpeningHours.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/OperateLog.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/OperateLog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/Region.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/Region.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/SiteImage.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/SiteImage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/ToolUsageLog.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/ToolUsageLog.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/UserPreference.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/UserPreference.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Service/Impl/UserServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Service/Impl/UserServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Service/UserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Utils/JwtUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Utils/JwtUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Utils/RedisConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Utils/RedisConstants.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/VO/UserLoginVO.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/VO/UserLoginVO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/com/example/Mapper/HeritageSiteMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/com/example/Mapper/HeritageSiteMapper.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/com/example/WenjiApplicationTests.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,7 +82,11 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
+    "JUnit.WebConfigTest.testAddCorsMappings.executor": "Run",
+    "JUnit.WebConfigTest.testAddInterceptors.executor": "Debug",
+    "JUnit.WenjiApplicationTests.testUserMapper.executor": "Run",
     "Maven.backend [clean].executor": "Run",
+    "Maven.backend [compile].executor": "Run",
     "Maven.backend [package].executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RequestMappingsPanelOrder0": "0",
@@ -91,7 +109,7 @@
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
     "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "editor.preferences.inline.completion",
+    "settings.editor.selected.configurable": "通义灵码",
     "ts.external.directory.path": "D:\\IntelliJ IDEA 2025.2.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
     "vue.rearranger.settings.migration": "true",
     "应用程序.WenjiApplication.executor": "Run"
@@ -135,9 +153,8 @@
       </map>
     </option>
   </component>
-  <component name="RunManager" selected="应用程序.WenjiApplication">
-    <configuration name="WenjiApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.example.WenjiApplication" />
+  <component name="RunManager" selected="Spring Boot.WenjiApplication">
+    <configuration name="WebConfigTest.testAddCorsMappings" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="backend" />
       <extension name="coverage">
         <pattern>
@@ -145,6 +162,42 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
+      <option name="PACKAGE_NAME" value="com.example" />
+      <option name="MAIN_CLASS_NAME" value="com.example.WebConfigTest" />
+      <option name="METHOD_NAME" value="testAddCorsMappings" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="WebConfigTest.testAddInterceptors" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="backend" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.example.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.example" />
+      <option name="MAIN_CLASS_NAME" value="com.example.WebConfigTest" />
+      <option name="METHOD_NAME" value="testAddInterceptors" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="WenjiApplicationTests.testUserMapper" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="backend" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.example.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.example" />
+      <option name="MAIN_CLASS_NAME" value="com.example.WenjiApplicationTests" />
+      <option name="METHOD_NAME" value="testUserMapper" />
+      <option name="TEST_OBJECT" value="method" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -160,7 +213,9 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="应用程序.WenjiApplication" />
+        <item itemvalue="JUnit.WebConfigTest.testAddInterceptors" />
+        <item itemvalue="JUnit.WebConfigTest.testAddCorsMappings" />
+        <item itemvalue="JUnit.WenjiApplicationTests.testUserMapper" />
       </list>
     </recent_temporary>
   </component>
@@ -207,7 +262,15 @@
       <option name="project" value="LOCAL" />
       <updated>1771555464127</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="对当前业务进行与redis缓存的结合开发">
+      <option name="closed" value="true" />
+      <created>1771733025668</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1771733025668</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -228,7 +291,8 @@
     <MESSAGE value="Commit local changes before merge" />
     <MESSAGE value="refactor: 重构为前后端分离结构 (Monorepo)&#10;&#10;- 移动后端代码至 /backend 目录&#10;- 移动前端代码至 /frontend 目录&#10;- 更新 .gitignore 忽略构建产物&#10;- 重置 .idea 配置以适应新结构" />
     <MESSAGE value="1.将注册登录功能合二为一，同时添加验证码机制&#10;2.添加缓存redis，存储用户每次登录/注册时点击获取验证码，5分钟后失效 ，(CaptchaController、CaptchaUtils、RedisConstants)&#10;3.将实体类验证信息是否合法直接集成到RegexUtils中&#10;4.拦截器修改不拦截获取验证码信息&#10;5.在yaml文件中设置redis等基础信息" />
-    <option name="LAST_COMMIT_MESSAGE" value="1.将注册登录功能合二为一，同时添加验证码机制&#10;2.添加缓存redis，存储用户每次登录/注册时点击获取验证码，5分钟后失效 ，(CaptchaController、CaptchaUtils、RedisConstants)&#10;3.将实体类验证信息是否合法直接集成到RegexUtils中&#10;4.拦截器修改不拦截获取验证码信息&#10;5.在yaml文件中设置redis等基础信息" />
+    <MESSAGE value="对当前业务进行与redis缓存的结合开发" />
+    <option name="LAST_COMMIT_MESSAGE" value="对当前业务进行与redis缓存的结合开发" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -249,5 +313,9 @@
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

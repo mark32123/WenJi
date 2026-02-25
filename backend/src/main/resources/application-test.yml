@@ -1,0 +1,20 @@
+spring:
+datasource:
+  url: jdbc:mysql://localhost:3306/wenji?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+  driver-class-name: com.mysql.cj.jdbc.Driver
+  username: root
+  password: 123456
+
+logging:
+  level:
+    com.baomidou.mybatisplus: debug
+    org.springframework: INFO
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+  mapper-locations: classpath*:com/example/Mapper/*.xml
+  type-aliases-package: com.example.Pojo
