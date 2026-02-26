@@ -7,6 +7,8 @@ import com.example.Service.UserService;
 import com.example.Utils.ThreadLocalUtil;
 import com.example.VO.UserInfoVO;
 import io.micrometer.common.util.StringUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import java.util.Map;
 @RestController
 @Slf4j
 @RequestMapping("/user")
+@Tag(name = "用户管理", description = "用户相关接口")
 public class UserController {
 
     @Autowired
@@ -42,6 +45,7 @@ public class UserController {
      * @param request 请求对象
      * @return token
      **/
+
     private String getTokenFromRequest(HttpServletRequest request){
         String token = request.getHeader("Authorization");
 
@@ -63,6 +67,7 @@ public class UserController {
      * @param loginFormDTO 登录信息
      * @return 登录结果
      */
+    @Operation(summary = "用户登录")
     @PostMapping("/login")
     public Result<?> login(@Validated @RequestBody LoginFormDTO loginFormDTO){
         return userService.login(loginFormDTO);
@@ -73,6 +78,7 @@ public class UserController {
      * 登出当前账号
      * @return 登出结果
      */
+    @Operation(summary = "用户登出")
     @PostMapping("/logout")
     public Result<Void> logout(HttpServletRequest  request){
         String token = getTokenFromRequest(request);
@@ -88,6 +94,7 @@ public class UserController {
      * @param request 请求对象
      * @return UserInfoVO 用户信息
      */
+    @Operation(summary = "获取当前用户信息")
     @GetMapping("/currentUserInfo")
     public Result<UserInfoVO> getUserProfile(HttpServletRequest request){
         Long userId=getCurrentUserId();
@@ -103,6 +110,7 @@ public class UserController {
      * @param userUpdateDTO 修改信息
      * @return UserInfoVO 修改后的用户信息
      */
+    @Operation(summary = "修改用户信息")
     @PutMapping("/updateUserInfo")
     public Result<UserInfoVO> updateUserInfoById(@Validated @RequestBody UserUpdateDTO userUpdateDTO){
         Long userId=getCurrentUserId();
@@ -121,6 +129,7 @@ public class UserController {
      * 注销用户信息
      * @return 删除用户信息
      */
+    @Operation(summary = "注销用户信息")
     @DeleteMapping("/deleteUserInfo")
     public Result<Void> removeUserById(){
         Long userId=getCurrentUserId();

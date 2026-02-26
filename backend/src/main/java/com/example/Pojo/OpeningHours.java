@@ -1,5 +1,6 @@
 package com.example.Pojo;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -10,6 +11,7 @@ import java.time.LocalTime;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@TableName("opening_hours")
 public class OpeningHours {
     private Long hourId;
     private String siteId;

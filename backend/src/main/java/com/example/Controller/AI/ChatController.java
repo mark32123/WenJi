@@ -2,6 +2,9 @@ package com.example.Controller.AI;
 
 
 import com.example.Common.Repository.ChatHistoryRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -23,6 +26,7 @@ import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvis
 @RestController
 @Slf4j
 @RequestMapping("/ai")
+@Tag(name = "AI聊天管理", description = "AI聊天相关接口，支持文本和多模态对话")
 public class ChatController {
 
     private final ChatClient chatClient;
@@ -30,11 +34,12 @@ public class ChatController {
     private  final ChatHistoryRepository chatHistoryRepository;
 
     // 修改为返回JSON格式的同步API
+    @Operation(summary = "同步AI聊天", description = "同步方式与AI对话，支持文本和多模态输入")
     @PostMapping("/chat-sync")
     public ResponseEntity<Map<String, Object>> chatSync(
-            @RequestParam("prompt") String prompt,
-            @RequestParam("chatId") String chatId,
-            @RequestParam(value = "files", required = false) List<MultipartFile> files) {
+            @Parameter(description = "用户输入的提示词") @RequestParam("prompt") String prompt,
+            @Parameter(description = "会话ID") @RequestParam("chatId") String chatId,
+            @Parameter(description = "上传的文件列表，可选") @RequestParam(value = "files", required = false) List<MultipartFile> files) {
         try {
             // 1.保存会话id
             log.info("保存会话id：{}", chatId);
@@ -94,11 +99,12 @@ public class ChatController {
     }
 
     // 保持原有的流式API，如果需要实时响应功能
+    @Operation(summary = "流式AI聊天", description = "流式方式与AI对话，支持实时响应和多模态输入")
     @PostMapping(value = "/chat", produces = "text/plain;charset=utf-8")
     public Flux<String> chat(
-            @RequestParam("prompt") String prompt,
-            @RequestParam("chatId") String chatId,
-            @RequestParam(value = "files", required = false) List<MultipartFile> files) {
+            @Parameter(description = "用户输入的提示词") @RequestParam("prompt") String prompt,
+            @Parameter(description = "会话ID") @RequestParam("chatId") String chatId,
+            @Parameter(description = "上传的文件列表，可选") @RequestParam(value = "files", required = false) List<MultipartFile> files) {
         // 1.保存会话id
         chatHistoryRepository.save("chat", chatId);
         // 2.请求模型

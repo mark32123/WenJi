@@ -23,5 +23,9 @@
         distance DESC
         LIMIT #{limit}
     </select>
+    <select id="getSiteDetail" resultType="com.example.Pojo.HeritageSite">
+
+        SELECT * FROM heritage_sites WHERE site_id = #{siteId} AND status = 1
+    </select>
 
 </mapper>

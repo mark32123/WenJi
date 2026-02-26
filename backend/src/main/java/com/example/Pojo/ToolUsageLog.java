@@ -1,5 +1,6 @@
 package com.example.Pojo;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@TableName("tool_usage_log")
 public class ToolUsageLog {
     private Long toolUsageId;        // 工具使用ID
     private String sessionId;        // 会话ID

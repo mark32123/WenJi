@@ -5,6 +5,9 @@ import com.example.Common.Result;
 import com.example.VO.AI.MessageVO;
 import com.example.VO.AI.ChatSessionVO;
 import com.example.Common.Repository.ChatHistoryRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -21,26 +24,31 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/ai/history")
+@Tag(name = "AI聊天历史管理", description = "AI聊天历史记录相关接口")
 public class ChatHistoryController {
 
     private final ChatHistoryRepository chatHistoryRepository;
     private final ChatMemory chatMemory;
 
+    @Operation(summary = "获取聊天ID列表", description = "根据类型获取所有聊天会话ID")
     @GetMapping("/{type}")
-    public Result<List<String>> getChatIds(@PathVariable("type") String type){
+    public Result<List<String>> getChatIds(@Parameter(description = "聊天类型") @PathVariable("type") String type){
         List<String> chatIds = chatHistoryRepository.getChatIds(type);
         log.info("获取询问历史id{}",chatIds);
         return Result.success(chatIds);
     }
 
+    @Operation(summary = "获取聊天历史详情", description = "根据类型和会话ID获取完整的聊天历史记录")
     @GetMapping("/{type}/{chatId}")//为了与上面的方法进行区分，先执行上面的方法，再执行下面的方法
-    public Result<List<ChatSessionVO>> getChatHistory(@PathVariable("type") String type, @PathVariable("chatId") String chatId){
+    public Result<List<ChatSessionVO>> getChatHistory(
+            @Parameter(description = "聊天类型") @PathVariable("type") String type, 
+            @Parameter(description = "会话ID") @PathVariable("chatId") String chatId){
         List<Message> messages = chatMemory.get(chatId, Integer.MAX_VALUE);
         if(messages==null){
             messages = List.of();
         }
 
-        List<MessageVO> messageVOs = messages.stream().map(m->new MessageVO(m)).toList();
+        List<MessageVO> messageVOs = messages.stream().map(MessageVO::new).toList();
         ChatSessionVO sessionVO = new ChatSessionVO(chatId, LocalDateTime.now(), messageVOs);
         List<ChatSessionVO> sessionList = List.of(sessionVO);
         return Result.success(sessionList);

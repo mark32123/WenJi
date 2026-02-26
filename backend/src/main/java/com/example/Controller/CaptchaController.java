@@ -2,6 +2,8 @@ package com.example.Controller;
 
 import com.example.Common.Result;
 import com.example.Utils.CaptchaUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -20,6 +22,7 @@ import static java.util.UUID.randomUUID;
 @Slf4j
 @RestController
 @RequestMapping("/user")
+@Tag(name = "验证码管理", description = "验证码相关接口")
 public class CaptchaController {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -28,6 +31,7 @@ public class CaptchaController {
      * 获取图形验证码
      * @return 验证码
      */
+    @Operation(summary = "获取图形验证码", description = "生成并返回图形验证码，包含验证码图片和验证码标识")
     @GetMapping("/captcha")
     public Result<Map<String,String>>getCaptcha(){
         //生成验证码

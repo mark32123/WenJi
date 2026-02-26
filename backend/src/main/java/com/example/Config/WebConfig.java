@@ -20,13 +20,25 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(refreshTokenInterceptor)
                 .order(0)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/user/login","/user/captcha","/");
+                .excludePathPatterns("/user/login","/user/captcha","/",
+                        "/doc.html",
+                        "/webjars/**",
+                        "/swagger-resources/**",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html");
         //拦截所有请求，确保这个拦截器是先执行
         registry.addInterceptor(loginInterceptor)//添加拦截器，但是要避免拦截登录和注册接口
                 .addPathPatterns("/**")//拦截所有接口
                 .excludePathPatterns("/user/login",
                         "/user/captcha",
-                        "/"
+                        "/",
+                        "/doc.html",
+                        "/webjars/**",
+                        "/swagger-resources/**",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html"
                 );
 
 

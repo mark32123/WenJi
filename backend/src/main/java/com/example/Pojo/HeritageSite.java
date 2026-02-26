@@ -1,5 +1,7 @@
 package com.example.Pojo;
 
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -10,7 +12,9 @@ import java.util.List;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@TableName("heritage_sites")
 public class HeritageSite {
+    @TableId
     private String siteId;//站点ID
     private String siteCode;//站点编码
     private String name;//站点名称

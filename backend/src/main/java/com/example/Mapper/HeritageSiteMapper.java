@@ -1,5 +1,6 @@
 package com.example.Mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.Pojo.HeritageSite;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -7,7 +8,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 @Mapper
-public interface HeritageSiteMapper {
+public interface HeritageSiteMapper extends BaseMapper<HeritageSite> {
     /**
      * 根据用户当前位置和城市筛选推荐景点
      */

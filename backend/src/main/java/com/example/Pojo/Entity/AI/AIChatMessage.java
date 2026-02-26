@@ -1,5 +1,6 @@
 package com.example.Pojo.Entity.AI;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@TableName("ai_chat_message")
 public class AIChatMessage {
     private Long messageId;
     private String sessionId;        // 关联ai_chat_session

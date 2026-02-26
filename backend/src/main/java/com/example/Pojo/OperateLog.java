@@ -1,10 +1,12 @@
 package com.example.Pojo;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
+@TableName("operate_log")
 public class OperateLog {
     private Integer id;//ID
     private Integer operateEmpId;//操作员工ID
