@@ -9,8 +9,12 @@ import ModifyContactAndPasswordVue from '@/views/ModifyContactAndPassword.vue'
 import AIGuideVue from '@/views/AIGuide.vue'
 import HistoryQA from '@/views/HistoryQA.vue'
 import CeramicArVue from '@/views/CeramicAr.vue'
+
+import BeijingVue from '@/views/Beijing.vue' // 新增
+
 const routes = [
-  { path: '/', redirect: '/login' },           // 默认重定向到登录页
+  { path: '/', redirect: '/guide' },           
+  { path: '/guide', component: BeijingVue },
   { path: '/login', component: LoginRegisterVue },
   { path: '/register', component: LoginRegisterVue },
   { path: '/user/home', component: HomeViewVue , meta:{requiresAuth:true} }, // 独立路由
