@@ -17,6 +17,12 @@ function getUserIdFromToken() {
   }
   return null
 }
+
+// 获取验证码
+export const getCaptcha = () => {
+  return request.get('/user/captcha');
+}
+
 //调用注册接口的函数
 export const userRegisterService = (registerData)=>{
     return request.post('/user/register',registerData);
@@ -48,7 +54,7 @@ export const updatePassword = (oldPassword, newPassword, rePassword) => {
   }
   
   // 发送原始数据而不是对象
-  return request.put(`/user/updatePassword/${userId}`, {
+  return request.put(`/user/updatePassword`, {
     oldPassword: oldPassword,
     newPassword: newPassword,
     rePassword: rePassword
@@ -57,20 +63,12 @@ export const updatePassword = (oldPassword, newPassword, rePassword) => {
 
 //调用获取用户信息的函数 - 使用当前登录用户
 export const getCurrentUserInfo = () => {
-  const userId = getUserIdFromToken();
-  if (!userId) {
-    throw new Error('未找到用户ID');
-  }
-  return request.get(`/user/info/${userId}`);
+  return request.get(`/user/currentUserInfo`);
 }
 
 // 添加更新联系方式的函数 - 使用当前登录用户
 export const updateContact = (phone) => {
-  const userId = getUserIdFromToken();
-  if (!userId) {
-    throw new Error('未找到用户ID');
-  }
-  return request.put(`/user/update/${userId}`, {
+  return request.put(`/user/update`, {
     phone
   });
 }
@@ -82,7 +80,7 @@ export function updateUserInfo(data) {
     throw new Error('未找到用户ID');
   }
   return request({
-    url: `/user/updateUserInfo/${userId}`,  //使用模板字符串
+    url: `/user/updateUserInfo`,
     method: 'put', 
     data
   })
@@ -95,7 +93,7 @@ export function deleteUserAccount() {
     throw new Error('未找到用户ID');
   }
   return request({
-    url: `/user/deleteUserInfo/${userId}`,  //使用模板字符串
+    url: `/user/deleteUserInfo`,
     method: 'delete' 
   })
 }

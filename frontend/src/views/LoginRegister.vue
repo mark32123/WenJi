@@ -13,12 +13,32 @@ const registerData=ref({
     username:'',
     password:'',
     phone:'',
-    rePassword:''
+    rePassword:'',
+    captcha:'',
+    captchaKey:''
 })
 
+// 验证码图片
+const captchaImage = ref('')
+
+// 加载验证码
+const loadCaptcha = async () => {
+  try {
+    const res = await getCaptcha()
+    if (res.code === 1 || res.code === '200') {
+      registerData.value.captchaKey = res.data.captchaKey
+      captchaImage.value = res.data.captchaImage
+    }
+  } catch (error) {
+    console.error('获取验证码失败:', error)
+  }
+}
+
 //根据当前URL自动设置模式
-onMounted(()=>{
+onMounted(async ()=>{
     isRegister.value = router.path === '/register'
+    // 加载验证码
+    await loadCaptcha()
 })
 // 切换登录/注册模式
 const toggleMode = () => {
@@ -48,6 +68,10 @@ const loginRules = reactive({
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, message: '密码至少6位', trigger: 'blur' }
+  ],
+  captcha: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { len: 4, message: '验证码为4位', trigger: 'blur' }
   ]
 })
 
@@ -62,12 +86,16 @@ const registerRules = reactive({
   rePassword: [
     { required: true, message: '请再次输入密码', trigger: 'blur' },
     { validator: checkRePassword, trigger: 'blur' }
+  ],
+  captcha: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { len: 4, message: '验证码为4位', trigger: 'blur' }
   ]
 })
 
 
 
-import {userRegisterService,userLoginService}from '@/api/user.js'
+import {userRegisterService,userLoginService,getCaptcha}from '@/api/user.js'
 import { ElMessage } from 'element-plus';
 //调用后台接口完成注册
 //异步方法
@@ -129,7 +157,9 @@ const login=async()=>{
     await loginFormRef.value.validate();
     const result = await userLoginService({
       username: registerData.value.username,
-      password: registerData.value.password
+      password: registerData.value.password,
+      captcha: registerData.value.captcha,
+      captchaKey: registerData.value.captchaKey
     })
     
     console.log('Login response:', result); // 这行可以保留用于调试
@@ -186,6 +216,25 @@ const login=async()=>{
         />
       </el-form-item>
 
+      <el-form-item prop="captcha" label="验证码">
+        <div class="captcha-input-wrapper">
+          <el-input
+            v-model="registerData.captcha"
+            placeholder="请输入验证码"
+            maxlength="4"
+            clearable
+          />
+          <img 
+            v-if="captchaImage" 
+            :src="captchaImage" 
+            class="captcha-image" 
+            @click="loadCaptcha"
+            title="点击刷新验证码"
+            alt="验证码"
+          />
+        </div>
+      </el-form-item>
+
       <el-button type="primary" class="submit-btn" @click="login" >登录 </el-button>
 
       <div @click="toggleMode" class="toggle-link">切换到注册</div>
@@ -227,6 +276,25 @@ const login=async()=>{
           placeholder="用于账号安全验证"
           maxlength="11"
         />
+      </el-form-item>
+
+      <el-form-item prop="captcha" label="验证码">
+        <div class="captcha-input-wrapper">
+          <el-input
+            v-model="registerData.captcha"
+            placeholder="请输入验证码"
+            maxlength="4"
+            clearable
+          />
+          <img 
+            v-if="captchaImage" 
+            :src="captchaImage" 
+            class="captcha-image" 
+            @click="loadCaptcha"
+            title="点击刷新验证码"
+            alt="验证码"
+          />
+        </div>
       </el-form-item>
 
       <el-button
@@ -370,6 +438,27 @@ const login=async()=>{
   color: #A68A64;
   font-size: 12px;
   margin-top: 4px;
+}
+
+/* 验证码样式 */
+.captcha-input-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.captcha-image {
+  width: 100px;
+  height: 40px;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid #C4B8A8;
+  transition: all 0.3s;
+}
+
+.captcha-image:hover {
+  border-color: #A68A64;
+  transform: scale(1.05);
 }
 
 /* ========== 去掉 el-input 聚焦时的蓝框和边框动画 ========== */

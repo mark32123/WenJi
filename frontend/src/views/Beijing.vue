@@ -1,9 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const currentIndex = ref(0)
+const isTransitioning = ref(false)
+let autoPlayTimer = null
+let touchStartX = 0
+let touchEndX = 0
 
 // 引导页图片数组
 const guideImages = [
@@ -13,23 +17,138 @@ const guideImages = [
   '/images/beijing4.jpg'
 ]
 
+// 获取当前页面的标题
+const getSlideTitle = (index) => {
+  const titles = [
+    '探索文化遗产',
+    '沉浸式体验',
+    '智能AI导览',
+    '开启文化之旅'
+  ]
+  return titles[index] || ''
+}
+
+// 获取当前页面的描述
+const getSlideDescription = (index) => {
+  const descriptions = [
+    '发现中华上下五千年的璀璨文化',
+    '身临其境感受历史遗迹的魅力',
+    'AI智能助手为您提供专业讲解',
+    '立即开始您的文化探索之旅'
+  ]
+  return descriptions[index] || ''
+}
+
+// 切换到指定页面
+const goToPage = (index) => {
+  if (index !== currentIndex.value && !isTransitioning.value) {
+    isTransitioning.value = true
+    currentIndex.value = index
+    setTimeout(() => {
+      isTransitioning.value = false
+    }, 500)
+  }
+}
+
 // 切换到下一页
 const nextPage = () => {
   if (currentIndex.value < guideImages.length - 1) {
-    currentIndex.value += 1
+    goToPage(currentIndex.value + 1)
+  }
+}
+
+// 切换到上一页
+const prevPage = () => {
+  if (currentIndex.value > 0) {
+    goToPage(currentIndex.value - 1)
   }
 }
 
 // 开始体验，跳转到登录页
 const startExperience = () => {
-  router.push('/login')
+  // 添加淡出效果
+  const guideWrapper = document.querySelector('.guide-wrapper')
+  if (guideWrapper) {
+    guideWrapper.classList.add('fade-out')
+    setTimeout(() => {
+      router.push('/login')
+    }, 1000)
+  } else {
+    router.push('/login')
+  }
 }
+
+// 自动播放轮播图
+const startAutoPlay = () => {
+  if (autoPlayTimer) clearInterval(autoPlayTimer)
+  autoPlayTimer = setInterval(() => {
+    if (currentIndex.value < guideImages.length - 1) {
+      nextPage()
+    } else {
+      // 在最后一页停止自动播放
+      stopAutoPlay()
+    }
+  }, 4000)
+}
+
+// 停止自动播放
+const stopAutoPlay = () => {
+  if (autoPlayTimer) {
+    clearInterval(autoPlayTimer)
+    autoPlayTimer = null
+  }
+}
+
+// 触摸事件处理
+const handleTouchStart = (e) => {
+  touchStartX = e.changedTouches[0].screenX
+  stopAutoPlay()
+}
+
+const handleTouchMove = (e) => {
+  touchEndX = e.changedTouches[0].screenX
+}
+
+const handleTouchEnd = () => {
+  const swipeThreshold = 50
+  const diff = touchStartX - touchEndX
+  
+  if (Math.abs(diff) > swipeThreshold) {
+    if (diff > 0) {
+      // 向左滑动，下一页
+      nextPage()
+    } else {
+      // 向右滑动，上一页
+      prevPage()
+    }
+  }
+  
+  // 如果不是最后一页，重新开始自动播放
+  if (currentIndex.value < guideImages.length - 1) {
+    startAutoPlay()
+  }
+}
+
+// 组件挂载时开始自动播放
+onMounted(() => {
+  startAutoPlay()
+})
+
+// 组件卸载前清除定时器
+onBeforeUnmount(() => {
+  stopAutoPlay()
+})
 </script>
 
 <template>
   <div class="guide-wrapper">
     <!-- 轮播图区域 -->
-    <div class="guide-swiper">
+    <div 
+      class="guide-swiper"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+    >
       <div
         v-for="(img, index) in guideImages"
         :key="index"
@@ -39,6 +158,12 @@ const startExperience = () => {
         <img :src="img" :alt="`引导页${index + 1}`" class="guide-image" />
         <!-- 半透明遮罩层，增强按钮和指示器对比度 -->
         <div class="overlay"></div>
+        
+        <!-- 添加引导页文字说明 -->
+        <div class="slide-content">
+          <h2 class="slide-title">{{ getSlideTitle(index) }}</h2>
+          <p class="slide-description">{{ getSlideDescription(index) }}</p>
+        </div>
       </div>
     </div>
 
@@ -55,7 +180,7 @@ const startExperience = () => {
       <!-- 第4页显示“开始体验”按钮 -->
       <el-button
         v-else
-        class="guide-btn transparent-btn"
+        class="guide-btn start-btn"
         @click="startExperience"
       >
         开始体验
@@ -68,6 +193,7 @@ const startExperience = () => {
           :key="index"
           class="indicator"
           :class="{ active: index === currentIndex }"
+          @click="goToPage(index)"
         ></span>
       </div>
     </div>
@@ -78,6 +204,7 @@ const startExperience = () => {
 .guide-wrapper {
   width: 100%;
   height: 100vh;
+  transition: opacity 1s ease-in-out;
   overflow: hidden;
   position: relative;
   box-sizing: border-box;
