@@ -1,12 +1,10 @@
 package com.example.Interceptor;
 
 import com.example.Pojo.User;
-import com.example.Utils.JwtUtils;
-import com.example.Utils.ThreadLocalUtil;
+import com.example.Common.Utils.JwtUtils;
+import com.example.Common.Utils.ThreadLocalUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.util.BeanUtil;
 import io.jsonwebtoken.Claims;
-import io.micrometer.common.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -17,8 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.example.Utils.RedisConstants.USER_LOGIN_EXPIRE;
-import static com.example.Utils.RedisConstants.USER_LOGIN_KEY;
+import static com.example.Common.Constants.RedisConstants.USER_LOGIN_EXPIRE;
+import static com.example.Common.Constants.RedisConstants.USER_LOGIN_KEY;
 
 @Component
 public class RefreshTokenInterceptor implements HandlerInterceptor {

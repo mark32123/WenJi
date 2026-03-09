@@ -1,16 +1,10 @@
 package com.example.Interceptor;
 
-import com.example.Utils.JwtUtils;
-import com.example.Utils.ThreadLocalUtil;
+import com.example.Common.Utils.ThreadLocalUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-
-import java.util.Map;
 
 @Component
 public class LoginInterceptor implements HandlerInterceptor {

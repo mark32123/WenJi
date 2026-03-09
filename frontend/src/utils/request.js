@@ -38,8 +38,14 @@ const isTokenExpiringSoon = (token) => {
 // 请求拦截器 - 添加认证头
 instance.interceptors.request.use(
   config => {
+    console.log('=== 请求拦截器 ===');
+    console.log('请求 URL:', config.url);
+    console.log('请求方法:', config.method);
+    console.log('完整配置:', config);
+    
     // 从 localStorage 获取 token
     let token = localStorage.getItem('token');
+    console.log('当前 token:', token ? token.substring(0, 20) + '...' : 'null');
     
     // 检查 token 是否即将过期，如果是则先刷新
     if (token && isTokenExpiringSoon(token)) {
@@ -54,6 +60,9 @@ instance.interceptors.request.use(
     if (token && token !== 'undefined' && token !== 'null' && token.trim() !== '') {
       // 设置 Authorization 头，注意格式：Bearer <token>
       config.headers['Authorization'] = `Bearer ${token}`;
+      console.log('✓ 已添加 Authorization 头');
+    } else {
+      console.warn('⚠ Token 无效，未添加 Authorization 头');
     }
     
     // 特殊处理 FormData 请求 - 删除 Content-Type 让浏览器自动设置
@@ -101,23 +110,37 @@ const refreshToken = async () => {
 // 响应拦截器 - 统一处理
 instance.interceptors.response.use(
   result => {
+    console.log('=== 收到响应 ===');
+    console.log('完整响应:', result);
+    console.log('result.data:', result.data);
+    console.log('result.data.code:', result.data?.code);
+    
     // 判断业务状态码
     if (result.data.code === 1 || result.data.code === '200') {
       // 显示成功信息
+      console.log('✓ 业务执行成功，返回数据');
       return result.data;
     }
     
-    // 显示错误信息
+    // 业务失败
+    console.error('✗ 业务失败，code:', result.data.code, 'msg:', result.data?.msg);
     const errorMessage = result.data?.msg || '服务异常';
     ElMessage.error(errorMessage);
-    // 返回 rejected promise
-    return Promise.reject(result.data);
+    // 返回 rejected promise，传递一个 Error 对象
+    const error = new Error(errorMessage);
+    error.code = result.data.code;
+    error.data = result.data.data;
+    return Promise.reject(error);
   },
   err => {
     const originalRequest = err.config;
 
     // 网络错误或其他异常
-    console.error('网络错误:', err);
+    console.error('=== 网络错误或异常 ===');
+    console.error('错误类型:', typeof err);
+    console.error('错误对象:', err);
+    console.error('err.response:', err.response);
+    console.error('err.message:', err.message);
     
     // 检查是否是 401 错误且不是刷新 token 的请求
     if (err.response?.status === 401 && !originalRequest._retry) {
@@ -139,7 +162,16 @@ instance.interceptors.response.use(
     }
     
     // 其他错误处理
-    alert(err.response?.data?.msg || '网络连接异常');
+    const errorMsg = err.response?.data?.msg || err.message || '网络连接异常';
+    console.error('请求失败:', errorMsg);
+    ElMessage.error(errorMsg);
+    
+    // 确保返回的是一个 Error 对象
+    if (typeof err === 'string') {
+      const error = new Error(err);
+      error.response = err.response;
+      return Promise.reject(error);
+    }
     return Promise.reject(err);
   }
 );

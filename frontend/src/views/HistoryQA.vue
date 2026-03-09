@@ -59,121 +59,96 @@ function convertToQAPairs(messages) {
 // }
 
 onMounted(async () => {
-  console.log('正在获取会话列表...')
+  console.log('=== 开始加载历史问答 ===')
   
   try {
-    // 获取会话列表
+    // 第一步：获取会话 ID 列表
+    console.log('步骤 1: 获取会话列表...')
     const response = await chatHistoryService('chat');
+    console.log('✓ 会话列表响应:', JSON.stringify(response, null, 2));
+    console.log('  - response.code:', response?.code);
+    console.log('  - response.data:', response?.data);
+    console.log('  - response.msg:', response?.msg);
     
-    // 验证响应格式
     let sessionIds = [];
     if (response && typeof response === 'object' && response.code === 1 && Array.isArray(response.data)) {
       sessionIds = response.data;
-      console.log('提取出会话ID数组:', sessionIds);
+      console.log('✓ 提取出会话 ID 数组:', sessionIds);
+      console.log('  - 数组长度:', sessionIds.length);
+      console.log('  - 数组内容:', JSON.stringify(sessionIds));
     } else {
-      console.error('会话列表响应格式错误:', response);
+      console.error('✗ 会话列表响应格式错误:', response);
+      console.error('  - code 应该是 1，实际是:', response?.code);
+      console.error('  - data 应该是数组，实际是:', typeof response?.data, Array.isArray(response?.data));
       sessionIds = [];
     }
     
-    // 检查是否是数组
-    if (Array.isArray(sessionIds)) {
-      console.log('会话ID数组长度:', sessionIds.length);
-      
-      if (sessionIds.length > 0) {
-        // 逐个获取会话详情
-        const validSessions = [];
-        
-        for (const sessionId of sessionIds) {
-          try {
-            const sessionDetailResponse = await getSingleChatHistory('chat', sessionId);
-            
-            // 检查返回格式是否正确
-            if (sessionDetailResponse && sessionDetailResponse.code === 1 && Array.isArray(sessionDetailResponse.data)) {
-              // 假设 data 是一个包含单个会话的数组
-              const sessionDetail = sessionDetailResponse.data[0];
-              if (sessionDetail) {
-                validSessions.push(sessionDetail);
-              }
-            } else {
-              console.warn(`会话 ${sessionId} 详情响应格式不正确:`, sessionDetailResponse);
-            }
-          } catch (singleSessionErr) {
-            console.error(`获取会话 ${sessionId} 详情失败:`, singleSessionErr);
-            console.error('单个会话错误详情:', {
-              name: singleSessionErr?.name,
-              message: singleSessionErr?.message,
-              stack: singleSessionErr?.stack,
-              errorType: typeof singleSessionErr,
-              response: singleSessionErr?.response
-            });
-            // 继续处理下一个会话，而不是中断整个流程
-          }
-        }
-        
-        // 按开始时间排序（最新的在前）
-        validSessions.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
-        
-        sessions.value = validSessions;
-        console.log('最终会话数据:', validSessions);
-      } else {
-        // 如果没有会话ID，就设置为空数组
-        sessions.value = [];
-      }
-    } else {
-      console.error('会话ID列表格式错误:', sessionIds);
+    // 第二步：如果没有会话 ID，直接返回
+    if (!Array.isArray(sessionIds) || sessionIds.length === 0) {
+      console.log('暂无历史记录');
       sessions.value = [];
+      loading.value = false;
+      return;
     }
-  } catch (err) {
-    console.error('加载历史失败 - 错误在:', err);
-    console.error('错误类型:', typeof err);
-    console.error('错误是否为对象:', typeof err === 'object');
     
-    // 特殊情况处理：如果错误实际上是一个成功响应，就正常处理
-    if (err && typeof err === 'object' && err.code === '200' && Array.isArray(err.data)) {
-      console.log('检测到响应被误认为错误，直接处理数据...');
-      const sessionIds = err.data;
-      
-      if (Array.isArray(sessionIds)) {
-        console.log('会话ID数组长度:', sessionIds.length);
+    console.log(`步骤 2: 获取 ${sessionIds.length} 个会话的详情...`);
+    
+    // 第三步：逐个获取会话详情
+    const validSessions = [];
+    
+    for (const sessionId of sessionIds) {
+      try {
+        console.log(`\n  --- 获取会话 ${sessionId} ---`);
+        const sessionDetailResponse = await getSingleChatHistory('chat', sessionId);
+        console.log(`  ✓ 会话 ${sessionId} 响应:`, JSON.stringify(sessionDetailResponse, null, 2));
+        console.log(`    - code:`, sessionDetailResponse?.code);
+        console.log(`    - data 类型:`, typeof sessionDetailResponse?.data, Array.isArray(sessionDetailResponse?.data) ? '(数组)' : '(非数组)');
+        console.log(`    - data 长度:`, Array.isArray(sessionDetailResponse?.data) ? sessionDetailResponse.data.length : 'N/A');
         
-        if (sessionIds.length > 0) {
-          // 逐个获取会话详情
-          const validSessions = [];
-          
-          for (const sessionId of sessionIds) {
-            try {
-              const sessionDetailResponse = await getSingleChatHistory('chat', sessionId);
-              // 检查返回格式是否正确
-              if (sessionDetailResponse && sessionDetailResponse.code === '200' && Array.isArray(sessionDetailResponse.data)) {
-                // 假设 data 是一个包含单个会话的数组
-                const sessionDetail = sessionDetailResponse.data[0];
-                if (sessionDetail) {
-                  validSessions.push(sessionDetail);
-                }
-              } else {
-                console.warn(`会话 ${sessionId} 详情响应格式不正确:`, sessionDetailResponse);
-              }
-            } catch (singleSessionErr) {
-              console.error(`获取会话 ${sessionId} 详情失败:`, singleSessionErr);
-              // 继续处理下一个会话
-            }
+        // 检查返回格式是否正确
+        if (sessionDetailResponse && sessionDetailResponse.code === 1 && Array.isArray(sessionDetailResponse.data)) {
+          const sessionDetail = sessionDetailResponse.data[0];
+          if (sessionDetail) {
+            console.log(`    ✓ 成功获取会话 ${sessionId}`);
+            console.log(`      - sessionDetail:`, sessionDetail);
+            validSessions.push(sessionDetail);
+          } else {
+            console.warn(`    ⚠ 会话 ${sessionId} 数据为空`);
           }
-          
-          // 按开始时间排序（最新的在前）
-          validSessions.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
-          
-          sessions.value = validSessions;
-          console.log('最终会话数据:', validSessions);
         } else {
-          sessions.value = [];
+          console.warn(`    ✗ 会话 ${sessionId} 响应格式不正确:`);
+          console.warn(`      - code:`, sessionDetailResponse?.code, '(应该是 1)');
+          console.warn(`      - data 是数组吗？`, Array.isArray(sessionDetailResponse?.data));
         }
+      } catch (singleSessionErr) {
+        console.error(`    ✗ 获取会话 ${sessionId} 详情失败:`, singleSessionErr);
+        console.error(`      - 错误类型:`, typeof singleSessionErr);
+        console.error(`      - 错误消息:`, singleSessionErr?.message);
+        console.error(`      - 完整错误:`, singleSessionErr);
+        // 继续处理下一个会话
       }
-    } else {
-      console.error('真正的错误:', err);
-      sessions.value = [];
     }
+    
+    console.log(`\n步骤 3: 成功获取 ${validSessions.length}/${sessionIds.length} 个会话`);
+    
+    // 第四步：按开始时间排序（最新的在前）
+    validSessions.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+    
+    sessions.value = validSessions;
+    console.log('\n✓ 最终会话数据:', validSessions);
+    
+  } catch (err) {
+    console.error('\n✗ 加载历史失败:', err);
+    console.error('  - 错误类型:', typeof err);
+    console.error('  - 错误是否为字符串？', typeof err === 'string');
+    console.error('  - 错误是否为对象？', typeof err === 'object');
+    console.error('  - 错误消息:', err?.message);
+    console.error('  - 错误堆栈:', err?.stack);
+    console.error('  - 完整错误:', JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
+    sessions.value = [];
   } finally {
     loading.value = false;
+    console.log('\n=== 加载完成 ===');
   }
 });
 </script>

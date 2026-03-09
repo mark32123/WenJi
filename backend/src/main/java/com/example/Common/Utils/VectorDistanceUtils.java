@@ -1,4 +1,4 @@
-package com.example.Utils;
+package com.example.Common.Utils;
 
 public class VectorDistanceUtils {
     

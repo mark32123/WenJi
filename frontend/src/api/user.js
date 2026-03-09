@@ -36,9 +36,9 @@ export const userLoginService = (loginData)=>{
 export const chatService = (chatData)=>{
     return request.post('/ai/chat',chatData);
 }
-// 调用AI历史接口的函数 - 添加类型参数，默认为 'chat'
+// 调用 AI 历史接口的函数 - 添加类型参数，默认为 'chat'
 export const chatHistoryService = (type = 'chat') => {
-    return request.get(`/ai/history/${type}`);
+    return request.get(`/ai/history/${type}/list`);
 }
 
 // 获取单个会话历史的函数

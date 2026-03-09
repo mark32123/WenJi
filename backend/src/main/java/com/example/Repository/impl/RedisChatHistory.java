@@ -1,5 +1,6 @@
-package com.example.Common.Repository;
+package com.example.Repository.impl;
 
+import com.example.Repository.ChatHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
@@ -10,7 +11,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 //@Component
 //这是一个基于Redis的会话历史记录存储实现
-public class RedisChatHistory implements ChatHistoryRepository{
+public class RedisChatHistory implements ChatHistoryRepository {
 
     private final StringRedisTemplate redisTemplate;
 

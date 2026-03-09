@@ -4,7 +4,6 @@ import com.example.Common.Result;
 import com.example.DTO.LoginFormDTO;
 import com.example.DTO.UserUpdateDTO;
 import com.example.Service.UserService;
-import com.example.Utils.ThreadLocalUtil;
 import com.example.VO.UserInfoVO;
 import io.micrometer.common.util.StringUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+
+import static com.example.Common.Utils.GetUserIdUtils.getCurrentUserId;
 
 
 @RestController
@@ -28,17 +28,6 @@ public class UserController {
     private UserService userService;
 
 
-    /**
-     * 获取当前用户ID
-     * @return 用户ID
-     */
-    private Long getCurrentUserId(){
-        Map<String,Object> claims = ThreadLocalUtil.get();
-        if(claims==null){
-            return null;
-        }
-        return (Long) claims.get("userId");
-    }
 
     /**
      * 从请求中获取token
@@ -97,7 +86,7 @@ public class UserController {
     @Operation(summary = "获取当前用户信息")
     @GetMapping("/currentUserInfo")
     public Result<UserInfoVO> getUserProfile(HttpServletRequest request){
-        Long userId=getCurrentUserId();
+        Long userId= getCurrentUserId();
         if(userId==null){
             return Result.error("未登录",null);
         }

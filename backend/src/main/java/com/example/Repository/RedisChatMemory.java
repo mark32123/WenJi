@@ -1,4 +1,4 @@
-package com.example.Common.Repository;
+package com.example.Repository;
 
 
 import com.example.Pojo.Entity.AI.Msg;

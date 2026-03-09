@@ -432,3 +432,40 @@ Authorization: Bearer <token>
 
 ### 请求头
 Authorization: Bearer <token>
+
+---
+
+# 2-26-2026
+## 前后端接口对接优化
+
+### 1. 验证码字段名统一
+**问题**：前端使用`captchaCode`字段，后端使用`captcha`字段，导致验证失败
+
+**解决方案**：
+- 修改前端LoginRegister.vue，统一使用`captcha`字段名
+- 修改位置：数据模型、登录函数、校验规则、模板绑定
+
+### 2. API路径优化
+**问题**：前端在URL中拼接userId，与后端设计不符
+
+**解决方案**：
+- 修改前端user.js中的API调用
+- 所有用户相关接口统一使用token认证，不在URL中传递userId
+
+**修改的接口**：
+1. getCurrentUserInfo: `/user/info/${userId}` → `/user/currentUserInfo`
+2. updateContact: `/user/update/${userId}` → `/user/update`
+3. updateUserInfo: `/user/updateUserInfo/${userId}` → `/user/updateUserInfo`
+4. deleteUserAccount: `/user/deleteUserInfo/${userId}` → `/user/deleteUserInfo`
+5. updatePassword: `/user/updatePassword/${userId}` → `/user/updatePassword`
+
+### 3. 安全性提升
+- 避免在URL中暴露用户ID
+- 统一使用token进行认证
+- 所有接口从请求头中解析token获取userId
+
+### 4. 认证流程
+1. 前端在请求头中携带token（通过request拦截器自动添加）
+2. 后端从请求头中获取token（支持Authorization和authorization两种大小写形式）
+3. 后端解析token获取userId
+4. 后端执行相应的业务逻辑

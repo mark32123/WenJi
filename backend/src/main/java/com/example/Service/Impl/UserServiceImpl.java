@@ -7,9 +7,9 @@ import com.example.DTO.UserUpdateDTO;
 import com.example.Mapper.UserMapper;
 import com.example.Pojo.User;
 import com.example.Service.UserService;
-import com.example.Utils.JwtUtils;
-import com.example.Utils.Md5Util;
-import com.example.Utils.RegexUtils;
+import com.example.Common.Utils.JwtUtils;
+import com.example.Common.Utils.Md5Util;
+import com.example.Common.Utils.RegexUtils;
 import com.example.VO.UserInfoVO;
 import com.example.VO.UserLoginVO;
 
@@ -27,10 +27,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.example.Common.Constants.RedisConstants.*;
 import static com.example.Common.Result.error;
 import static com.example.Config.LevelConfig.getLevelByExp;
-import static com.example.Utils.JwtUtils.generateToken;
-import static com.example.Utils.RedisConstants.*;
+import static com.example.Common.Utils.JwtUtils.generateToken;
 
 @Service
 @Transactional
