@@ -1,7 +1,10 @@
 package com.example.Pojo.Entity.AI;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,10 +13,13 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @TableName("ai_chat_session")
 public class AIChatSession {
-    private String sessionId;        // 会话ID
-    private Integer userId;          // 关联User.userId
+    @TableId(type = IdType.INPUT)
+    private String sessionId;    // 会话 ID (VARCHAR类型,与数据库表结构匹配)
+
+    private Integer userId;       // 关联 User.userId (INT类型,与数据库表结构匹配)
     private String currentLocation;  // 用户当前位置(经纬度)
     private String sessionContext;   // 会话上下文(JSON格式)
     private Integer messageCount;    // 消息数量

@@ -1,7 +1,7 @@
 package com.example.Controller;
 
 import com.example.Common.Result;
-import com.example.Utils.CaptchaUtils;
+import com.example.Common.Utils.CaptchaUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.example.Utils.RedisConstants.CAPTCHA_EXPIRE;
-import static com.example.Utils.RedisConstants.CAPTCHA_PREFIX;
+import static com.example.Common.Constants.RedisConstants.CAPTCHA_EXPIRE;
+import static com.example.Common.Constants.RedisConstants.CAPTCHA_PREFIX;
 import static java.util.UUID.randomUUID;
 
 @Slf4j

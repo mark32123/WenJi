@@ -1,7 +1,7 @@
 package com.example.Controller.AI;
 
 
-import com.example.Common.Repository.ChatHistoryRepository;
+import com.example.Repository.ChatHistoryRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
