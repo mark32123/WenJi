@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.example.Common.Utils.GetUserIdUtils.getCurrentUserId;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 
 @RequiredArgsConstructor
@@ -41,9 +42,10 @@ public class ChatController {
             @Parameter(description = "会话ID") @RequestParam("chatId") String chatId,
             @Parameter(description = "上传的文件列表，可选") @RequestParam(value = "files", required = false) List<MultipartFile> files) {
         try {
-            // 1.保存会话id
-            log.info("保存会话id：{}", chatId);
-            chatHistoryRepository.save("chat", chatId);
+            Long userId = getCurrentUserId();
+            // 1.保存会话id和当前用户Id
+            log.info("保存会话id和当前用户id：{},{}", userId,chatId);
+            chatHistoryRepository.save("chat", chatId,userId);
             
             String response;
             // 2.请求模型
@@ -105,8 +107,10 @@ public class ChatController {
             @Parameter(description = "用户输入的提示词") @RequestParam("prompt") String prompt,
             @Parameter(description = "会话ID") @RequestParam("chatId") String chatId,
             @Parameter(description = "上传的文件列表，可选") @RequestParam(value = "files", required = false) List<MultipartFile> files) {
-        // 1.保存会话id
-        chatHistoryRepository.save("chat", chatId);
+        // 1.保存会话id和用户Id
+        Long userId = getCurrentUserId();
+        log.info("多模态保存会话id和当前用户id：{},{}", userId,chatId);
+        chatHistoryRepository.save("chat", chatId,userId);
         // 2.请求模型
         if (files == null || files.isEmpty()) {
             // 没有附件，纯文本聊天

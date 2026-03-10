@@ -35,14 +35,7 @@ public class DatabaseChatHistoryRepository implements ChatHistoryRepository {
     private AIChatSessionMapper chatSessionMapper;
 
     @Override
-    public void save(String type, String sessionId) {
-        // 1.通过线程获取用户 Id
-        Long userId = getCurrentUserId();
-        if (userId == null) {
-            log.error("用户未登录，无法保存会话记录");
-            return;
-        }
-
+    public void save(String type, String sessionId,Long userId) {
         // 2.保存到数据库：创建或更新会话元数据
         saveOrUpdateSession(sessionId, userId);
 
@@ -60,11 +53,18 @@ public class DatabaseChatHistoryRepository implements ChatHistoryRepository {
     private void saveOrUpdateSession(String sessionId, Long userId) {
         AIChatSession existingSession = getChatSessionBySessionId(sessionId);
 
+        //判断该对话是否属于该用户
+        if (existingSession != null && !existingSession.getUserId().equals(userId)) {
+            log.error("会话归属权不匹配，sessionId: {}, 期望 userId: {}, 实际 userId: {}",
+                    sessionId, existingSession.getUserId(), userId);
+            throw new RuntimeException("无权操作该会话");
+        }
+
         if (existingSession == null) {
             // 第一次创建会话
             AIChatSession newSession = AIChatSession.builder()
                     .sessionId(sessionId)
-                    .userId(userId.intValue())
+                    .userId(userId)
                     .startTime(LocalDateTime.now())
                     .lastActiveTime(LocalDateTime.now())
                     .messageCount(0)
@@ -77,10 +77,12 @@ public class DatabaseChatHistoryRepository implements ChatHistoryRepository {
             // 更新已有会话（只更新活跃时间和消息数）
             AIChatSession updateSession = AIChatSession.builder()
                     .sessionId(existingSession.getSessionId())
-                    .userId(userId.intValue())
+                    .userId(existingSession.getUserId())  // 保持原有的 userId
                     .lastActiveTime(LocalDateTime.now())
                     .messageCount(existingSession.getMessageCount() + 1)
                     .status(existingSession.getStatus())
+                    .currentLocation(existingSession.getCurrentLocation())
+                    .sessionContext(existingSession.getSessionContext())
                     .build();
 
             chatSessionMapper.updateById(updateSession);
@@ -118,27 +120,27 @@ public class DatabaseChatHistoryRepository implements ChatHistoryRepository {
      */
     @Override
     public List<String> getChatIds(String type) {
-        log.error("=== [DEBUG] getChatIds 被调用，type: {} ===", type);
+        log.debug("=== getChatIds 被调用，type: {} ===", type);
         Long userId = getCurrentUserId();
-        log.error("=== [DEBUG] 从线程上下文获取 userId: {} ===", userId);
+        log.debug("=== 从线程上下文获取 userId: {} ===", userId);
         if (userId == null) {
-            log.error("=== [DEBUG] 用户未登录，userId 为 null ===");
+            log.warn("=== 用户未登录，userId 为 null ===");
             return List.of();
         }
 
         // 从 Redis 中获取会话 ID 列表
         String redisKey = AI_CHAT_PREFIX + userId + ":" + type;
-        log.error("=== [DEBUG] Redis key: {} ===", redisKey);
+        log.debug("=== Redis key: {} ===", redisKey);
         Set<String> sessionIds = redisTemplate.opsForSet().members(redisKey);
-        log.error("=== [DEBUG] 从 Redis 获取到 sessionIds: {} ===", sessionIds);
+        log.debug("=== 从 Redis 获取到 sessionIds: {} ===", sessionIds);
 
         if (sessionIds == null || sessionIds.isEmpty()) {
-            log.error("=== [DEBUG] Redis 中没有数据，返回空列表 ===");
+            log.debug("=== Redis 中没有数据，返回空列表 ===");
             return List.of();
         }
 
         List<String> sortedList = sessionIds.stream().sorted(String::compareTo).toList();
-        log.error("=== [DEBUG] 排序后的列表：{} ===", sortedList);
+        log.debug("=== 排序后的列表：{} ===", sortedList);
         return sortedList;
     }
 }

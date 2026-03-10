@@ -1,11 +1,14 @@
 package com.example.Service.Impl;
 
 import com.example.Mapper.AIChatMessageMapper;
+import com.example.Mapper.AIChatSessionMapper;
 import com.example.Pojo.Entity.AI.AIChatMessage;
+import com.example.Pojo.Entity.AI.AIChatSession;
 import com.example.Service.AIChatMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +30,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @RequiredArgsConstructor
 public class AIChatMessageServiceImpl implements AIChatMessageService {
-
+    @Autowired
     private final AIChatMessageMapper chatMessageMapper;
+    @Autowired
+    private final AIChatSessionMapper chatSessionMapper;
 
     // 内存缓存，用于临时存储待归档的消息
     private final Map<Long, List<AIChatMessage>> pendingMessages = new ConcurrentHashMap<>();
@@ -88,13 +93,14 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
      */
 
     @Override
-    public List<AIChatMessage> getMessagesByChatId(Long chatId) {
-        try {
-            return chatMessageMapper.selectBySessionId(chatId);
-        } catch (Exception e) {
-            log.error("查询消息失败", e);
+    public List<AIChatMessage> getMessagesByChatId(Long chatId,Long userId) {
+        // 先验证 chatId 是否属于 userId
+        AIChatSession session = chatSessionMapper.selectById(chatId);
+        if (session == null || !session.getUserId().equals(userId)) {
+            log.error("无权访问该会话，chatId: {}, userId: {}", chatId, userId);
             return List.of();
         }
+        return chatMessageMapper.selectBySessionId(chatId);
     }
 
     /**

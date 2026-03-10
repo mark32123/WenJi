@@ -5,6 +5,8 @@ import com.example.Common.Result;
 import com.example.VO.AI.MessageVO;
 import com.example.VO.AI.ChatSessionVO;
 import com.example.Repository.ChatHistoryRepository;
+import com.example.Mapper.AIChatSessionMapper;
+import com.example.Pojo.Entity.AI.AIChatSession;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.example.Common.Utils.GetUserIdUtils.getCurrentUserId;
+
+
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -29,6 +34,7 @@ public class ChatHistoryController {
 
     private final ChatHistoryRepository chatHistoryRepository;
     private final ChatMemory chatMemory;
+    private final AIChatSessionMapper chatSessionMapper;
 
     @Operation(summary = "获取聊天 ID 列表", description = "根据类型获取所有聊天会话 ID")
     @GetMapping("/{type}/list")
@@ -46,6 +52,21 @@ public class ChatHistoryController {
             @Parameter(description = "聊天类型") @PathVariable("type") String type, 
             @Parameter(description = "会话 ID") @PathVariable("chatId") String chatId){
         log.info("=== 收到获取聊天历史详情请求，type: {}, chatId: {} ===", type, chatId);
+        
+        // 1. 获取当前登录用户 ID
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return Result.error("未登录", null);
+        }
+        
+        // 2. 验证 chatId 是否属于当前用户
+        AIChatSession session = chatSessionMapper.selectById(chatId);
+        if (session == null || !session.getUserId().equals(userId)) {
+            log.error("无权访问该会话，chatId: {}, userId: {}", chatId, userId);
+            return Result.error("无权访问该会话", null);
+        }
+        
+        // 3. 验证通过后才从 Redis 中获取消息
         List<Message> messages = chatMemory.get(chatId, Integer.MAX_VALUE);
         if(messages==null){
             messages = List.of();
