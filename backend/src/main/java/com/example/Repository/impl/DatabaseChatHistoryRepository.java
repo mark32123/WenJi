@@ -1,21 +1,18 @@
 package com.example.Repository.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.example.Common.Utils.RedisChatHistoryUtils;
 import com.example.Mapper.AIChatSessionMapper;
 import com.example.Pojo.Entity.AI.AIChatSession;
 import com.example.Repository.ChatHistoryRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
-
-import static com.example.Common.Constants.RedisConstants.AI_CHAT_PREFIX;
-import static com.example.Common.Utils.GetUserIdUtils.getCurrentUserId;
 
 /**
  * 基于数据库的会话历史记录存储
@@ -25,23 +22,34 @@ import static com.example.Common.Utils.GetUserIdUtils.getCurrentUserId;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
+
 public class DatabaseChatHistoryRepository implements ChatHistoryRepository {
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private  StringRedisTemplate redisTemplate;
 
-    @Autowired
-    private AIChatSessionMapper chatSessionMapper;
+    private final AIChatSessionMapper chatSessionMapper;
+    
+    // Redis 操作工具类（在构造函数中初始化）
+    private RedisChatHistoryUtils redisUtils;
+    
+    // 构造函数，在注入依赖后初始化 redisUtils
+   public DatabaseChatHistoryRepository(StringRedisTemplate redisTemplate, 
+                                        AIChatSessionMapper chatSessionMapper) {
+        this.redisTemplate = redisTemplate;
+        this.chatSessionMapper = chatSessionMapper;
+        this.redisUtils = new RedisChatHistoryUtils(redisTemplate);
+    }
+
 
     @Override
     public void save(String type, String sessionId,Long userId) {
+
+        // 1.保存到 Redis：用于快速获取会话列表，通过 redisUtils 进行
+        redisUtils.save(type, sessionId, userId);
+
         // 2.保存到数据库：创建或更新会话元数据
         saveOrUpdateSession(sessionId, userId);
-
-        // 3.保存到 Redis：用于快速获取会话列表
-        saveToRedis(userId, type, sessionId);
-
         log.info("保存会话记录成功，userId: {}, sessionId: {}", userId, sessionId);
     }
 
@@ -91,18 +99,6 @@ public class DatabaseChatHistoryRepository implements ChatHistoryRepository {
     }
 
     /**
-     * 保存会话 ID 到 Redis（用于快速查询列表）
-     * @param userId 用户 ID
-     *
-     */
-    private void saveToRedis(Long userId, String type, String sessionId) {
-        String key = AI_CHAT_PREFIX + userId + ":" + type;
-        redisTemplate.opsForSet().add(key, sessionId);
-        // 设置 7 天过期时间
-        redisTemplate.expire(key, 7, java.util.concurrent.TimeUnit.DAYS);
-    }
-
-    /**
      * 根据 sessionId 查询会话信息
      * @param sessionId 会话 ID
      * @return 会话信息
@@ -119,28 +115,45 @@ public class DatabaseChatHistoryRepository implements ChatHistoryRepository {
      * @return 会话列表
      */
     @Override
+
     public List<String> getChatIds(String type) {
-        log.debug("=== getChatIds 被调用，type: {} ===", type);
-        Long userId = getCurrentUserId();
-        log.debug("=== 从线程上下文获取 userId: {} ===", userId);
-        if (userId == null) {
-            log.warn("=== 用户未登录，userId 为 null ===");
-            return List.of();
+        // 委托给 RedisChatHistoryUtils 进行操作
+       return redisUtils.getChatIds(type);
+    }
+
+    /**
+     * 删除会话
+     * @param type 业务类型，如：chat、service、pdf
+     * @param sessionId 会话ID
+     * @param userId 用户ID
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(String type, String sessionId, Long userId) {
+        // 1. 先操作 Redis
+        redisUtils.delete(type, sessionId, userId);
+
+        // 2. 验证权限并从数据库中删除
+        AIChatSession session= getChatSessionBySessionId(sessionId);
+        
+        // 判断是否是该对话的拥有者操作，验证权限
+        if (session == null || !session.getUserId().equals(userId)) {
+            throw new RuntimeException("无权删除会话");
         }
 
-        // 从 Redis 中获取会话 ID 列表
-        String redisKey = AI_CHAT_PREFIX + userId + ":" + type;
-        log.debug("=== Redis key: {} ===", redisKey);
-        Set<String> sessionIds = redisTemplate.opsForSet().members(redisKey);
-        log.debug("=== 从 Redis 获取到 sessionIds: {} ===", sessionIds);
+        //然后对数据库进行操作
+        AIChatSession updateSession=AIChatSession.builder()
+                .sessionId(session.getSessionId())
+                .userId(session.getUserId())
+                .status("deleted")
+                .lastActiveTime(LocalDateTime.now())
+                .build();
 
-        if (sessionIds == null || sessionIds.isEmpty()) {
-            log.debug("=== Redis 中没有数据，返回空列表 ===");
-            return List.of();
+        int delete =chatSessionMapper.deleteById(updateSession);
+        if(delete ==0){
+            throw new RuntimeException("数据删除异常");
         }
 
-        List<String> sortedList = sessionIds.stream().sorted(String::compareTo).toList();
-        log.debug("=== 排序后的列表：{} ===", sortedList);
-        return sortedList;
+        log.info("删除会话成功：sessionId:{}",sessionId);
     }
 }

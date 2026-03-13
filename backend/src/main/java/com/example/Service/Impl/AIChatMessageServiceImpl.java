@@ -93,16 +93,11 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
      */
 
     @Override
-    public List<AIChatMessage> getMessagesByChatId(Long chatId,Long userId) {
-        // 先验证 chatId 是否属于 userId
-        AIChatSession session = chatSessionMapper.selectById(chatId);
-        if (session == null || !session.getUserId().equals(userId)) {
-            log.error("无权访问该会话，chatId: {}, userId: {}", chatId, userId);
-            return List.of();
-        }
-        return chatMessageMapper.selectBySessionId(chatId);
+   public List<AIChatMessage> getMessagesByChatId(Long chatId, Long userId) {
+        // ChatHistoryController 已经进行了权限校验，这里直接查询
+       return chatMessageMapper.selectBySessionId(chatId);
     }
-
+    
     /**
      * 根据用户 ID 查询用户历史消息
      * @param userId 用户 ID

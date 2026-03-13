@@ -16,4 +16,14 @@ public interface ChatHistoryRepository {
      * @return 会话ID列表
      */
     List<String> getChatIds(String type);
+
+    /**
+     * 删除会话
+     * @param type 业务类型，如：chat、service、pdf
+     * @param sessionId 会话ID
+     * @param userId 用户ID
+     *
+     **/
+
+    void delete(String type,String sessionId,Long userId);
 }
