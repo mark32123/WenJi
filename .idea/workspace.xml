@@ -41,38 +41,38 @@
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {}
 }</component>
-  <component name="GitHubPullRequestState"><![CDATA[{
-  "prStates": [
+  <component name="GitHubPullRequestState">{
+  &quot;prStates&quot;: [
     {
-      "id": {
-        "id": "PR_kwDOQ8rjss7Hk4oO",
-        "number": 4
+      &quot;id&quot;: {
+        &quot;id&quot;: &quot;PR_kwDOQ8rjss7Hk4oO&quot;,
+        &quot;number&quot;: 4
       },
-      "lastSeen": 1772723816365
+      &quot;lastSeen&quot;: 1772723816365
     },
     {
-      "id": {
-        "id": "PR_kwDOQ8rjss7EGpzF",
-        "number": 2
+      &quot;id&quot;: {
+        &quot;id&quot;: &quot;PR_kwDOQ8rjss7EGpzF&quot;,
+        &quot;number&quot;: 2
       },
-      "lastSeen": 1772723835545
+      &quot;lastSeen&quot;: 1772723835545
     },
     {
-      "id": {
-        "id": "PR_kwDOQ8rjss7EG-X9",
-        "number": 3
+      &quot;id&quot;: {
+        &quot;id&quot;: &quot;PR_kwDOQ8rjss7EG-X9&quot;,
+        &quot;number&quot;: 3
       },
-      "lastSeen": 1772723838980
+      &quot;lastSeen&quot;: 1772723838980
     },
     {
-      "id": {
-        "id": "PR_kwDOQ8rjss6-J0Mt",
-        "number": 1
+      &quot;id&quot;: {
+        &quot;id&quot;: &quot;PR_kwDOQ8rjss6-J0Mt&quot;,
+        &quot;number&quot;: 1
       },
-      "lastSeen": 1773295294929
+      &quot;lastSeen&quot;: 1773295294929
     }
   ]
-}]]></component>
+}</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;git@github.com:bingege-0729/WenJi.git&quot;,
@@ -329,7 +329,23 @@
       <option name="project" value="LOCAL" />
       <updated>1773125426944</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="文迹AI历史记录存入数据库和缓存业务代码改进">
+      <option name="closed" value="true" />
+      <created>1773367220756</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1773367220756</updated>
+    </task>
+    <task id="LOCAL-00010" summary="文迹AI历史记录存入数据库和缓存业务代码改进">
+      <option name="closed" value="true" />
+      <created>1773367367431</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1773367367431</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
