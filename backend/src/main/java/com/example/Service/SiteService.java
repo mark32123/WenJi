@@ -5,6 +5,7 @@ import com.example.Pojo.HeritageSite;
 import java.util.List;
 
 public interface SiteService {
+
     /**
      * 根据用户当前位置和城市筛选推荐景点
      * @param lng
@@ -12,4 +13,11 @@ public interface SiteService {
      * @return
      */
     List<HeritageSite> getNearbyHeritageSites(Double lng, Double lat);
+
+    /**
+     *
+     * @param id
+     * @return
+     */
+    HeritageSite getDetail(String id);
 }

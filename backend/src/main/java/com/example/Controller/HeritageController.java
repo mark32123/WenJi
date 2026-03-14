@@ -1,15 +1,13 @@
 package com.example.Controller;
 
 import com.example.Common.Result;
+import com.example.Pojo.HeritageSite;
 import com.example.Service.SiteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/map")
@@ -28,6 +26,20 @@ public class HeritageController {
     @GetMapping("/initial")
     public ResponseEntity<?> getNearby(@RequestParam Double lng, @RequestParam Double lat) {
         return ResponseEntity.ok(Result.success(siteService.getNearbyHeritageSites(lng, lat)));
+    }
+
+    /**
+     * 根据ID获取景点详细介绍
+     * * @param id 景点ID
+     * @return 包含介绍、历史、图片的详情对象
+     */
+    @GetMapping("/{id}")
+    public Result<HeritageSite> getSiteDetail(@PathVariable("id") String id) {
+        HeritageSite detail = siteService.getDetail(id);
+        if (detail != null) {
+            return Result.success(detail);
+        }
+        return Result.error("未找到该景点的详细信息");
     }
 
 }
