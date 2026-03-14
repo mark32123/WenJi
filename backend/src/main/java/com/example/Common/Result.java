@@ -56,12 +56,12 @@ public class Result<T> implements Serializable {
     }
 
     /**
-     * 失败返回结果
+     * 失败返回结果 (通用泛型版本)
      */
-    public static Result<Void> error(String msg){
-        Result<Void> result = new Result<>();
-        result.code=0;
-        result.msg=msg;
+    public static <T> Result<T> error(String msg) {
+        Result<T> result = new Result<>();
+        result.code = 0;
+        result.msg = msg;
         return result;
     }
 }
