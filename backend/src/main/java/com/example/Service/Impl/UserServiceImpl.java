@@ -244,7 +244,7 @@ public class UserServiceImpl implements UserService {
             userUpdateDTO.setLevel(getLevelByExp(0)); // 设置为默认等级"见习学徒"
         }
         // 调用mapper更新用户信息
-        userMapper.updateById(userId, userUpdateDTO);
+        userMapper.updateUserInfo(userId, userUpdateDTO);
     }
     /**
      * 删除用户

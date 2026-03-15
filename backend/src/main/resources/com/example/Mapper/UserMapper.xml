@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.Mapper.UserMapper">
-    <update id="updateById" parameterType="map">
+    <update id="updateUserInfo" parameterType="map">
         UPDATE user
         <set>
             <if test="userUpdateDTO.username != null">username = #{userUpdateDTO.username},</if>

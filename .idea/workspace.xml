@@ -4,37 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9bf8cb9c-57aa-4cda-b40a-0d686289e8b0" name="更改" comment="对所有业务进行MP的业务代码改造以及设置Swagger3在线接口文档">
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Utils/GetUserIdUtils.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Repository/impl/DatabaseChatHistoryRepository.java" afterDir="false" />
+    <list default="true" id="9bf8cb9c-57aa-4cda-b40a-0d686289e8b0" name="更改" comment="景点详细信息，包含介绍、历史、图片的详情对象">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/logs.md" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/logs.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Repository/ChatHistoryRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Repository/ChatHistoryRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Repository/InMemoryChatHistoryRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Repository/impl/InMemoryChatHistoryRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Repository/RedisChatHistory.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Repository/impl/RedisChatHistory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Repository/RedisChatMemory.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Repository/RedisChatMemory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/AI/ChatController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/AI/ChatController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/AI/ChatHistoryController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/AI/ChatHistoryController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/CaptchaController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/CaptchaController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Controller/UserController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Exception/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Exception/GlobalExceptionHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Interceptor/LoginInterceptor.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Interceptor/LoginInterceptor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Interceptor/RefreshTokenInterceptor.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Interceptor/RefreshTokenInterceptor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/Entity/AI/AIChatMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/Entity/AI/AIChatMessage.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/Entity/AI/AIChatSession.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/Entity/AI/AIChatSession.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/ImageRecognitionLog.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/ImageRecognitionLog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Service/Impl/UserServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Service/Impl/UserServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Utils/CaptchaUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Utils/CaptchaUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Utils/JwtUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Utils/JwtUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Utils/Md5Util.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Utils/Md5Util.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Utils/RedisConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Constants/RedisConstants.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Utils/RegexUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Utils/RegexUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Utils/ThreadLocalUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Utils/ThreadLocalUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Utils/VectorDistanceUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Common/Utils/VectorDistanceUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/api/user.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/user.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/utils/request.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/utils/request.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/HistoryQA.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/HistoryQA.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/vite.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application-test.yml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application-test.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,9 +30,18 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {}
-}</component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "history": [
+    {
+      "state": "OPEN",
+      "author": "mark32123"
+    }
+  ],
+  "lastFilter": {
+    "state": "OPEN",
+    "author": "mark32123"
+  }
+}]]></component>
   <component name="GitHubPullRequestState">{
   &quot;prStates&quot;: [
     {
@@ -85,12 +67,12 @@
     }
   ]
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;git@github.com:bingege-0729/WenJi.git&quot;,
-    &quot;accountId&quot;: &quot;4b727904-3fb6-435c-b242-5c74ba7d9a6c&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/bingege-0729/WenJi.git",
+    "accountId": "e52ff440-3b1c-4586-b34a-1da896a350c5"
   }
-}</component>
+}]]></component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
@@ -106,6 +88,9 @@
   &quot;associatedIndex&quot;: 6
 }</component>
   <component name="ProjectId" id="39kkYczgNs5I8vsssqqTxwfpG24" />
+  <component name="ProjectLevelVcsManager">
+    <OptionsSetting value="false" id="Update" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -127,7 +112,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;Spring Boot.WenjiApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.WenjiApplication.executor&quot;: &quot;Debug&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;D:/Back-end_Development/project/WenJi&quot;,
@@ -140,7 +125,7 @@
     &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.itangcent.idea.plugin.configurable.AccountConfigurable.apifox&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;ts.external.directory.path&quot;: &quot;D:\\IntelliJ IDEA 2025.2.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;,
     &quot;应用程序.WenjiApplication.executor&quot;: &quot;Run&quot;
@@ -253,7 +238,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.30387.90" />
+        <option value="bundled-jdk-30f59d01ecdd-26cb7f24e5b0-intellij.indexing.shared.core-IU-253.29346.138" />
       </set>
     </attachedChunks>
   </component>
@@ -317,7 +302,23 @@
       <option name="project" value="LOCAL" />
       <updated>1772098109022</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="添加初始化景点信息10个">
+      <option name="closed" value="true" />
+      <created>1773148006766</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1773148006766</updated>
+    </task>
+    <task id="LOCAL-00007" summary="景点详细信息，包含介绍、历史、图片的详情对象">
+      <option name="closed" value="true" />
+      <created>1773463730347</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1773463730347</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -351,20 +352,13 @@
     <MESSAGE value="对当前业务进行与redis缓存的结合开发" />
     <MESSAGE value="对User业务进行MP的业务代码改造" />
     <MESSAGE value="对所有业务进行MP的业务代码改造以及设置Swagger3在线接口文档" />
-    <option name="LAST_COMMIT_MESSAGE" value="对所有业务进行MP的业务代码改造以及设置Swagger3在线接口文档" />
+    <MESSAGE value="添加初始化景点信息10个" />
+    <MESSAGE value="景点详细信息，包含介绍、历史、图片的详情对象" />
+    <option name="LAST_COMMIT_MESSAGE" value="景点详细信息，包含介绍、历史、图片的详情对象" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <line-breakpoint enabled="true" type="java-method">
-          <url>file://$PROJECT_DIR$/backend/src/main/java/com/example/Interceptor/RefreshTokenInterceptor.java</url>
-          <line>30</line>
-          <properties class="com.example.Interceptor.RefreshTokenInterceptor" method="preHandle">
-            <option name="EMULATED" value="true" />
-            <option name="WATCH_EXIT" value="false" />
-          </properties>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/backend/src/main/java/com/example/Interceptor/LoginInterceptor.java</url>
           <line>44</line>
