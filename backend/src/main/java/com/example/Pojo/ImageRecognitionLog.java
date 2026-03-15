@@ -1,5 +1,6 @@
 package com.example.Pojo;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@TableName("image_recognition_log")
 public class ImageRecognitionLog {
     private Long recognitionId;
     private String sessionId;        // 关联会话
