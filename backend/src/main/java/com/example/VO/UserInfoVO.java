@@ -32,4 +32,5 @@ public class UserInfoVO {
     private String lastLoginTime;// 最后登录时间
     private Integer isRealNameVerified;// 是否实名认证 0:未认证 1:已认证
     private Integer experience;// 经验 默认0
+    private Integer points;// 积分 默认0
 }

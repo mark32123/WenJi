@@ -119,6 +119,7 @@ public class UserServiceImpl implements UserService {
         userInfo.put("username", user.getUsername());
         userInfo.put("phone", user.getPhone());
         userInfo.put("avatarUrl", user.getAvatarUrl());
+        userInfo.put("points", user.getPoints() == null ? "0" : user.getPoints().toString());
         return userInfo;
     }
 
@@ -191,7 +192,11 @@ public class UserServiceImpl implements UserService {
                 UserInfoVO userInfoVO = new UserInfoVO();
                 userInfoVO.setUsername((String) userInfo.get("username"));
                 userInfoVO.setPhone((String) userInfo.get("phone"));
-                userInfoVO.setAvatarUrl((String) userInfo.get("avatarUrl"));//这里写错了avatarUrl
+                userInfoVO.setAvatarUrl((String) userInfo.get("avatarUrl"));
+                Object pointsObj = userInfo.get("points");
+                if (pointsObj != null) {
+                    userInfoVO.setPoints(Integer.parseInt(pointsObj.toString()));
+                }
                 log.info("从redis中获取用户信息成功，用户ID：{}",userId);
                 return Result.success(userInfoVO);
             }

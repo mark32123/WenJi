@@ -6,8 +6,17 @@
   <component name="ChangeListManager">
     <list default="true" id="9bf8cb9c-57aa-4cda-b40a-0d686289e8b0" name="更改" comment="景点详细信息，包含介绍、历史、图片的详情对象">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Config/WebConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Config/WebConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/UserMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Mapper/UserMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Pojo/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/Service/Impl/UserServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/Service/Impl/UserServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/VO/UserInfoVO.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/VO/UserInfoVO.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application-test.yml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application-test.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/user.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/user.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/ProfileView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/ProfileView.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/UserInfo.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/UserInfo.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -30,18 +39,15 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "history": [
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;history&quot;: [
     {
-      "state": "OPEN",
-      "author": "mark32123"
+      &quot;state&quot;: &quot;OPEN&quot;,
+      &quot;author&quot;: &quot;mark32123&quot;
     }
   ],
-  "lastFilter": {
-    "state": "OPEN",
-    "author": "mark32123"
-  }
-}]]></component>
+  &quot;lastFilter&quot;: {}
+}</component>
   <component name="GitHubPullRequestState">{
   &quot;prStates&quot;: [
     {
@@ -67,12 +73,12 @@
     }
   ]
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/bingege-0729/WenJi.git",
-    "accountId": "e52ff440-3b1c-4586-b34a-1da896a350c5"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/bingege-0729/WenJi.git&quot;,
+    &quot;accountId&quot;: &quot;e52ff440-3b1c-4586-b34a-1da896a350c5&quot;
   }
-}]]></component>
+}</component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>

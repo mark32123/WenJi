@@ -29,6 +29,7 @@
         
         <div class="username">{{ username }}</div>
         <div class="level">{{ level }}</div>
+        <div class="points">💰 积分: {{ points }}</div>
       </div>
 
       <!-- 文艺权益 -->
@@ -45,15 +46,24 @@
         <a href="#" class="go-to-shop" @click.prevent="goToShop">→ 前往文迹商城兑换更多</a>
       </div>
 
-      <!-- 已点亮地点 -->
-      <div class="section-title">🔥 已点亮地点（{{ visitedPlaces.length }}/{{ totalPlaces }}）</div>
-      <div class="places">
+      <!-- 已点亮地点 (改为足迹博客展示) -->
+      <div class="section-title">🔥 我的足迹（{{ travelBlogs.length }} 次打卡）</div>
+      <div class="travel-blogs">
         <div 
-          v-for="(place, index) in visitedPlaces" 
+          v-for="(blog, index) in travelBlogs" 
           :key="index" 
-          class="place-tag"
+          class="blog-card"
         >
-          <span class="place-icon">·</span>{{ place }}
+          <div class="blog-header">
+            <span class="blog-site">📍 {{ blog.siteId }}</span>
+            <span class="blog-date">{{ formatDate(blog.createTime) }}</span>
+          </div>
+          <div class="blog-title">{{ blog.title }}</div>
+          <div class="blog-content">{{ blog.content }}</div>
+          <div v-if="blog.images" class="blog-images">
+             <!-- 解析 JSON 字符串显示图片 -->
+             <img v-for="(img, idx) in parseImages(blog.images)" :key="idx" :src="img" class="blog-img" />
+          </div>
         </div>
       </div>
 
@@ -63,9 +73,10 @@
         <div 
           v-for="(badge, index) in badges" 
           :key="index" 
-          class="badge"
+          class="badge-item"
         >
-          {{ badge.text }}
+          <div class="badge-icon">🏅</div>
+          <div class="badge-name">{{ badge.name }}</div>
         </div>
       </div>
     </div>
@@ -77,13 +88,16 @@ import { onActivated, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Layout from '@/components/Layout.vue'
 import { ElMessage } from 'element-plus';
-import { getCurrentUserInfo } from '@/api/user';
+import { getCurrentUserInfo, getUserBadges, getMyTravelBlogs } from '@/api/user';
 const router = useRouter();
 
 const username = ref('');
 const level = ref('');
+const points = ref(0);
 const userAvatar = ref(null);
 const selectedIconPaths = ref([]);
+const badges = ref([]);
+const travelBlogs = ref([]);
 
 // 默认头像路径 - 青瓷瓶
 const defaultAvatarPaths = [
@@ -97,69 +111,68 @@ const goToEditProfile = () => {
 
 const goToShop = () => {
   ElMessage.info('暂未开放');
-  // router.push('/shop');
 }
 
-const loadUserInfo = async () => { 
-  try{
-    const response = await getCurrentUserInfo();
-    console.log('获取用户信息响应:', response); // 调试信息
-    
-    if (response.code === 1) {
-      username.value = response.data.username || '...';
-      level.value = response.data.level || '普通用户';
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleDateString();
+};
+
+const parseImages = (jsonStr) => {
+  try {
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    return [];
+  }
+};
+
+const loadProfileData = async () => {
+  try {
+    const [userRes, badgeRes, blogRes] = await Promise.all([
+      getCurrentUserInfo(),
+      getUserBadges(),
+      getMyTravelBlogs()
+    ]);
+
+    if (userRes.code === 1) {
+      username.value = userRes.data.username || '...';
+      level.value = userRes.data.level || '普通用户';
+      points.value = userRes.data.points || 0;
       
       // 处理头像数据
-      if (response.data.avatarUrl) {
-        // 用户上传的头像
+      if (userRes.data.avatarUrl) {
         userAvatar.value = {
           type: 'image',
-          url: response.data.avatarUrl
+          url: userRes.data.avatarUrl
         };
-        console.log('设置了图片头像:', response.data.avatarUrl);
-      } else if (response.data.iconName) {
-        // 用户选择的内置图标
+      } else if (userRes.data.iconName) {
         userAvatar.value = {
           type: 'builtin',
-          iconName: response.data.iconName
+          iconName: userRes.data.iconName
         };
-        
-        // 根据图标名称设置路径
-        setSelectedIconPaths(response.data.iconName);
-        console.log('设置了内置头像:', response.data.iconName);
+        setSelectedIconPaths(userRes.data.iconName);
       } else {
-        // 使用默认头像
         userAvatar.value = {
           type: 'builtin',
           iconName: 'default'
         };
         selectedIconPaths.value = defaultAvatarPaths;
-        console.log('设置了默认头像');
       }
-    } else {
-      username.value = '...';
-      level.value = '普通用户';
-      // 设置默认头像
-      userAvatar.value = {
-        type: 'builtin',
-        iconName: 'default'
-      };
-      selectedIconPaths.value = defaultAvatarPaths;
-      console.log('响应错误，设置了默认头像');
     }
+    if (badgeRes.code === 1) badges.value = badgeRes.data;
+    if (blogRes.code === 1) travelBlogs.value = blogRes.data;
   } catch (error) {
-    console.error('获取用户信息失败:', error);
-    username.value = '...';
-    level.value = '普通用户';
-    // 设置默认头像
-    userAvatar.value = {
-      type: 'builtin',
-      iconName: 'default'
-    };
-    selectedIconPaths.value = defaultAvatarPaths;
-    console.log('捕获错误，设置了默认头像');
+    console.error('加载个人主页数据失败:', error);
   }
-}
+};
+
+onMounted(() => {
+  loadProfileData();
+});
+
+onActivated(() => {
+  loadProfileData();
+});
 
 // 根据图标名称设置路径
 const setSelectedIconPaths = (iconName) => {
