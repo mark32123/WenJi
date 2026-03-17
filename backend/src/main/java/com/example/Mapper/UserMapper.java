@@ -33,7 +33,7 @@ public interface UserMapper extends BaseMapper<User> {
      * @param userId 用户ID
      * @return UserInfoVO
      **/
-    @Select("select username,real_name,gender,phone,birthday,avatar_url,level,experience,points,is_real_name_verified,last_login_time,create_time,update_time from user where user_id=#{userId}")
+    @Select("select username,real_name,gender,phone,birthday,avatar_url,location,level,experience,points,is_real_name_verified,last_login_time,create_time,update_time from user where user_id=#{userId}")
     UserInfoVO getByUserId(@Param("userId") Long userId);
 
     /**

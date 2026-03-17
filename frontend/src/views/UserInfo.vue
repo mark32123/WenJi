@@ -205,7 +205,16 @@ const loadUserInfo = async () => {
     if (response.code === 1) {
       // 使用后端返回的用户名和位置信息
       elegantName.value = response.data.username || '林砚之'
-      location.value = response.data.location || response.data.address || '景德镇'
+      
+      // 检查后端是否返回了位置信息
+      if (response.data.location) {
+        location.value = response.data.location;
+      } else if (response.data.address) {
+        location.value = response.data.address;
+      } else {
+        // 如果后端没有位置信息，则自动尝试获取当前物理位置
+        await getLocation();
+      }
       
       // 加载头像信息
       if (response.data.avatarUrl) {
@@ -269,18 +278,27 @@ async function reverseGeocode(lat, lng) {
 // 获取当前位置
 async function getLocation() {
   try {
-    ElMessage.info('正在获取位置…')
-    // 调用地图API获取实际位置
+    ElMessage.info('正在尝试获取当前位置...')
+    // 调用地图API获取实际位置 (使用 HTML5 Geolocation)
     const locationData = await mapApi.getUserLocation();
     
-    // 使用反向地理编码获取城市名称
-    const city = await reverseGeocode(locationData.lat, locationData.lng);
-    location.value = city;
-    
-    ElMessage.success('位置获取成功')
+    // 如果获取到的是非默认的有效经纬度
+    if (locationData && locationData.lat !== 35.8617) {
+      // 使用反向地理编码获取城市名称
+      const city = await reverseGeocode(locationData.lat, locationData.lng);
+      location.value = city;
+      ElMessage.success(`位置已自动识别为: ${city}`)
+    } else {
+      // 如果定位失败或返回默认值，则默认设置为景德镇
+      if (!location.value) {
+        location.value = '景德镇'
+      }
+    }
   } catch (error) {
-    console.error('获取位置失败:', error)
-    ElMessage.error('获取位置失败')
+    console.error('获取地理位置失败:', error)
+    if (!location.value) {
+      location.value = '景德镇'
+    }
   }
 }
 

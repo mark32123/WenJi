@@ -22,10 +22,11 @@ public class User {
     @NotBlank
     private String username;// 用户名
     private String password;// 密码
-    private String gender;// 性别
     private String phone;// 手机号
     private String realName;// 真实姓名
     private String avatarUrl;// 头像
+    private String location;// 常驻之地
+    private Integer gender;// 性别 1:男 0:女 2:保密
     private String level;// 等级 见习学徒
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;// 创建时间

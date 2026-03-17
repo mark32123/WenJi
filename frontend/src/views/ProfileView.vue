@@ -216,34 +216,16 @@ const setSelectedIconPaths = (iconName) => {
 
 const vouchers = ref([
   {
-    name: '龙井春茗话费券',
-    description: '可抵扣10元通信费用 · 有效期至2026.12'
+    name: '唐三彩陶马周边',
+    description: '景德镇博物馆文创中心领取'
   },
   {
-    name: '青瓷守护礼包',
-    description: '含AR体验券 ×2 + 专属徽章'
+    name: '古窑遗址体验券',
+    description: '凭码至古窑民俗博览区核销'
   }
 ]);
 
-const visitedPlaces = ref([
-  '杭州',
-  '苏州',
-  '景德镇',
-  '泉州',
-  '西安'
-]);
-
 const totalPlaces = ref(36);
-
-const badges = ref([
-  { text: '茶艺\n传人' },
-  { text: '绣坊\n学徒' },
-  { text: '瓷匠' },
-  { text: '古建\n守护者' }
-]);
-onMounted(() => {
-  loadUserInfo();
-});
 </script>
 
 <style scoped>
@@ -390,19 +372,87 @@ onMounted(() => {
   gap: 12px;
 }
 
-.badge {
+.badge-item {
   width: 68px;
-  height: 68px;
-  background: white;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-icon {
+  width: 50px;
+  height: 50px;
+  background: #FAF8F5;
   border: 1px solid #C4B8A8;
-  border-radius: 50%; /* 圆形瓦当 */
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: #A68A64;
+  font-size: 24px;
+}
+
+.badge-name {
+  font-size: 11px;
+  color: #8C7B6B;
   text-align: center;
-  line-height: 1.3;
+}
+
+/* —————— 足迹博客 —————— */
+.travel-blogs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.blog-card {
+  background: #FAF8F5;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #EFEAE5;
+}
+
+.blog-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.blog-site {
+  color: #A68A64;
+  font-weight: 600;
+}
+
+.blog-date {
+  color: #999;
+}
+
+.blog-title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 6px;
+  color: #3A3530;
+}
+
+.blog-content {
+  font-size: 13px;
+  color: #5A524A;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.blog-images {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.blog-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
 }
 </style>

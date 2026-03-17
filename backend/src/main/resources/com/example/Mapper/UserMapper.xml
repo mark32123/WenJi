@@ -12,8 +12,8 @@
             <if test="userUpdateDTO.email != null">email = #{userUpdateDTO.email},</if>
             <if test="userUpdateDTO.birthday != null">birthday = #{userUpdateDTO.birthday},</if>
             <if test="userUpdateDTO.avatarUrl != null">avatar_url = #{userUpdateDTO.avatarUrl},</if>
+            <if test="userUpdateDTO.location != null">location = #{userUpdateDTO.location},</if>
             <if test="userUpdateDTO.password != null">password = #{userUpdateDTO.password},</if>
-            <if test="userUpdateDTO.level != null">level = #{userUpdateDTO.level},</if>
             update_time = NOW()
         </set>
         WHERE user_id = #{userId}
