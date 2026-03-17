@@ -19,7 +19,7 @@ public class AIChatSession {
     @TableId(type = IdType.INPUT)
     private String sessionId;    // 会话 ID (VARCHAR类型,与数据库表结构匹配)
 
-    private Integer userId;       // 关联 User.userId (INT类型,与数据库表结构匹配)
+    private Long userId;       // 关联 User.userId (INT类型,与数据库表结构匹配)
     private String currentLocation;  // 用户当前位置(经纬度)
     private String sessionContext;   // 会话上下文(JSON格式)
     private Integer messageCount;    // 消息数量
