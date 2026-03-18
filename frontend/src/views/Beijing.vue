@@ -11,10 +11,10 @@ let touchEndX = 0
 
 // 引导页图片数组
 const guideImages = [
-  '/images/beijing1.jpg',
-  '/images/beijing2.jpg',
-  '/images/beijing3.jpg',
-  '/images/beijing4.jpg'
+  'https://img.freepik.com/free-photo/forbidden-city-beijing-china_335224-172.jpg',
+  'https://img.freepik.com/free-photo/great-wall-china_335224-118.jpg',
+  'https://img.freepik.com/free-photo/beijing-hutong_335224-179.jpg',
+  'https://img.freepik.com/free-photo/summer-palace-beijing_335224-181.jpg'
 ]
 
 // 获取当前页面的标题
@@ -37,6 +37,17 @@ const getSlideDescription = (index) => {
     '立即开始您的文化探索之旅'
   ]
   return descriptions[index] || ''
+}
+
+// 获取当前页面的地址信息
+const getLocationInfo = (index) => {
+  const locations = [
+    '北京·故宫',
+    '北京·长城',
+    '北京·胡同',
+    '北京·颐和园'
+  ]
+  return locations[index] || '北京'
 }
 
 // 切换到指定页面
@@ -142,6 +153,15 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="guide-wrapper">
+    <!-- 跳过按钮 -->
+    <button class="skip-btn" @click="startExperience">跳过</button>
+
+    <!-- 书法动画文字 -->
+    <div class="calligraphy-container">
+      <div class="calligraphy-word">文</div>
+      <div class="calligraphy-word">迹</div>
+    </div>
+
     <!-- 轮播图区域 -->
     <div 
       class="guide-swiper"
@@ -163,6 +183,11 @@ onBeforeUnmount(() => {
         <div class="slide-content">
           <h2 class="slide-title">{{ getSlideTitle(index) }}</h2>
           <p class="slide-description">{{ getSlideDescription(index) }}</p>
+        </div>
+        
+        <!-- 地址信息 -->
+        <div class="location-info">
+          {{ getLocationInfo(index) }}
         </div>
       </div>
     </div>
@@ -208,6 +233,79 @@ onBeforeUnmount(() => {
   overflow: hidden;
   position: relative;
   box-sizing: border-box;
+}
+
+/* 跳过按钮 */
+.skip-btn {
+  position: absolute;
+  top: 30px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.skip-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+/* 书法动画文字容器 */
+.calligraphy-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* 书法文字 */
+.calligraphy-word {
+  font-size: 80px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Ma Shan Zheng', cursive, 'Noto Serif SC', serif;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: translateY(20px);
+  animation: calligraphyAnimation 2s ease-out forwards;
+}
+
+/* 第二个字延迟动画 */
+.calligraphy-word:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+/* 书法动画 */
+@keyframes calligraphyAnimation {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+  }
+  50% {
+    opacity: 0.7;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    stroke-dashoffset: 0;
+  }
 }
 
 .guide-swiper {
@@ -301,5 +399,21 @@ onBeforeUnmount(() => {
 
 .indicator.active {
   background-color: #ffffff;
+}
+
+/* 地址信息 */
+.location-info {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  font-weight: 500;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 6px 12px;
+  border-radius: 16px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 </style>

@@ -1,9 +1,9 @@
 package com.example.Controller;
 
 
-import com.example.Pojo.Entity.AI.AIChatMessage;
 import com.example.Repository.ChatHistoryRepository;
 import com.example.Service.AIChatMessageService;
+import com.example.Pojo.Entity.AI.AIChatMessage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.model.Media;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.MimeType;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
@@ -27,110 +27,14 @@ import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvis
 @RestController
 @Slf4j
 @RequestMapping("/ai")
-@Tag(name = "AI聊天管理", description = "AI聊天相关接口，支持文本和多模态对话")
+@Tag(name = "AI 聊天管理", description = "AI 聊天相关接口，支持文本和多模态对话")
 public class ChatController {
 
     private final ChatClient chatClient;
     
     private final ChatHistoryRepository chatHistoryRepository;
-        
-    private final AIChatMessageService aiChatMessageService;
-
-
-    // 修改为返回JSON格式的同步API
-    @Operation(summary = "同步AI聊天", description = "同步方式与AI对话，支持文本和多模态输入")
-    @PostMapping("/chat-sync")
-    public ResponseEntity<Map<String, Object>> chatSync(
-            @Parameter(description = "用户输入的提示词") @RequestParam("prompt") String prompt,
-            @Parameter(description = "会话ID") @RequestParam("chatId") String chatId,
-            @Parameter(description = "上传的文件列表，可选") @RequestParam(value = "files", required = false) List<MultipartFile> files) {
-        try {
-            Long userId = getCurrentUserId();
-            // 1.保存会话id和当前用户Id
-            log.info("保存会话id和当前用户id：{},{}", userId,chatId);
-            chatHistoryRepository.save("chat", chatId,userId);
-            
-            String response;
-            // 2.请求模型
-            if (files == null || files.isEmpty()) {
-                // 没有附件，纯文本聊天
-                response = textChatSync(prompt, chatId);
-            } else {
-                // 有附件，多模态聊天
-                response = multiModalChatSync(prompt, chatId, files);
-            }
-
-            // 构建响应对象
-            Map<String, Object> responseData = new HashMap<>();
-            responseData.put("success", true);
-            responseData.put("data", response);
-            responseData.put("chatId", chatId);
-            
-            return ResponseEntity.ok(responseData);
-        } catch (Exception e) {
-            log.error("同步聊天失败", e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("error", e.getMessage());
-            
-            return ResponseEntity.badRequest().body(errorResponse);
-        }
-    }
-
-    /**
-     * 保存对话到 MySQL（双写模式）
-     */
-   private void saveMessagesToDatabase(String chatId, Long userId, String userPrompt, String aiResponse) {
-        try {
-            // 提取数字类型的 chatId
-           Long numericChatId = extractNumericChatId(chatId);
-           
-            // 保存用户消息
-           AIChatMessage userMessage = AIChatMessage.builder()
-                   .chatId(numericChatId)
-                    .role("USER")
-                    .content(userPrompt)
-                    .messageType("TEXT")
-                    .createTime(LocalDateTime.now())
-                    .build();
-            aiChatMessageService.saveMessage(userMessage);
-            
-            // 保存 AI 回复
-           AIChatMessage aiMessage = AIChatMessage.builder()
-                   .chatId(numericChatId)
-                    .role("ASSISTANT")
-                    .content(aiResponse)
-                    .messageType("TEXT")
-                    .createTime(LocalDateTime.now())
-                    .build();
-            aiChatMessageService.saveMessage(aiMessage);
-            
-            log.info("保存对话到 MySQL 成功，chatId: {}", chatId);
-        } catch (Exception e) {
-            log.error("保存对话到 MySQL 失败，chatId: {}", chatId, e);
-            // 不抛出异常，避免影响用户体验
-        }
-    }
-
-    /**
-     * 从 sessionId 中提取数字部分
-     * 格式：chat_timestamp_random → 提取 timestamp
-     */
-  private Long extractNumericChatId(String sessionId) {
-        try {
-            if (sessionId.startsWith("chat_")) {
-                String[] parts = sessionId.substring(5).split("_");
-                if (parts.length > 0) {
-                    return Long.parseLong(parts[0]);
-                }
-            }
-            // 如果已经是纯数字，直接转换
-            return Long.parseLong(sessionId);
-        } catch (Exception e) {
-            log.error("解析 chatId 失败：{}", sessionId, e);
-            return 0L;
-        }
-    }
+    
+    private final AIChatMessageService chatMessageService;
 
     // 同步版本的文本聊天
     private String textChatSync(String prompt, String chatId) {
@@ -143,7 +47,6 @@ public class ChatController {
 
     // 同步版本的多模态聊天
     private String multiModalChatSync(String prompt, String chatId, List<MultipartFile> files) {
-        // 1.解析多媒体
         List<Media> medias = files.stream()
                 .map(file -> new Media(
                                 MimeType.valueOf(Objects.requireNonNull(file.getContentType())),
@@ -151,7 +54,7 @@ public class ChatController {
                         )
                 )
                 .toList();
-        // 2.请求模型
+        
         return chatClient.prompt()
                 .user(p -> p.text(prompt).media(medias.toArray(Media[]::new)))
                 .advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId))
@@ -159,30 +62,40 @@ public class ChatController {
                 .content();
     }
 
-    // 保持原有的流式API，如果需要实时响应功能
-    @Operation(summary = "流式AI聊天", description = "流式方式与AI对话，支持实时响应和多模态输入")
-    @PostMapping(value = "/chat", produces = "text/plain;charset=utf-8")
-    public Flux<String> chat(
-            @Parameter(description = "用户输入的提示词") @RequestParam("prompt") String prompt,
-            @Parameter(description = "会话ID") @RequestParam("chatId") String chatId,
-            @Parameter(description = "上传的文件列表，可选") @RequestParam(value = "files", required = false) List<MultipartFile> files) {
-        // 1.保存会话id和用户Id
+    // 流式版本的文本聊天
+    private Flux<String> textChat(String prompt, String chatId) {
+        StringBuilder fullResponse = new StringBuilder();
         Long userId = getCurrentUserId();
-        log.info("多模态保存会话id和当前用户id：{},{}", userId,chatId);
-        chatHistoryRepository.save("chat", chatId,userId);
-        // 2.请求模型
-        if (files == null || files.isEmpty()) {
-            // 没有附件，纯文本聊天
-            return textChat(prompt, chatId);
-        } else {
-            // 有附件，多模态聊天
-            return multiModalChat(prompt, chatId, files);
-        }
-
+        
+        return chatClient.prompt()
+                .user(prompt)
+                .advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId))
+                .stream()
+                .content()
+                .doOnNext(chunk -> fullResponse.append(chunk))
+                .doOnComplete(() -> {
+                    // 保存AI回复
+                    if (userId != null && !fullResponse.isEmpty()) {
+                        try {
+                            AIChatMessage aiMessage = AIChatMessage.builder()
+                                    .chatId(chatId)
+                                    .sessionId(chatId)
+                                    .role("assistant")
+                                    .content(fullResponse.toString())
+                                    .messageType("text")
+                                    .createTime(LocalDateTime.now())
+                                    .build();
+                            chatMessageService.saveMessage(aiMessage);
+                            log.debug("保存AI回复成功，chatId: {}", chatId);
+                        } catch (Exception e) {
+                            log.error("保存AI回复失败", e);
+                        }
+                    }
+                });
     }
-    //这是纯文本聊天的实现
+    
+    // 流式版本的多模态聊天
     private Flux<String> multiModalChat(String prompt, String chatId, List<MultipartFile> files) {
-        // 1.解析多媒体
         List<Media> medias = files.stream()
                 .map(file -> new Media(
                                 MimeType.valueOf(Objects.requireNonNull(file.getContentType())),
@@ -190,22 +103,97 @@ public class ChatController {
                         )
                 )
                 .toList();
-        // 2.请求模型
+        
+        StringBuilder fullResponse = new StringBuilder();
+        Long userId = getCurrentUserId();
+        
         return chatClient.prompt()
                 .user(p -> p.text(prompt).media(medias.toArray(Media[]::new)))
                 .advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId))
                 .stream()
-                .content();
+                .content()
+                .doOnNext(chunk -> fullResponse.append(chunk))
+                .doOnComplete(() -> {
+                    // 保存AI回复
+                    if (userId != null && !fullResponse.isEmpty()) {
+                        try {
+                            AIChatMessage aiMessage = AIChatMessage.builder()
+                                    .chatId(chatId)
+                                    .sessionId(chatId)
+                                    .role("assistant")
+                                    .content(fullResponse.toString())
+                                    .messageType("multi-modal")
+                                    .createTime(LocalDateTime.now())
+                                    .build();
+                            chatMessageService.saveMessage(aiMessage);
+                            log.debug("保存AI回复成功，chatId: {}", chatId);
+                        } catch (Exception e) {
+                            log.error("保存AI回复失败", e);
+                        }
+                    }
+                });
     }
 
-    private Flux<String> textChat(String prompt, String chatId) {
-        return chatClient.prompt()
-                .user(prompt)
-                .advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId))
-                .stream()
-                .content();
+    /**
+     * AI 聊天接口（支持文本和多模态）
+     * @param prompt 用户问题
+     * @param chatId 会话 ID
+     * @param images 图片文件列表（可选，用于多模态对话）
+     * @return AI 回复的文本内容（流式响应）
+     */
+    @Operation(summary = "AI 聊天", description = "支持文本和多模态对话，返回流式响应")
+    @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> chat(
+            @Parameter(description = "用户问题") @RequestParam("prompt") String prompt,
+            @Parameter(description = "会话 ID") @RequestParam(value = "chatId", required = false) String chatId,
+            @Parameter(description = "图片文件列表") @RequestParam(value = "images", required = false) List<MultipartFile> images) {
+        
+        log.info("收到聊天请求，prompt: {}, chatId: {}, images: {}", 
+                prompt, chatId, images != null ? images.size() : 0);
+        
+        // 如果没有传入 chatId，生成一个新的
+        if (chatId == null || chatId.isEmpty()) {
+            chatId = "chat_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8);
+            log.info("生成新会话 ID: {}", chatId);
+        }
+        
+        // 保存会话记录到数据库
+        try {
+            Long userId = getCurrentUserId();
+            if (userId != null) {
+                chatHistoryRepository.save("chat", chatId, userId);
+                log.debug("保存会话记录成功，userId: {}, chatId: {}", userId, chatId);
+                
+                // 保存用户消息
+                AIChatMessage userMessage = AIChatMessage.builder()
+                        .chatId(chatId)
+                        .sessionId(chatId)
+                        .role("user")
+                        .content(prompt)
+                        .messageType(images != null && !images.isEmpty() ? "multi-modal" : "text")
+                        .createTime(LocalDateTime.now())
+                        .build();
+                log.info("准备保存用户消息，chatId: {}, content: {}", chatId, prompt);
+                boolean saved = chatMessageService.saveMessage(userMessage);
+                if (saved) {
+                    log.info("保存用户消息成功，chatId: {}", chatId);
+                } else {
+                    log.warn("保存用户消息失败，chatId: {}", chatId);
+                }
+            } else {
+                log.debug("用户未登录，跳过消息存储");
+            }
+        } catch (Exception e) {
+            log.error("保存会话记录或用户消息失败: {}", e.getMessage());
+        }
+        
+        // 根据是否有图片选择对应的聊天方法
+        if (images != null && !images.isEmpty()) {
+            log.info("使用多模态聊天模式");
+            return multiModalChat(prompt, chatId, images);
+        } else {
+            log.info("使用文本聊天模式");
+            return textChat(prompt, chatId);
+        }
     }
-
-
-
 }

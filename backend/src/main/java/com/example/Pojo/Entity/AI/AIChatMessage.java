@@ -27,7 +27,9 @@ public class AIChatMessage {
     @TableId(type = IdType.AUTO)
     private Long messageId;        // 主键 ID
     
-    private Long chatId;           // 会话 ID（关联 ai_chat_session.chat_id）
+    private String chatId;           // 会话 ID（关联 ai_chat_session.session_id）
+    
+    private String sessionId;        // 会话 ID（与 chat_id 相同）
     
     private String role;           // 角色：user/assistant/system
     

@@ -272,7 +272,7 @@ CREATE TABLE user_preference (
 ## 将实体类验证信息是否合法直接集成到RegexUtils中
 ## 拦截器修改不拦截获取验证码信息
 ## 在yaml文件中设置redis等基础信息
-![img.png](img.png)
+![img.png](../backend/src/img.png)
 ---
 2-22-2026
 # 总结
@@ -505,3 +505,7 @@ VALUES
 -- 10. 敦煌：莫高窟 (壁画艺术)
 ('10', 'GS-MGK-010', '敦煌莫高窟', 1, '世界级', '620000', '620900', '甘肃省酒泉市敦煌市', 40.03541, 94.80215, ST_GeomFromText('POINT(94.80215 40.03541)'), 'https://example.com/images/mgk.jpg', '举世闻名的佛教艺术胜地。', '始建于前秦建元二年。', '精美的壁画和彩塑艺术，反映了千年的社会变迁。', 1, 1, 99.0, 4.9);
 ```
+
+# 3-16-2026
+
+## 在DatabaseChatHistoryRepository类中的删除方法修改成直接删除数据库里的对话

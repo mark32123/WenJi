@@ -19,7 +19,7 @@ public interface AIChatMessageMapper extends BaseMapper<AIChatMessage> {
      * @param sessionId 会话 ID
      * @return 消息列表
      */
-    List<AIChatMessage> selectBySessionId(@Param("sessionId") Long sessionId);
+    List<AIChatMessage> selectBySessionId(@Param("sessionId") String sessionId);
 
     /**
      * 批量插入消息（用于异步归档）

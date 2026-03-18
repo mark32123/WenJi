@@ -42,10 +42,9 @@ public class ChatHistoryController {
     @Operation(summary = "获取聊天 ID 列表", description = "根据类型获取所有聊天会话 ID")
     @GetMapping("/{type}/list")
     public Result<List<String>> getChatIds(@Parameter(description = "聊天类型") @PathVariable("type") String type){
-        log.info("=== 收到获取聊天历史列表请求，type: {} ===", type);
+        log.debug("收到获取聊天历史列表请求，type: {}", type);
         List<String> chatIds = chatHistoryRepository.getChatIds(type);
-        log.info("获取询问历史 id{}",chatIds);
-        log.info("返回数据：{}", chatIds);
+        log.debug("获取到 {} 个会话 ID", chatIds.size());
         return Result.success(chatIds);
     }
 
@@ -54,34 +53,38 @@ public class ChatHistoryController {
     public Result<List<ChatSessionVO>> getChatHistory(
             @Parameter(description = "聊天类型") @PathVariable("type") String type, 
             @Parameter(description = "会话 ID") @PathVariable("chatId") String chatId){
-        log.info("=== 收到获取聊天历史详情请求，type: {}, chatId: {} ===", type, chatId);
+        log.debug("收到获取聊天历史详情请求，type: {}, chatId: {}", type, chatId);
         
         // 1. 获取当前登录用户 ID
         Long userId = getCurrentUserId();
         if (userId == null) {
-            return Result.error("未登录", null);
+            log.warn("用户未登录");
+            return Result.error("请先登录后查看历史记录", null);
         }
         
         // 2. 验证 chatId 是否属于当前用户
         AIChatSession session = chatSessionMapper.selectById(chatId);
-        if (session == null || !session.getUserId().equals(userId)) {
-            log.error("无权访问该会话，chatId: {}, userId: {}", chatId, userId);
+        if (session == null) {
+            log.warn("会话不存在，chatId: {}", chatId);
+            return Result.error("会话不存在，请检查会话ID", null);
+        }
+        if (!session.getUserId().equals(userId)) {
+            log.warn("无权访问该会话，chatId: {}, 当前用户：{}, 会话所属用户：{}", chatId, userId, session.getUserId());
             return Result.error("无权访问该会话", null);
         }
         
         // 3. 从 MySQL 中获取消息（双写模式）
-        // 从 sessionId 中提取数字部分作为 chatId（格式：chat_timestamp_random）
-       Long numericChatId = extractNumericChatId(chatId);
-    List<AIChatMessage> messages = aiChatMessageService.getMessagesByChatId(numericChatId, userId);
+        // 直接使用传入的 chatId，因为我们已经将 AIChatMessage 的 chatId 改为 String 类型
+        List<AIChatMessage> messages = aiChatMessageService.getMessagesByChatId(chatId, userId);
         if(messages==null){
            messages = List.of();
         }
-        log.info("从 MySQL 获取到 {} 条消息", messages.size());
+        log.debug("从 MySQL 获取到 {} 条消息", messages.size());
     
         List<MessageVO> messageVOs = messages.stream().map(MessageVO::new).toList();
         ChatSessionVO sessionVO = new ChatSessionVO(chatId, LocalDateTime.now(), messageVOs);
         List<ChatSessionVO> sessionList = List.of(sessionVO);
-        log.info("返回会话详情：{}", sessionList);
+        log.debug("返回会话详情，chatId: {}, 消息数量: {}", chatId, messageVOs.size());
         return Result.success(sessionList);
     }
 

@@ -29,7 +29,7 @@ public interface AIChatMessageService {
      * @param chatId 会话 ID
      * @return 消息列表
      */
-    List<AIChatMessage> getMessagesByChatId(Long chatId,Long userId);
+    List<AIChatMessage> getMessagesByChatId(String chatId,Long userId);
 
     /**
      * 查询用户的历史消息（用于向量分析和推荐）

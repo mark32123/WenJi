@@ -1,9 +1,11 @@
 package com.example.Service.Impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.Mapper.AIChatMessageMapper;
 import com.example.Mapper.AIChatSessionMapper;
 import com.example.Pojo.Entity.AI.AIChatMessage;
 import com.example.Pojo.Entity.AI.AIChatSession;
+import com.example.Repository.RedisChatMemory;
 import com.example.Service.AIChatMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * AI 聊天消息服务实现类
@@ -30,13 +29,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @RequiredArgsConstructor
 public class AIChatMessageServiceImpl implements AIChatMessageService {
-    @Autowired
+    
     private final AIChatMessageMapper chatMessageMapper;
-    @Autowired
+    
     private final AIChatSessionMapper chatSessionMapper;
-
-    // 内存缓存，用于临时存储待归档的消息
-    private final Map<Long, List<AIChatMessage>> pendingMessages = new ConcurrentHashMap<>();
+    @Autowired
+    private final RedisChatMemory redisChatMemory;
 
     /**
      * 保存消息
@@ -47,15 +45,21 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
     @Transactional(rollbackFor = Exception.class)
     public boolean saveMessage(AIChatMessage message) {
         try {
+            log.info("开始保存消息，chatId: {}, role: {}, content: {}", 
+                message.getChatId(), message.getRole(), message.getContent());
+            
             int result = chatMessageMapper.insert(message);
-            log.info("保存消息成功，messageId: {}, chatId: {}", 
-                message.getMessageId(), message.getChatId());
+            log.info("保存消息成功，影响行数: {}, messageId: {}, chatId: {}", 
+                result, message.getMessageId(), message.getChatId());
+            
             return result > 0;
         } catch (Exception e) {
-            log.error("保存消息失败", e);
+            log.error("保存消息失败，chatId: {}, role: {}", 
+                message.getChatId(), message.getRole(), e);
             return false;
         }
     }
+    
     /**
      * 批量保存消息
      * @param messages 消息列表
@@ -69,16 +73,7 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
         }
         
         try {
-            // 分批插入，每批 500 条
-            int batchSize = 500;
-            int totalInserted = 0;
-            
-            for (int i = 0; i < messages.size(); i += batchSize) {
-                int end = Math.min(i + batchSize, messages.size());
-                List<AIChatMessage> batch = messages.subList(i, end);
-                totalInserted += chatMessageMapper.batchInsert(batch);
-            }
-            
+            int totalInserted = chatMessageMapper.batchInsert(messages);
             log.info("批量保存消息成功，总数：{}", totalInserted);
             return totalInserted;
         } catch (Exception e) {
@@ -86,16 +81,28 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
             throw new RuntimeException("批量保存失败", e);
         }
     }
+    
     /**
      * 根据会话 ID 查询消息列表
      * @param chatId 会话 ID
      * @return 消息列表
      */
-
     @Override
-   public List<AIChatMessage> getMessagesByChatId(Long chatId, Long userId) {
-        // ChatHistoryController 已经进行了权限校验，这里直接查询
-       return chatMessageMapper.selectBySessionId(chatId);
+   public List<AIChatMessage> getMessagesByChatId(String chatId, Long userId) {
+        log.info("查询消息，chatId: {}, userId: {}", chatId, userId);
+        //检验用户权限，普通用户只有获取用户历史消息权限，管理员可以获取所有用户的历史消息
+        
+        try {
+            List<AIChatMessage> result = chatMessageMapper.selectBySessionId(chatId);
+            log.info("查询结果：{} 条消息", result != null ? result.size() : 0);
+            if (result != null && !result.isEmpty()) {
+                log.info("第一条消息 ID: {}, role: {}", result.get(0).getMessageId(), result.get(0).getRole());
+            }
+            return result != null ? result : List.of();
+        } catch (Exception e) {
+            log.error("查询消息失败，chatId: {}", chatId, e);
+            return List.of();
+        }
     }
     
     /**
@@ -113,7 +120,6 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
             return List.of();
         }
     }
-
 
     /**
      * 更新消息的向量嵌入
@@ -141,7 +147,6 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
             return false;
         }
     }
-
 
     /**
      * 批量更新消息的关键词和主题
@@ -172,7 +177,6 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
         }
     }
 
-
     /**
      * 批量更新消息的的情感分析结果
      * @param messageId 消息 ID
@@ -201,75 +205,106 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
     }
 
     /**
-     * 将消息添加到待归档队列
-     * @param chatId 会话 ID
-     * @param message 消息对象
-     */
-    public void addToPendingQueue(Long chatId, AIChatMessage message) {
-        pendingMessages.computeIfAbsent(chatId, k -> new ArrayList<>()).add(message);
-        log.debug("消息加入待归档队列，chatId: {}", chatId);
-    }
-
-    /**
-     * 定时任务：每 5 分钟归档一次待处理的消息
+     * 定时任务：每 5 分钟归档一次活跃会话的消息
      * 从 Redis 的 ChatMemory 中读取消息，批量保存到数据库
      */
-    @Scheduled(cron = "0 */5 * * * ?") // 每 5 分钟执行一次
+    @Scheduled(cron = "0 */5 * * * ?")
     public void scheduledArchiveMessages() {
         log.info("开始执行定时任务：归档聊天消息");
-        
+
         try {
-            // TODO: 这里需要实现从 ChatMemory 中读取所有活跃会话的消息
-            // 示例代码逻辑：
-            // 1. 获取所有活跃的会话 ID
-            // 2. 从 ChatMemory 中读取每个会话的消息
-            // 3. 转换为 AIChatMessage 对象
-            // 4. 批量插入到数据库
-            
-            // 这里是伪代码示例
-            /*
-            List<Long> activeChatIds = getActiveChatIds();
-            for (Long chatId : activeChatIds) {
-                List<Message> messages = chatMemory.get(String.valueOf(chatId), 100);
-                List<AIChatMessage> chatMessages = messages.stream()
-                    .map(this::convertToAIChatMessage)
-                    .toList();
-                
-                if (!chatMessages.isEmpty()) {
-                    batchSaveMessages(chatMessages);
-                    // 归档成功后，可以选择性地从 Redis 中清理旧数据
-                }
+            // 1. 获取所有活跃的会话（从 ai_chat_session 表查询最近 5 分钟活跃的）
+            List<String> activeSessionIds = getActiveSessionIds();
+            log.info("发现 {} 个活跃会话", activeSessionIds.size());
+
+            if (activeSessionIds.isEmpty()) {
+                log.info("没有活跃会话，跳过本次归档");
+                return;
             }
-            */
-            
-            log.info("定时归档任务执行完成");
+
+            // 2. 遍历每个会话，从 Redis 读取消息并归档
+            int totalArchived = 0;
+            for (String sessionId : activeSessionIds) {
+                int archived = archiveSessionMessages(sessionId);
+                totalArchived += archived;
+            }
+
+            log.info("定时归档任务执行完成，共归档 {} 条消息", totalArchived);
         } catch (Exception e) {
             log.error("定时归档任务执行失败", e);
+        }
+    }
+    
+    /**
+     * 归档单个会话的消息
+     *
+     * @param sessionId 会话 ID
+     * @return 批量保存的条数
+     */
+    private int archiveSessionMessages(String sessionId) {
+        try {
+            // 从 Redis 读取该会话的所有消息
+            List<Message> messages = redisChatMemory.get(sessionId, 100);
+            
+            if (messages.isEmpty()) {
+                log.debug("会话没有新消息，sessionId: {}", sessionId);
+                return 0;
+            }
+            
+            // 转换为 AIChatMessage 实体
+            List<AIChatMessage> chatMessages = messages.stream()
+                    .map(msg -> convertToAIChatMessage(msg, sessionId))
+                    .toList();
+            
+            // 批量保存到数据库
+            if (!chatMessages.isEmpty()) {
+                int saved = batchSaveMessages(chatMessages);
+                log.info("归档会话消息成功，sessionId: {}, 保存 {} 条", sessionId, saved);
+                //归档成功后，可以选择性地从 Redis 中清理旧数据（可选）
+                redisChatMemory.clear(sessionId);
+                return saved;
+            }
+        } catch (Exception e) {
+            log.error("归档会话消息失败，sessionId: {}", sessionId, e);
+        }
+        return 0;
+    }
+    
+    /**
+     * 获取活跃的会话 ID 列表
+     */
+    private List<String> getActiveSessionIds() {
+        // 查询最近 5 分钟内活跃的会话
+        try {
+            LocalDateTime fiveMinutesAgo = LocalDateTime.now().minusMinutes(5);
+
+            QueryWrapper<AIChatSession> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("status", "active")
+                    .ge("last_active_time", fiveMinutesAgo)
+                    .orderByDesc("last_active_time");
+
+            List<AIChatSession> sessions = chatSessionMapper.selectList(queryWrapper);
+
+            //返回 sessionId 列表
+            return sessions.stream()
+                    .map(AIChatSession::getSessionId)
+                    .toList();
+        } catch (Exception e) {
+            log.error("查询活跃会话失败",e);
+            return List.of();
         }
     }
 
     /**
      * 转换 Spring AI Message 到 AIChatMessage
      */
-    /*
-    private AIChatMessage convertToAIChatMessage(Message message, Long chatId) {
+    private AIChatMessage convertToAIChatMessage(Message message, String sessionId) {
         return AIChatMessage.builder()
-                .chatId(chatId)
+                .chatId(sessionId)
                 .role(message.getMessageType().name().toLowerCase())
                 .content(message.getText())
                 .messageType("text")
                 .createTime(LocalDateTime.now())
                 .build();
     }
-    */
-
-    /**
-     * 获取活跃的会话 ID 列表（从 Redis 或数据库）
-     */
-    /*
-    private List<Long> getActiveChatIds() {
-        // TODO: 实现从数据库查询最近活跃的会话
-        return List.of();
-    }
-    */
 }
