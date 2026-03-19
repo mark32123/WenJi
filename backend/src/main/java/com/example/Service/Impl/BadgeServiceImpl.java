@@ -1,6 +1,6 @@
 package com.example.Service.Impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+
 import com.example.Mapper.BadgeMapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.example.Mapper.TravelBlogMapper;

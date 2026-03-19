@@ -1,6 +1,11 @@
 package com.example.Common.Utils;
 
+import static com.example.Common.Constants.RedisConstants.USER_LOGIN_KEY;
+
 import java.util.Map;
+
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -37,5 +42,25 @@ public class UersUtils {
         }
 
         return token != null ? token.trim() : null;
+    }
+
+    
+    
+    /**
+     * 
+     * @param request
+     * @return
+       */
+    public static String getLoginKey() {
+        ServletRequestAttributes requestAttributes = 
+        (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = requestAttributes.getRequest();
+        String authorization = request.getHeader("Authorization");
+
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            String token = authorization.substring(7).trim();
+            return USER_LOGIN_KEY + token;
+        }
+        return null;
     }
 }

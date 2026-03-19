@@ -48,8 +48,10 @@ public class DatabaseChatHistoryRepository implements ChatHistoryRepository {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void save(String type, String sessionId,Long userId) {
+        //最大重试次数和重试次数间间隔
         int maxRetries = 3;
         int retryCount = 0;
+        //是否成功保存
         boolean success = false;
         
         while (!success && retryCount < maxRetries) {
@@ -117,7 +119,7 @@ public class DatabaseChatHistoryRepository implements ChatHistoryRepository {
                     .currentLocation(existingSession.getCurrentLocation())
                     .sessionContext(existingSession.getSessionContext())
                     .build();
-
+            //更新数据库
             chatSessionMapper.updateById(updateSession);
             log.debug("更新会话活跃时间，sessionId: {}", sessionId);
         }
@@ -129,6 +131,7 @@ public class DatabaseChatHistoryRepository implements ChatHistoryRepository {
      * @return 会话信息
      */
     private AIChatSession getChatSessionBySessionId(String sessionId) {
+        // 查询数据库中是否存在该会话
         QueryWrapper<AIChatSession> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("session_id", sessionId);
         return chatSessionMapper.selectOne(queryWrapper);

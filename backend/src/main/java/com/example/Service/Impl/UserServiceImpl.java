@@ -24,16 +24,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import static com.example.Common.Constants.RedisConstants.*;
 import static com.example.Common.Result.error;
 import static com.example.Common.Utils.JwtUtils.generateToken;
+import static com.example.Common.Utils.UersUtils.getLoginKey;
+
 
 @Service
 @Transactional
@@ -46,13 +46,10 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
-    @Autowired
-    private ObjectMapper objectMapper;
 
 
     /**
      * 用户注册/登录
-     *
      * @param loginFormDTO 登录/注册信息
      * @return 登录结果
      */
@@ -114,6 +111,12 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+
+    /**
+     * 将用户信息转换为字符串类型的Map，用于存储到Redis中
+     * @param user 用户信息
+     * @return 包含用户信息的字符串类型的Map
+     */
     @Nonnull
     private static Map<String, Object> getStringObjectMap(User user) {
         Map<String,Object>userInfo = new HashMap<>();
@@ -131,6 +134,8 @@ public class UserServiceImpl implements UserService {
 
     /**
      * 验证注册信息
+     * @param loginFormDTO 注册信息
+     * @return 注册结果
      **/
     private Result<Void> handlerRegister(@RequestBody LoginFormDTO loginFormDTO){
         // 2.2 用户不存在，执行注册
@@ -191,7 +196,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public Result<UserInfoVO> getUserProfile(Long userId, String token) {
         try {
-            String key=USER_LOGIN_KEY+token;
+            // 从Redis中获取用户信息
+            String key  = USER_LOGIN_KEY + userId;
             Map<Object,Object> userInfo = stringRedisTemplate.opsForHash().entries(key);
             if(!userInfo.isEmpty()){
                 //Redis中有缓存，构建基础用户信息
@@ -224,7 +230,7 @@ public class UserServiceImpl implements UserService {
      * @param userUpdateDTO 修改信息
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void updateById(Long userId, UserUpdateDTO userUpdateDTO) {
         // 处理密码加密等逻辑
         if (userUpdateDTO.getNewPassword() != null && !userUpdateDTO.getNewPassword().isEmpty()) {
@@ -240,11 +246,10 @@ public class UserServiceImpl implements UserService {
         // 清理并更新 Redis 缓存：获取当前请求头中的 token
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
-            HttpServletRequest request = attributes.getRequest();
-            String authorization = request.getHeader("Authorization");
-            if (authorization != null && authorization.startsWith("Bearer ")) {
-                String token = authorization.substring(7).trim();
-                String key = USER_LOGIN_KEY + token;
+            String key=getLoginKey();
+            if(key==null){
+                throw new RuntimeException("获取登录缓存key失败");
+            }
                 
                 // 查询最新用户信息
                 User updatedUser = userMapper.selectById(userId);
@@ -268,7 +273,6 @@ public class UserServiceImpl implements UserService {
                 }
             }
         }
-    }
     /**
      * 删除用户
      * @param userId 用户ID

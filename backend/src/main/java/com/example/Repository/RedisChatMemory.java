@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.example.Common.Constants.RedisConstants.CHAT_HISTORY_EXPIRE;
-import static com.example.Common.Constants.RedisConstants.CHAT_HISTORY_PREFIX;
+import static com.example.Common.Constants.RedisConstants.AI_CHAT_HISTORY_EXPIRE;
+import static com.example.Common.Constants.RedisConstants.AI_CHAT_HISTORY_PREFIX;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -41,12 +41,13 @@ public class RedisChatMemory implements ChatMemory {
         if (messages == null || messages.isEmpty()) {
             return;
         }
-        String key=CHAT_HISTORY_PREFIX+conversationId;
+        String key=AI_CHAT_HISTORY_PREFIX+conversationId;
 
         try {
-            //进行序列化TODO：搞明白这是什么
+            //进行序列化 TODO：搞明白这是什么
             List<String> jsonList = messages.stream()
-                    .map(Msg::new)
+                    .map(Msg::new) //将消息转换为Msg对象
+                    //将Msg对象转换为JSON字符串
                     .map(msg -> {
                         try {
                             return objectMapper.writeValueAsString(msg);
@@ -56,11 +57,11 @@ public class RedisChatMemory implements ChatMemory {
                     })
                     .toList();
 
-            //redis
+            //rightPushAll将jsonList根据key添加到Redis列表的末尾
             redisTemplate.opsForList().rightPushAll(key, jsonList);
 
             // 设置过期时间（每次添加都刷新 TTL）
-            redisTemplate.expire(key, CHAT_HISTORY_EXPIRE, TimeUnit.MINUTES);
+            redisTemplate.expire(key, AI_CHAT_HISTORY_EXPIRE, TimeUnit.MINUTES);
 
             log.debug("添加消息到 Redis，conversationId: {}, 消息数：{}", conversationId, messages.size());
         } catch (Exception e) {
@@ -76,13 +77,13 @@ public class RedisChatMemory implements ChatMemory {
      */
     @Override
     public List<Message> get(String conversationId, int lastN) {
-        String key = CHAT_HISTORY_PREFIX + conversationId;
+        String key = AI_CHAT_HISTORY_PREFIX + conversationId;
 
         try {
             //在redis缓存中查找关于这个key的前N条信息
             List<String> jsonList = redisTemplate.opsForList().range(key, -lastN, -1);
 
-            //为空，Redis中没有找到信息
+            //为空，Redis中没有找到信息，返回空列表
             if (jsonList == null || jsonList.isEmpty()) {
                 log.debug("Redis 中未找到会话记忆，conversationId: {}", conversationId);
                 return Collections.emptyList();
@@ -98,11 +99,11 @@ public class RedisChatMemory implements ChatMemory {
                             return null;
                         }
                     })
-                    .filter(Objects::nonNull)
+                    .filter(Objects::nonNull)//过滤掉null值
                     .toList();
 
             // 刷新 TTL
-            redisTemplate.expire(key, CHAT_HISTORY_EXPIRE, TimeUnit.MINUTES);
+            redisTemplate.expire(key, AI_CHAT_HISTORY_EXPIRE, TimeUnit.MINUTES);
 
             log.debug("从 Redis 获取会话记忆，conversationId: {}, 消息数：{}", conversationId, messages.size());
             return messages;
@@ -119,6 +120,6 @@ public class RedisChatMemory implements ChatMemory {
      */
     @Override
     public void clear(String conversationId) {
-        redisTemplate.delete(CHAT_HISTORY_PREFIX + conversationId);
+        redisTemplate.delete(AI_CHAT_HISTORY_PREFIX + conversationId);
     }
 }

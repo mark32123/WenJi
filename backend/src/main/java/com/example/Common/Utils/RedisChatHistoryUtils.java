@@ -3,6 +3,9 @@ package com.example.Common.Utils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+import static com.example.Common.Constants.RedisConstants.AI_CHAT_HISTORY_EXPIRE;
+import static com.example.Common.Constants.RedisConstants.AI_CHAT_HISTORY_PREFIX;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -16,8 +19,6 @@ public class RedisChatHistoryUtils {
 
     private final StringRedisTemplate redisTemplate;
 
-    private static final String CHAT_HISTORY_KEY_PREFIX = "chat:history:";
-    private static final long EXPIRE_TIME = 7 * 24 * 60 * 60; // 7天过期
 
     /**
      * 保存会话到 Redis
@@ -28,11 +29,11 @@ public class RedisChatHistoryUtils {
         }
 
         // 按用户维度存储，使用有序集合，分数为当前时间戳
-        String key = CHAT_HISTORY_KEY_PREFIX + type + ":" + userId;
+        String key = AI_CHAT_HISTORY_PREFIX + type + ":" + userId;
         redisTemplate.opsForZSet().add(key, sessionId, System.currentTimeMillis());
 
         // 设置过期时间
-        redisTemplate.expire(key, EXPIRE_TIME, java.util.concurrent.TimeUnit.SECONDS);
+        redisTemplate.expire(key, AI_CHAT_HISTORY_EXPIRE, java.util.concurrent.TimeUnit.SECONDS);
     }
 
     /**
@@ -43,7 +44,7 @@ public class RedisChatHistoryUtils {
             return Collections.emptyList();
         }
 
-        String key = CHAT_HISTORY_KEY_PREFIX + type + ":" + userId;
+        String key = AI_CHAT_HISTORY_PREFIX + type + ":" + userId;
         // 按分数倒序获取（最新的会话在前）
         Set<String> chatIds = redisTemplate.opsForZSet().reverseRange(key, 0, -1);
         if (chatIds == null || chatIds.isEmpty()) {
@@ -60,7 +61,7 @@ public class RedisChatHistoryUtils {
             return;
         }
 
-        String key = CHAT_HISTORY_KEY_PREFIX + type + ":" + userId;
+        String key = AI_CHAT_HISTORY_PREFIX + type + ":" + userId;
         redisTemplate.opsForZSet().remove(key, sessionId);
     }
 }

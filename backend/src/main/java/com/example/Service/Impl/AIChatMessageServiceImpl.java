@@ -159,12 +159,13 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
     @Transactional(rollbackFor = Exception.class)
     public boolean updateKeywordsAndTopic(Long messageId, String keywords, Integer topicCategory) {
         try {
+            //查询消息是否存在
             AIChatMessage message = chatMessageMapper.selectById(messageId);
             if (message == null) {
                 log.warn("消息不存在，messageId: {}", messageId);
                 return false;
             }
-
+            //更新关键词和主题
             message.setKeywords(keywords);
             message.setTopicCategory(topicCategory);
             int result = chatMessageMapper.updateById(message);
@@ -192,7 +193,7 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
                 log.warn("消息不存在，messageId: {}", messageId);
                 return false;
             }
-
+            //更新情感分析结果
             message.setSentiment(sentiment);
             int result = chatMessageMapper.updateById(message);
 
@@ -260,7 +261,7 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
             if (!chatMessages.isEmpty()) {
                 int saved = batchSaveMessages(chatMessages);
                 log.info("归档会话消息成功，sessionId: {}, 保存 {} 条", sessionId, saved);
-                //归档成功后，可以选择性地从 Redis 中清理旧数据（可选）
+                //归档成功后，可以直接从 Redis 中清理旧数据
                 redisChatMemory.clear(sessionId);
                 return saved;
             }
@@ -296,7 +297,10 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
     }
 
     /**
-     * 转换 Spring AI Message 到 AIChatMessage
+     * 转换 Spring AI Message 到 AIChatMessage（对象转化）
+     * @param message Spring AI Message
+     * @param sessionId 会话 ID
+     * @return AIChatMessage
      */
     private AIChatMessage convertToAIChatMessage(Message message, String sessionId) {
         return AIChatMessage.builder()
