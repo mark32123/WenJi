@@ -31,9 +31,9 @@ import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvis
 public class ChatController {
 
     private final ChatClient chatClient;
-    
+
     private final ChatHistoryRepository chatHistoryRepository;
-    
+
     private final AIChatMessageService chatMessageService;
 
 
@@ -42,7 +42,7 @@ public class ChatController {
         // 初始化空字符串构建器
         StringBuilder fullResponse = new StringBuilder();
         Long userId = getCurrentUserId();
-        
+
         return chatClient.prompt()
                 .user(prompt)
                 .advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId))
@@ -58,7 +58,6 @@ public class ChatController {
                     if (userId != null && !fullResponse.isEmpty()) {
                         try {
                             AIChatMessage aiMessage = AIChatMessage.builder()
-                                    .chatId(chatId)
                                     .sessionId(chatId)
                                     .role("assistant")
                                     .content(fullResponse.toString())
@@ -66,14 +65,14 @@ public class ChatController {
                                     .createTime(LocalDateTime.now())
                                     .build();
                             chatMessageService.saveMessage(aiMessage);
-                            log.debug("保存AI回复成功，chatId: {}", chatId);
+                            log.debug("保存AI回复成功，sessionId: {}", chatId);
                         } catch (Exception e) {
                             log.error("保存AI回复失败", e);
                         }
                     }
                 });
     }
-    
+
     // 流式版本的多模态聊天
     private Flux<String> multiModalChat(String prompt, String chatId, List<MultipartFile> files) {
         // Media是Spring AI的媒体类，用于表示图片、视频等多模态内容，通过创建列表装载多模态内容
@@ -87,7 +86,7 @@ public class ChatController {
         //为了迎合流式输出的需求，这里使用StringBuilder来构建完整的响应内容
         StringBuilder fullResponse = new StringBuilder();
         Long userId = getCurrentUserId();
-        
+
         //创建一个prompt，将用户问题 prompt 和多模态内容 medias 添加到prompt中
         // 告诉AI这是一个多模态对话，需要同时考虑文本和多模态内容
         return chatClient.prompt()
@@ -103,7 +102,6 @@ public class ChatController {
                     if (userId != null && !fullResponse.isEmpty()) {
                         try {
                             AIChatMessage aiMessage = AIChatMessage.builder()
-                                    .chatId(chatId)
                                     .sessionId(chatId)
                                     .role("assistant")
                                     .content(fullResponse.toString())
@@ -112,7 +110,7 @@ public class ChatController {
                                     .build();
                             //调用AI对话保存数据库的方法
                             chatMessageService.saveMessage(aiMessage);
-                            log.debug("保存AI回复成功，chatId: {}", chatId);
+                            log.debug("保存AI回复成功，sessionId: {}", chatId);
                         } catch (Exception e) {
                             log.error("保存AI回复失败", e);
                         }
@@ -134,38 +132,37 @@ public class ChatController {
             @Parameter(description = "用户问题") @RequestParam("prompt") String prompt,
             @Parameter(description = "会话 ID") @RequestParam(value = "chatId", required = false) String chatId,
             @Parameter(description = "图片文件列表") @RequestParam(value = "images", required = false) List<MultipartFile> images) {
-        
-        log.info("收到聊天请求，prompt: {}, chatId: {}, images: {}", 
+
+        log.info("收到聊天请求，prompt: {}, chatId: {}, images: {}",
                 prompt, chatId, images != null ? images.size() : 0);
-        
+
         // 如果没有传入 chatId，生成一个新的
         if (chatId == null || chatId.isEmpty()) {
             chatId = "chat_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8);
             log.info("生成新会话 ID: {}", chatId);
         }
-        
+
         // 保存会话记录到数据库
         try {
             Long userId = getCurrentUserId();
             if (userId != null) {
                 chatHistoryRepository.save("chat", chatId, userId);
-                log.debug("保存会话记录成功，userId: {}, chatId: {}", userId, chatId);
-                
+                log.debug("保存会话记录成功，userId: {}, sessionId: {}", userId, chatId);
+
                 // 保存用户消息
                 AIChatMessage userMessage = AIChatMessage.builder()
-                        .chatId(chatId)
                         .sessionId(chatId)
                         .role("user")
                         .content(prompt)
                         .messageType(images != null && !images.isEmpty() ? "multi-modal" : "text")
                         .createTime(LocalDateTime.now())
                         .build();
-                log.info("准备保存用户消息，chatId: {}, content: {}", chatId, prompt);
+                log.info("准备保存用户消息，sessionId: {}, content: {}", chatId, prompt);
                 boolean saved = chatMessageService.saveMessage(userMessage);
                 if (saved) {
-                    log.info("保存用户消息成功，chatId: {}", chatId);
+                    log.info("保存用户消息成功，sessionId: {}", chatId);
                 } else {
-                    log.warn("保存用户消息失败，chatId: {}", chatId);
+                    log.warn("保存用户消息失败，sessionId: {}", chatId);
                 }
             } else {
                 log.debug("用户未登录，跳过消息存储");
@@ -173,7 +170,7 @@ public class ChatController {
         } catch (Exception e) {
             log.error("保存会话记录或用户消息失败: {}", e.getMessage());
         }
-        
+
         // 根据是否有图片选择对应的聊天方法
         if (images != null && !images.isEmpty()) {
             log.info("使用多模态聊天模式");

@@ -13,7 +13,7 @@ import java.util.Set;
  */
 @RequiredArgsConstructor
 public class RedisChatHistoryUtils {
-    
+
     private final StringRedisTemplate redisTemplate;
 
     private static final String CHAT_HISTORY_KEY_PREFIX = "chat:history:";
@@ -22,15 +22,15 @@ public class RedisChatHistoryUtils {
     /**
      * 保存会话到 Redis
      */
-   public void save(String type, String chatId, Long userId) {
+    public void save(String type, String sessionId, Long userId) {
         if (userId == null) {
             return;
         }
-        
+
         // 按用户维度存储，使用有序集合，分数为当前时间戳
         String key = CHAT_HISTORY_KEY_PREFIX + type + ":" + userId;
-        redisTemplate.opsForZSet().add(key, chatId, System.currentTimeMillis());
-        
+        redisTemplate.opsForZSet().add(key, sessionId, System.currentTimeMillis());
+
         // 设置过期时间
         redisTemplate.expire(key, EXPIRE_TIME, java.util.concurrent.TimeUnit.SECONDS);
     }
@@ -38,11 +38,11 @@ public class RedisChatHistoryUtils {
     /**
      * 从 Redis 获取会话 ID 列表
      */
-   public List<String> getChatIds(String type, Long userId) {
+    public List<String> getChatIds(String type, Long userId) {
         if (userId == null) {
             return Collections.emptyList();
         }
-        
+
         String key = CHAT_HISTORY_KEY_PREFIX + type + ":" + userId;
         // 按分数倒序获取（最新的会话在前）
         Set<String> chatIds = redisTemplate.opsForZSet().reverseRange(key, 0, -1);
@@ -55,11 +55,11 @@ public class RedisChatHistoryUtils {
     /**
      * 从 Redis 删除会话
      */
-   public void delete(String type, String sessionId, Long userId) {
+    public void delete(String type, String sessionId, Long userId) {
         if (userId == null) {
             return;
         }
-        
+
         String key = CHAT_HISTORY_KEY_PREFIX + type + ":" + userId;
         redisTemplate.opsForZSet().remove(key, sessionId);
     }

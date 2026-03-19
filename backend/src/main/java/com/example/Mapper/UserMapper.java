@@ -11,14 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Mapper
 public interface UserMapper extends BaseMapper<User> {
-    /*
-      根据用户名查询用户
-      @param username 用户名
-     * @return 用户信息
-     */
-//    @Select("select * from user where username=#{username}")
-//    User selectByUserName(@NotBlank(message = "用户名不能为空") String username);
-
     /**
      * 注册
      * @param username 用户名
@@ -49,24 +41,6 @@ public interface UserMapper extends BaseMapper<User> {
      * @param userId 用户ID
      * @param userUpdateDTO 修改的用户信息
      */
-
     void updateUserInfo(@Param("userId") Long userId, @Param("userUpdateDTO") @RequestBody @Validated UserUpdateDTO userUpdateDTO);
 
-
-    /*
-      根据用户id查询用户是否存在
-      @param userId 用户id
-     * @return 用户信息
-     */
-//    @Select("SELECT * FROM user WHERE user_id = #{userId}")
-//    User selectByUserId(Long userId);
-
-
-
-    /*
-      删除用户
-      @param userId 用户ID
-     */
-//    @Delete("DELETE FROM user WHERE user_id = #{userId}")
-//    void removeUserById(Long userId);
 }

@@ -29,9 +29,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AIChatMessageServiceImpl implements AIChatMessageService {
-    
+
     private final AIChatMessageMapper chatMessageMapper;
-    
+
     private final AIChatSessionMapper chatSessionMapper;
     @Autowired
     private final RedisChatMemory redisChatMemory;
@@ -45,21 +45,21 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
     @Transactional(rollbackFor = Exception.class)
     public boolean saveMessage(AIChatMessage message) {
         try {
-            log.info("开始保存消息，chatId: {}, role: {}, content: {}", 
-                message.getChatId(), message.getRole(), message.getContent());
-            
+            log.info("开始保存消息，sessionId: {}, role: {}, content: {}",
+                message.getSessionId(), message.getRole(), message.getContent());
+
             int result = chatMessageMapper.insert(message);
-            log.info("保存消息成功，影响行数: {}, messageId: {}, chatId: {}", 
-                result, message.getMessageId(), message.getChatId());
-            
+            log.info("保存消息成功，影响行数: {}, messageId: {}, sessionId: {}",
+                result, message.getMessageId(), message.getSessionId());
+
             return result > 0;
         } catch (Exception e) {
-            log.error("保存消息失败，chatId: {}, role: {}", 
-                message.getChatId(), message.getRole(), e);
+            log.error("保存消息失败，sessionId: {}, role: {}",
+                message.getSessionId(), message.getRole(), e);
             return false;
         }
     }
-    
+
     /**
      * 批量保存消息
      * @param messages 消息列表
@@ -71,7 +71,7 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
         if (messages == null || messages.isEmpty()) {
             return 0;
         }
-        
+
         try {
             int totalInserted = chatMessageMapper.batchInsert(messages);
             log.info("批量保存消息成功，总数：{}", totalInserted);
@@ -81,30 +81,30 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
             throw new RuntimeException("批量保存失败", e);
         }
     }
-    
+
     /**
      * 根据会话 ID 查询消息列表
-     * @param chatId 会话 ID
+     * @param sessionId 会话 ID
+     * @param userId 用户 ID
      * @return 消息列表
      */
     @Override
-   public List<AIChatMessage> getMessagesByChatId(String chatId, Long userId) {
-        log.info("查询消息，chatId: {}, userId: {}", chatId, userId);
-        //检验用户权限，普通用户只有获取用户历史消息权限，管理员可以获取所有用户的历史消息
-        
+    public List<AIChatMessage> getMessagesBySessionId(String sessionId, Long userId) {
+        log.info("查询消息，sessionId: {}, userId: {}", sessionId, userId);
+
         try {
-            List<AIChatMessage> result = chatMessageMapper.selectBySessionId(chatId);
+            List<AIChatMessage> result = chatMessageMapper.selectBySessionId(sessionId);
             log.info("查询结果：{} 条消息", result != null ? result.size() : 0);
             if (result != null && !result.isEmpty()) {
                 log.info("第一条消息 ID: {}, role: {}", result.get(0).getMessageId(), result.get(0).getRole());
             }
             return result != null ? result : List.of();
         } catch (Exception e) {
-            log.error("查询消息失败，chatId: {}", chatId, e);
+            log.error("查询消息失败，sessionId: {}", sessionId, e);
             return List.of();
         }
     }
-    
+
     /**
      * 根据用户 ID 查询用户历史消息
      * @param userId 用户 ID
@@ -136,10 +136,10 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
                 log.warn("消息不存在，messageId: {}", messageId);
                 return false;
             }
-            
+
             message.setEmbedding(embedding);
             int result = chatMessageMapper.updateById(message);
-            
+
             log.info("更新向量嵌入成功，messageId: {}", messageId);
             return result > 0;
         } catch (Exception e) {
@@ -164,11 +164,11 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
                 log.warn("消息不存在，messageId: {}", messageId);
                 return false;
             }
-            
+
             message.setKeywords(keywords);
             message.setTopicCategory(topicCategory);
             int result = chatMessageMapper.updateById(message);
-            
+
             log.info("更新关键词和主题成功，messageId: {}", messageId);
             return result > 0;
         } catch (Exception e) {
@@ -192,10 +192,10 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
                 log.warn("消息不存在，messageId: {}", messageId);
                 return false;
             }
-            
+
             message.setSentiment(sentiment);
             int result = chatMessageMapper.updateById(message);
-            
+
             log.info("更新情感分析成功，messageId: {}", messageId);
             return result > 0;
         } catch (Exception e) {
@@ -234,7 +234,7 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
             log.error("定时归档任务执行失败", e);
         }
     }
-    
+
     /**
      * 归档单个会话的消息
      *
@@ -245,17 +245,17 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
         try {
             // 从 Redis 读取该会话的所有消息
             List<Message> messages = redisChatMemory.get(sessionId, 100);
-            
+
             if (messages.isEmpty()) {
                 log.debug("会话没有新消息，sessionId: {}", sessionId);
                 return 0;
             }
-            
+
             // 转换为 AIChatMessage 实体
             List<AIChatMessage> chatMessages = messages.stream()
                     .map(msg -> convertToAIChatMessage(msg, sessionId))
                     .toList();
-            
+
             // 批量保存到数据库
             if (!chatMessages.isEmpty()) {
                 int saved = batchSaveMessages(chatMessages);
@@ -269,7 +269,7 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
         }
         return 0;
     }
-    
+
     /**
      * 获取活跃的会话 ID 列表
      */
@@ -300,7 +300,7 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
      */
     private AIChatMessage convertToAIChatMessage(Message message, String sessionId) {
         return AIChatMessage.builder()
-                .chatId(sessionId)
+                .sessionId(sessionId)
                 .role(message.getMessageType().name().toLowerCase())
                 .content(message.getText())
                 .messageType("text")

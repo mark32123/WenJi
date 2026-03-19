@@ -26,31 +26,29 @@ import java.time.LocalDateTime;
 public class AIChatMessage {
     @TableId(type = IdType.AUTO)
     private Long messageId;        // 主键 ID
-    
-    private String chatId;           // 会话 ID（关联 ai_chat_session.session_id）
-    
-    private String sessionId;        // 会话 ID（与 chat_id 相同）
-    
+
+    private String sessionId;        // 会话 ID
+
     private String role;           // 角色：user/assistant/system
-    
+
     private String content;        // 消息内容（重要：用于向量化）
-    
+
     private String messageType;    // 消息类型：text/image/multi-modal
-    
+
     private String toolCalls;      // 工具调用记录（JSON 格式）
-    
+
     private String metadata;       // 元数据（图片 URL、坐标、情感分析结果等 JSON）
-    
+
     private LocalDateTime createTime; // 创建时间
-    
+
     /**
      * 以下字段用于 AI 分析和推荐
      */
     private String embedding;      // 向量嵌入（JSON 数组，如 [0.1, 0.2, ...]）
-    
+
     private String keywords;       // 提取的关键词（JSON 数组，用于主题分析）
-    
+
     private String sentiment;      // 情感分析：positive/negative/neutral
-    
+
     private Integer topicCategory; // 主题分类：1-历史文化 2-非遗技艺 3-旅游攻略 4-其他
 }

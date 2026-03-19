@@ -54,70 +54,66 @@ public class ChatHistoryController {
     /**
      * 获取会话详情
      * @param type 会话类型
-     * @param chatId 会话 ID
+     * @param sessionId 会话 ID
      * @return 会话详情
      */
     @Operation(summary = "获取聊天历史详情", description = "根据类型和会话 ID 获取完整的聊天历史记录")
-    @GetMapping("/{type}/{chatId}")
-    //为了与上面的方法进行区分，先执行上面的方法，再执行下面的方法
+    @GetMapping("/{type}/{sessionId}")
     public Result<List<ChatSessionVO>> getChatHistory(
-            @Parameter(description = "聊天类型") @PathVariable("type") String type, 
-            @Parameter(description = "会话 ID") @PathVariable("chatId") String chatId){
-        log.debug("收到获取聊天历史详情请求，type: {}, chatId: {}", type, chatId);
-        
+            @Parameter(description = "聊天类型") @PathVariable("type") String type,
+            @Parameter(description = "会话 ID") @PathVariable("sessionId") String sessionId){
+        log.debug("收到获取聊天历史详情请求，type: {}, sessionId: {}", type, sessionId);
+
         // 1. 获取当前登录用户 ID
         Long userId = getCurrentUserId();
         if (userId == null) {
             log.warn("用户未登录");
             return Result.error("请先登录后查看历史记录", null);
         }
-        
-        // 2. 验证 chatId 是否属于当前用户
-        AIChatSession session = chatSessionMapper.selectById(chatId);
+
+        // 2. 验证 sessionId 是否属于当前用户
+        AIChatSession session = chatSessionMapper.selectById(sessionId);
         // 2.1 检查会话是否存在
-        // 如果会话不存在，返回错误
         if (session == null) {
-            log.warn("会话不存在，chatId: {}", chatId);
+            log.warn("会话不存在，sessionId: {}", sessionId);
             return Result.error("会话不存在，请检查会话ID", null);
         }
         // 2.2 检查会话是否属于当前用户
-        // 如果会话不属于当前用户，返回错误
         if (!session.getUserId().equals(userId)) {
-            log.warn("无权访问该会话，chatId: {}, 当前用户：{}, 会话所属用户：{}", chatId, userId, session.getUserId());
+            log.warn("无权访问该会话，sessionId: {}, 当前用户：{}, 会话所属用户：{}", sessionId, userId, session.getUserId());
             return Result.error("无权访问该会话", null);
         }
-        
-        // 3. 从 MySQL 中获取消息（双写模式）
-        List<AIChatMessage> messages = aiChatMessageService.getMessagesByChatId(chatId, userId);
+
+        // 3. 从 MySQL 中获取消息
+        List<AIChatMessage> messages = aiChatMessageService.getMessagesBySessionId(sessionId, userId);
         if(messages==null){
-            // 如果数据库中没有消息，返回空列表
-           messages = List.of();
+            messages = List.of();
         }
         log.debug("从 MySQL 获取到 {} 条消息", messages.size());
         // 4. 转换为 MessageVO 列表
         List<MessageVO> messageVOs = messages.stream().map(MessageVO::new).toList();
         // 5. 转换为 ChatSessionVO 列表
-        ChatSessionVO sessionVO = new ChatSessionVO(chatId, LocalDateTime.now(), messageVOs);
+        ChatSessionVO sessionVO = new ChatSessionVO(sessionId, LocalDateTime.now(), messageVOs);
         List<ChatSessionVO> sessionList = List.of(sessionVO);
-        log.debug("返回会话详情，chatId: {}, 消息数量: {}", chatId, messageVOs.size());
+        log.debug("返回会话详情，sessionId: {}, 消息数量: {}", sessionId, messageVOs.size());
         return Result.success(sessionList);
     }
 
 
     /**
-    * 删除会话
-    * @param type 会话类型
-    * @param chatId 会话 ID
-    */
+     * 删除会话
+     * @param sessionId 会话 ID
+     */
     @Operation(summary = "删除对话", description = "删除指定的对话会话")
     @DeleteMapping("/session/{sessionId}")
-   public Result<Void> deleteSession(@Parameter(description = "会话 ID") @PathVariable("sessionId") String sessionId) {
+    public Result<Void> deleteSession(
+            @Parameter(description = "会话 ID") @PathVariable("sessionId") String sessionId) {
         try {
-           Long userId = getCurrentUserId();
+            Long userId = getCurrentUserId();
             if (userId == null) {
                 return Result.error("未登录", null);
             }
-            
+
             chatHistoryRepository.delete("chat", sessionId, userId);
             return Result.success(null);
         } catch (Exception e) {

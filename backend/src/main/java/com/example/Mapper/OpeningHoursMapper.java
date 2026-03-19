@@ -8,6 +8,10 @@ import java.util.List;
 
 @Mapper
 public interface OpeningHoursMapper extends BaseMapper<OpeningHours> {
-    // 根据景点ID查询营业时间表
+    /**
+     * 根据站点ID查询营业时间
+     * @param siteId 站点ID
+     * @return 营业时间列表
+     */
     List<OpeningHours> findBySiteId(String siteId);
 }

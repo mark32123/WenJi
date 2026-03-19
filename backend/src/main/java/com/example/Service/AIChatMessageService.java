@@ -26,10 +26,11 @@ public interface AIChatMessageService {
 
     /**
      * 根据会话 ID 查询消息列表
-     * @param chatId 会话 ID
+     * @param sessionId 会话 ID
+     * @param userId 用户 ID
      * @return 消息列表
      */
-    List<AIChatMessage> getMessagesByChatId(String chatId,Long userId);
+    List<AIChatMessage> getMessagesBySessionId(String sessionId, Long userId);
 
     /**
      * 查询用户的历史消息（用于向量分析和推荐）
