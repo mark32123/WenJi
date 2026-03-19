@@ -88,26 +88,7 @@ public class ChatHistoryController {
         return Result.success(sessionList);
     }
 
-    /**
-     * 从 sessionId 中提取数字部分
-     * 格式：chat_timestamp_random → 提取 timestamp
-     */
-  private Long extractNumericChatId(String sessionId) {
-        try {
-            // 移除 "chat_" 前缀和随机后缀
-            if (sessionId.startsWith("chat_")) {
-                String[] parts = sessionId.substring(5).split("_");
-                if (parts.length > 0) {
-                    return Long.parseLong(parts[0]);
-                }
-            }
-            // 如果已经是纯数字，直接转换
-            return Long.parseLong(sessionId);
-        } catch (Exception e) {
-            log.error("解析 chatId 失败：{}", sessionId, e);
-            return 0L; // 返回 0，后续查询会失败但不会抛异常
-        }
-    }
+
 
     @Operation(summary = "删除对话", description = "删除指定的对话会话")
     @DeleteMapping("/session/{sessionId}")
