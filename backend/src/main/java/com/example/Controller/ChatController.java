@@ -20,7 +20,7 @@ import reactor.core.publisher.Flux;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static com.example.Common.Utils.GetUserIdUtils.getCurrentUserId;
+import static com.example.Common.Utils.UersUtils.getCurrentUserId;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 
 @RequiredArgsConstructor
@@ -36,43 +36,23 @@ public class ChatController {
     
     private final AIChatMessageService chatMessageService;
 
-    // 同步版本的文本聊天
-    private String textChatSync(String prompt, String chatId) {
-        return chatClient.prompt()
-                .user(prompt)
-                .advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId))
-                .call()
-                .content();
-    }
-
-    // 同步版本的多模态聊天
-    private String multiModalChatSync(String prompt, String chatId, List<MultipartFile> files) {
-        List<Media> medias = files.stream()
-                .map(file -> new Media(
-                                MimeType.valueOf(Objects.requireNonNull(file.getContentType())),
-                                file.getResource()
-                        )
-                )
-                .toList();
-        
-        return chatClient.prompt()
-                .user(p -> p.text(prompt).media(medias.toArray(Media[]::new)))
-                .advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId))
-                .call()
-                .content();
-    }
 
     // 流式版本的文本聊天
     private Flux<String> textChat(String prompt, String chatId) {
+        // 初始化空字符串构建器
         StringBuilder fullResponse = new StringBuilder();
         Long userId = getCurrentUserId();
         
         return chatClient.prompt()
                 .user(prompt)
                 .advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId))
+                // 开启流式响应
                 .stream()
+                //获取内容流
                 .content()
-                .doOnNext(chunk -> fullResponse.append(chunk))
+                //每个chunk都添加到fullResponse
+                .doOnNext(fullResponse::append)
+                //直到做完以后把内容保存到数据库
                 .doOnComplete(() -> {
                     // 保存AI回复
                     if (userId != null && !fullResponse.isEmpty()) {
@@ -96,6 +76,7 @@ public class ChatController {
     
     // 流式版本的多模态聊天
     private Flux<String> multiModalChat(String prompt, String chatId, List<MultipartFile> files) {
+        // Media是Spring AI的媒体类，用于表示图片、视频等多模态内容，通过创建列表装载多模态内容
         List<Media> medias = files.stream()
                 .map(file -> new Media(
                                 MimeType.valueOf(Objects.requireNonNull(file.getContentType())),
@@ -103,12 +84,16 @@ public class ChatController {
                         )
                 )
                 .toList();
-        
+        //为了迎合流式输出的需求，这里使用StringBuilder来构建完整的响应内容
         StringBuilder fullResponse = new StringBuilder();
         Long userId = getCurrentUserId();
         
+        //创建一个prompt，将用户问题 prompt 和多模态内容 medias 添加到prompt中
+        // 告诉AI这是一个多模态对话，需要同时考虑文本和多模态内容
         return chatClient.prompt()
+                //将用户问题 prompt 和多模态内容 medias 添加到prompt中
                 .user(p -> p.text(prompt).media(medias.toArray(Media[]::new)))
+                //环绕通知，将会话ID添加到prompt中
                 .advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId))
                 .stream()
                 .content()
@@ -125,6 +110,7 @@ public class ChatController {
                                     .messageType("multi-modal")
                                     .createTime(LocalDateTime.now())
                                     .build();
+                            //调用AI对话保存数据库的方法
                             chatMessageService.saveMessage(aiMessage);
                             log.debug("保存AI回复成功，chatId: {}", chatId);
                         } catch (Exception e) {
@@ -143,6 +129,7 @@ public class ChatController {
      */
     @Operation(summary = "AI 聊天", description = "支持文本和多模态对话，返回流式响应")
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    // MediaType.TEXT_EVENT_STREAM_VALUE是流式响应的媒体类型
     public Flux<String> chat(
             @Parameter(description = "用户问题") @RequestParam("prompt") String prompt,
             @Parameter(description = "会话 ID") @RequestParam(value = "chatId", required = false) String chatId,

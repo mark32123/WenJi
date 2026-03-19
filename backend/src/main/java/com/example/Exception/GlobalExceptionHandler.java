@@ -7,6 +7,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    
+    /**
+     * 全局异常处理
+     * @param e 异常对象
+     * @return 异常结果
+     */
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
         e.printStackTrace();

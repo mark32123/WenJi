@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static com.example.Common.Utils.GetUserIdUtils.getCurrentUserId;
+import static com.example.Common.Utils.UersUtils.getCurrentUserId;
 
 @RestController
 @RequestMapping("/badge")

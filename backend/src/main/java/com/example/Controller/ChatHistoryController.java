@@ -14,8 +14,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.messages.Message;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.example.Common.Utils.GetUserIdUtils.getCurrentUserId;
+import static com.example.Common.Utils.UersUtils.getCurrentUserId;
 
 
 @Slf4j
@@ -39,6 +37,11 @@ public class ChatHistoryController {
     private final AIChatMessageService aiChatMessageService;
     private final AIChatSessionMapper chatSessionMapper;
 
+    /**
+     * 获取聊天 ID 列表，根据类型获取所有聊天会话 ID
+     * @param type 聊天类型，例如 "text" 或 "image"
+     * @return 包含所有聊天会话 ID 的列表
+     */
     @Operation(summary = "获取聊天 ID 列表", description = "根据类型获取所有聊天会话 ID")
     @GetMapping("/{type}/list")
     public Result<List<String>> getChatIds(@Parameter(description = "聊天类型") @PathVariable("type") String type){
@@ -48,8 +51,15 @@ public class ChatHistoryController {
         return Result.success(chatIds);
     }
 
+    /**
+     * 获取会话详情
+     * @param type 会话类型
+     * @param chatId 会话 ID
+     * @return 会话详情
+     */
     @Operation(summary = "获取聊天历史详情", description = "根据类型和会话 ID 获取完整的聊天历史记录")
-    @GetMapping("/{type}/{chatId}")//为了与上面的方法进行区分，先执行上面的方法，再执行下面的方法
+    @GetMapping("/{type}/{chatId}")
+    //为了与上面的方法进行区分，先执行上面的方法，再执行下面的方法
     public Result<List<ChatSessionVO>> getChatHistory(
             @Parameter(description = "聊天类型") @PathVariable("type") String type, 
             @Parameter(description = "会话 ID") @PathVariable("chatId") String chatId){
@@ -64,24 +74,29 @@ public class ChatHistoryController {
         
         // 2. 验证 chatId 是否属于当前用户
         AIChatSession session = chatSessionMapper.selectById(chatId);
+        // 2.1 检查会话是否存在
+        // 如果会话不存在，返回错误
         if (session == null) {
             log.warn("会话不存在，chatId: {}", chatId);
             return Result.error("会话不存在，请检查会话ID", null);
         }
+        // 2.2 检查会话是否属于当前用户
+        // 如果会话不属于当前用户，返回错误
         if (!session.getUserId().equals(userId)) {
             log.warn("无权访问该会话，chatId: {}, 当前用户：{}, 会话所属用户：{}", chatId, userId, session.getUserId());
             return Result.error("无权访问该会话", null);
         }
         
         // 3. 从 MySQL 中获取消息（双写模式）
-        // 直接使用传入的 chatId，因为我们已经将 AIChatMessage 的 chatId 改为 String 类型
         List<AIChatMessage> messages = aiChatMessageService.getMessagesByChatId(chatId, userId);
         if(messages==null){
+            // 如果数据库中没有消息，返回空列表
            messages = List.of();
         }
         log.debug("从 MySQL 获取到 {} 条消息", messages.size());
-    
+        // 4. 转换为 MessageVO 列表
         List<MessageVO> messageVOs = messages.stream().map(MessageVO::new).toList();
+        // 5. 转换为 ChatSessionVO 列表
         ChatSessionVO sessionVO = new ChatSessionVO(chatId, LocalDateTime.now(), messageVOs);
         List<ChatSessionVO> sessionList = List.of(sessionVO);
         log.debug("返回会话详情，chatId: {}, 消息数量: {}", chatId, messageVOs.size());
@@ -89,7 +104,11 @@ public class ChatHistoryController {
     }
 
 
-
+    /**
+    * 删除会话
+    * @param type 会话类型
+    * @param chatId 会话 ID
+    */
     @Operation(summary = "删除对话", description = "删除指定的对话会话")
     @DeleteMapping("/session/{sessionId}")
    public Result<Void> deleteSession(@Parameter(description = "会话 ID") @PathVariable("sessionId") String sessionId) {

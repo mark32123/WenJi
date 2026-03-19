@@ -11,7 +11,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.example.Common.Utils.GetUserIdUtils.getCurrentUserId;
+import static com.example.Common.Utils.UersUtils.getCurrentUserId;
 
 import java.time.LocalDateTime;
 import java.util.List;

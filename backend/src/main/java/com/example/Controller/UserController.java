@@ -1,6 +1,7 @@
 package com.example.Controller;
 
 import com.example.Common.Result;
+import com.example.Common.Utils.UersUtils;
 import com.example.DTO.LoginFormDTO;
 import com.example.DTO.UserUpdateDTO;
 import com.example.Service.UserService;
@@ -15,8 +16,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 
-import static com.example.Common.Utils.GetUserIdUtils.getCurrentUserId;
-
+import static com.example.Common.Utils.UersUtils.getCurrentUserId;
+import static com.example.Common.Utils.UersUtils.getTokenFromRequest;
 
 @RestController
 @Slf4j
@@ -26,29 +27,6 @@ public class UserController {
 
     @Autowired
     private UserService userService;
-
-
-
-    /**
-     * 从请求中获取token
-     * @param request 请求对象
-     * @return token
-     **/
-
-    private String getTokenFromRequest(HttpServletRequest request){
-        String token = request.getHeader("Authorization");
-
-        if(token == null){
-            token = request.getHeader("authorization");
-        }
-
-        //处理Bearer前缀
-        if(token != null && token.startsWith("Bearer ")){
-            token = token.substring(7);
-        }
-
-        return token != null ? token.trim() : null;
-    }
 
 
     /**

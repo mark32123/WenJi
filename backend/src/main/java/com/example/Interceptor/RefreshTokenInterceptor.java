@@ -4,7 +4,6 @@ import com.example.Pojo.User;
 import com.example.Common.Utils.JwtUtils;
 import com.example.Common.Utils.ThreadLocalUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -19,6 +18,7 @@ import static com.example.Common.Constants.RedisConstants.USER_LOGIN_EXPIRE;
 import static com.example.Common.Constants.RedisConstants.USER_LOGIN_KEY;
 
 @Component
+//@Component注解，将类注册为Spring组件，用于自动注入依赖
 public class RefreshTokenInterceptor implements HandlerInterceptor {
     private final StringRedisTemplate stringRedisTemplate;
 
@@ -27,9 +27,16 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         this.stringRedisTemplate = stringRedisTemplate;
     }
 
+    /**
+     * 请求处理前拦截器
+     * @param request 请求对象
+     * @param response 响应对象
+     * @param handler 处理器对象
+     * @return 是否放行
+     */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        // 获取请求的令牌
+        // 获取请求的令牌,去掉Bearer前缀
         String authorization=request.getHeader("Authorization");
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             response.setStatus(401);
@@ -37,6 +44,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
             return false;
         }
 
+        // 解析令牌
         String token=authorization.substring(7).trim();
         try {
             // 解析令牌
@@ -53,7 +61,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
                 return false;
             }
 
-            //将userMap转为User对象
+            //使用ObjectMapper的convertValue方法将userMap转为User对象
             ObjectMapper objectMapper=new ObjectMapper();
             User user=objectMapper.convertValue(userMap,User.class);
 
@@ -73,6 +81,13 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         }
     }
     
+    /**
+     * 请求处理后拦截器
+     * @param request 请求对象
+     * @param response 响应对象
+     * @param handler 处理器对象
+     * @param ex 异常对象
+     */
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         //请求处理完成后，清空ThreadLocal中的数据,防止内存泄露

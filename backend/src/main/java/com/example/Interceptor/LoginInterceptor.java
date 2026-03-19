@@ -10,7 +10,8 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class LoginInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-//        // 获取请求的 URL
+//在刷新令牌拦截器中配置了拦截所有请求，所以这里只处理其他请求
+        //        // 获取请求的 URL
 //        String uri = request.getRequestURI();
 //
 //        // 检查是否为登录或注册请求，如果是则放行
@@ -42,6 +43,7 @@ public class LoginInterceptor implements HandlerInterceptor {
 //            response.setStatus(401);
 //            return false;
 //        }
+        
         if(ThreadLocalUtil.get()==null){
             response.setStatus(401);
             return false;
@@ -49,6 +51,9 @@ public class LoginInterceptor implements HandlerInterceptor {
         return true;
     }
     
+    /**
+     * 请求处理完成后，清空ThreadLocal中的数据,防止内存泄露
+     */
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         //请求处理完成后，清空ThreadLocal中的数据,防止内存泄露
