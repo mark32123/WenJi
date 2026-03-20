@@ -75,17 +75,17 @@ const prevPage = () => {
   }
 }
 
-// 开始体验，跳转到登录页
+// 开始体验，跳转到主页
 const startExperience = () => {
   // 添加淡出效果
   const guideWrapper = document.querySelector('.guide-wrapper')
   if (guideWrapper) {
     guideWrapper.classList.add('fade-out')
     setTimeout(() => {
-      router.push('/login')
+      router.push('/user/home')
     }, 1000)
   } else {
-    router.push('/login')
+    router.push('/user/home')
   }
 }
 

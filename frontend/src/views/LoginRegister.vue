@@ -1,13 +1,18 @@
 <script setup>
-import { useRouter } from 'vue-router'
-
+import { useRouter, useRoute } from 'vue-router'
 import { ref ,reactive, onMounted} from 'vue'
+import { ArrowLeft } from '@element-plus/icons-vue'
 
 
 const router = useRouter();
+const route = useRoute();
 const registerFormRef=ref();
 const loginFormRef=ref();
 const isRegister= ref(false);
+
+const goBack = () => {
+  router.push('/user/home');
+};
 //定义数据模型
 const registerData=ref({
     username:'',
@@ -151,9 +156,7 @@ const register=async()=>{
 // 在你的 login 函数中
 // 在你的 login 函数中
 const login=async()=>{
-  //调用接口，完成登录
   try{
-    //触发表单校验
     await loginFormRef.value.validate();
     const result = await userLoginService({
       username: registerData.value.username,
@@ -162,7 +165,7 @@ const login=async()=>{
       captchaKey: registerData.value.captchaKey
     })
     
-    console.log('Login response:', result); // 这行可以保留用于调试
+    console.log('Login response:', result);
     
     // 不传 phone/rePassword
     if(result.code===1){
@@ -174,7 +177,9 @@ const login=async()=>{
       if(token && typeof token === 'string' && token.trim() !== '') {
         localStorage.setItem('token', token);
         console.log('Token set successfully:', token.substring(0, 20) + '...');
-        router.push('/user/home');
+        
+        const redirect = route.query.redirect || '/user/home';
+        router.push(redirect);
       } else {
         console.error('No valid token found in response');
         ElMessage.error('登录失败：服务器未返回有效认证令牌');
@@ -185,7 +190,6 @@ const login=async()=>{
       console.log('请求失败，原因：',result.msg);
     }
   } catch(err) {
-    // 校验失败时会 reject，可不处理，Element Plus 已显示错误
     console.error('Login error:', err);
   }
 };
@@ -194,6 +198,11 @@ const login=async()=>{
 
 <template>
  <div class="login-register-container">
+    <div class="back-btn" @click="goBack">
+      <el-icon><ArrowLeft /></el-icon>
+      <span>返回</span>
+    </div>
+    
     <div class="app-name">文迹</div>
 
     <!-- 登录表单 -->
@@ -323,6 +332,27 @@ const login=async()=>{
   justify-content: space-between;
   align-items: center;
   padding: 50px 20px;
+  position: relative;
+}
+
+.back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #8C7B6B;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  color: #A68A64;
+  background-color: rgba(166, 138, 100, 0.1);
 }
 
 .app-name {

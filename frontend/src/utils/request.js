@@ -99,10 +99,8 @@ const refreshToken = async () => {
     }
   } catch (error) {
     console.error('Token refresh failed:', error);
-    // 刷新失败，清除所有 token 并跳转到登录页
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
-    window.location.href = '/login';
     return null;
   }
 };

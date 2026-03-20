@@ -60,6 +60,12 @@ const defaultAvatarPaths = [
 ]
 
 const loadUserInfo = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    selectedIconPaths.value = defaultAvatarPaths;
+    return;
+  }
+  
   try {
     const response = await getCurrentUserInfo();
     if (response.code === 1) {
