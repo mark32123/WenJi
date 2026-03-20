@@ -86,13 +86,26 @@
     <!-- 所在地 -->
     <div class="form-group">
       <label class="form-label">常驻之地</label>
-      <input
-        v-model="location"
-        type="text"
-        class="form-input"
-        :placeholder="'当前地址: ' + (location || '未设置')"
-        id="location-input"
-      />
+      <div class="address-inputs">
+        <input
+          v-model="province"
+          type="text"
+          class="form-input address-input"
+          placeholder="省份"
+        />
+        <input
+          v-model="city"
+          type="text"
+          class="form-input address-input"
+          placeholder="城市"
+        />
+        <input
+          v-model="district"
+          type="text"
+          class="form-input address-input"
+          placeholder="区县"
+        />
+      </div>
       <button class="locate-btn" @click="getLocation">📍 自动获取当前位置</button>
     </div>
 
@@ -115,7 +128,7 @@ import { mapApi } from '@/api/mapApi' // 导入mapApi
 
 const router = useRouter()
 
-// ========== 头像相关 ==========
+// ========== 头像相关 ==========        //新增id值，与后端相关
 const avatarMode = ref('upload') // 'upload' | 'select'
 
 const builtinIcons = [
@@ -162,9 +175,57 @@ const builtinIcons = [
       { d: 'M35,30 h30 v40 h-30 z', rx: 6, fill: '#A68A64' },
       { type: 'ellipse', cx: 50, cy: 70, rx: 10, ry: 6, fill: '#8B7355' }
     ]
+  },
+  {
+    name: 'inkstone',
+    paths: [
+      { d: 'M20,50 h60 v20 h-60 z', fill: '#6B5B4F' },
+      { d: 'M25,55 h50 v10 h-50 z', fill: '#8B7355' },
+      { d: 'M40,45 a5,5 0 1,0 0,0', fill: '#A68A64' }
+    ]
+  },
+  {
+    name: 'brush',
+    paths: [
+      { d: 'M45,20 h10 v60 h-10 z', fill: '#8B7355' },
+      { d: 'M48,20 a8,8 0 1,0 0,0', fill: '#A68A64' },
+      { d: 'M40,80 h20', stroke: '#6B5B4F', strokeWidth: 3, fill: 'none' }
+    ]
+  },
+  {
+    name: 'seal',
+    paths: [
+      { d: 'M25,25 h50 v50 h-50 z', fill: '#C44536' },
+      { d: 'M30,35 h40 v30 h-40 z', fill: '#D4C5B0' },
+      { d: 'M40,45 a5,5 0 1,0 0,0', fill: '#A68A64' }
+    ]
+  },
+  {
+    name: 'bamboo',
+    paths: [
+      { d: 'M45,10 h10 v80 h-10 z', fill: '#7D9A7E' },
+      { d: 'M42,30 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' },
+      { d: 'M42,50 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' },
+      { d: 'M42,70 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' }
+    ]
+  },
+  {
+    name: 'cloud',
+    paths: [
+      { d: 'M20,50 a15,15 0 1,0 0,0', fill: '#9FB3C8' },
+      { d: 'M35,45 a20,20 0 1,0 0,0', fill: '#A8B5C0' },
+      { d: 'M55,50 a15,15 0 1,0 0,0', fill: '#9FB3C8' }
+    ]
+  },
+  {
+    name: 'mountain',
+    paths: [
+      { d: 'M20,80 L50,30 L80,80 Z', fill: '#6B7A8F' },
+      { d: 'M10,80 L35,50 L60,80 Z', fill: '#8B9BB3' },
+      { d: 'M50,80 L75,45 L100,80 Z', fill: '#7D8FA3' }
+    ]
   }
-]
-
+];
 const selectedIcon = ref(builtinIcons[0])
 
 const avatar = reactive({
@@ -194,6 +255,9 @@ function selectBuiltinIcon(icon) {
 
 // ========== 表单数据 ==========
 const elegantName = ref('')
+const province = ref('')
+const city = ref('')
+const district = ref('')
 const location = ref('')
 
 // 从后端获取用户信息
@@ -271,9 +335,16 @@ async function getLocation() {
     // 调用地图API获取实际位置
     const locationData = await mapApi.getUserLocation();
     
-    // 使用反向地理编码获取城市名称
-    const city = await reverseGeocode(locationData.lat, locationData.lng);
-    location.value = city;
+    // 使用反向地理编码获取详细地址
+    const address = await reverseGeocode(locationData.lat, locationData.lng);
+    // 解析地址并填充到相应字段
+    if (address) {
+      const addressParts = address.split(/[省市县区]/).filter(part => part.trim());
+      if (addressParts.length >= 1) province.value = addressParts[0];
+      if (addressParts.length >= 2) city.value = addressParts[1];
+      if (addressParts.length >= 3) district.value = addressParts[2];
+      location.value = address;
+    }
     
     ElMessage.success('位置获取成功')
   } catch (error) {
@@ -301,7 +372,13 @@ async function saveInfo() {
     // 准备要更新的数据
     const updateData = {
       username: elegantName.value,
-      location: location.value
+      // 提供完整的地址信息给后端
+      address: {
+        province: province.value,
+        city: city.value,
+        district: district.value,
+        fullAddress: location.value
+      }
     };
 
     // 处理头像数据
@@ -462,6 +539,16 @@ onMounted(() => {
 .form-input:focus {
   outline: none;
   border-color: #a68a64;
+}
+
+.address-inputs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.address-input {
+  flex: 1;
 }
 
 .locate-btn {

@@ -1,897 +1,1280 @@
 <template>
-  <!-- 主地图区域 - 修正容器样式 -->
-  <div ref="mapContainer" class="map-root-container">
-    <div class="map" ref="mapElement"></div>
-    <!-- 加载动画 -->
-    <div v-if="loading" class="map-loading-overlay">
-      <div class="map-loading-content">
-        <div class="map-spinner">
-          <svg class="map-spinner-svg" viewBox="0 0 50 50">
-            <circle class="map-spinner-circle" cx="25" cy="25" r="20" fill="none" stroke="#e0e0e0" stroke-width="4"/>
-            <circle class="map-spinner-arc" cx="25" cy="25" r="20" fill="none" stroke="#FF6B8B" stroke-width="4" stroke-linecap="round"/>
-            <circle class="map-spinner-dot" cx="5" cy="25" r="3" fill="#FF6B8B"/>
-          </svg>
-        </div>
-        <div class="map-loading-text">正在加载中国非遗地图...</div>
+  <Layout title="文迹 - 地图探索" :showBack="false">
+    <template #header-actions>
+      <!-- 个人详情按钮 -->
+      <div class="user-avatar" @click="goToProfile">
+        <span class="avatar-icon">📜</span>
       </div>
-    </div>
+    </template>
+    <div class="map-wrapper">
+      <!-- 地图容器 -->
+      <div ref="mapRef" class="map-container"></div>
 
-    <!-- 缩放按钮 -->
-    <button
-      v-if="!isLocating"
-      class="locate-btn"
-      @click="locateUser"
-      title="定位到我的位置"
-    >
-    📍
-    </button>
-
-    <button
-      v-else
-      class="locate-btn locating"
-      disabled
-    >
-    🔍
-    </button>
-    <!-- 比例尺 -->
-    <div class="map-scale-control">
-      <div class="map-scale-bar"></div>
-      <div class="map-scale-text">1000 km</div>
-    </div>
-    <!-- 底部信息抽屉 -->
+      <!-- 定位按钮 -->
+      <button class="location-btn" @click="locateUser" :class="{'locating': isLocating}">
+        <span class="location-icon">📍</span>
+      </button>
+      
+      <!-- AR体验按钮 -->
+      <div class="ar-enter-container">
+        <button class="ar-enter-btn" @click="goToAR">
+          <span class="ar-icon">🔮</span>
+          <span class="ar-text">进入AR体验</span>
+        </button>
+      </div>
+    <!-- 底部信息弹窗 -->
     <transition name="slide-up">
-      <div v-if="selectedSite" class="map-bottom-drawer">
-        <div class="drawer-content">
-          <div class="drawer-header">
-            <h3>{{ selectedSite.name }}</h3>
-            <button class="close-btn" @click="clearSelection">×</button>
+      <div v-if="showInfoPanel" class="info-panel-overlay" @click.self="closeInfoPanel">
+        <div class="info-panel">
+          <div class="info-header">
+            <h3>{{ infoData.name }}</h3>
+            <button class="close-btn" @click="closeInfoPanel">×</button>
           </div>
-          <div class="drawer-body">
-            <p><strong>类型：</strong>{{ getSiteTypeText(selectedSite.type) }}</p>
-            <p><strong>状态：</strong>{{ getStatusText(selectedSite.status) }}</p>
-            <p><strong>热度：</strong>{{ Math.round((selectedSite.heat_level || 0) * 100) }}%</p>
-            <p><strong>所在省份：</strong>{{ selectedSite.province }}</p>
+          <div class="info-content">
+          <div class="info-body">
+            <div class="info-left">
+              <img
+                v-if="infoData.name"
+                :src="getImageUrl(infoData.name)"
+                :alt="infoData.name"
+                class="site-image"
+                @error="handleImageError"
+              />
+            </div>
+            <div class="info-middle">
+              <div v-if="infoData.type" class="info-item">
+                <span class="label">类型:</span>
+                <span class="value">{{ infoData.type }}</span>
+              </div>
+              <div v-if="infoData.province" class="info-item">
+                <span class="label">省份:</span>
+                <span class="value">{{ infoData.province }}</span>
+              </div>
+              <div v-if="infoData.category" class="info-item">
+                <span class="label">类别:</span>
+                <span class="value">{{ infoData.category }}</span>
+              </div>
+              <div v-if="infoData.heat_level !== undefined" class="info-item">
+                <span class="label">热度:</span>
+                <span class="value">{{ (infoData.heat_level * 100).toFixed(0) }}%</span>
+              </div>
+              <div v-if="infoData.status" class="info-item">
+                <span class="label">状态:</span>
+                <span class="value" :class="{ 'status-unlocked': infoData.status === 'unlocked', 'status-locked': infoData.status === 'locked' }">
+                  {{ infoData.status === 'unlocked' ? '已解锁' : '未解锁' }}
+                </span>
+              </div>
+              <div v-if="infoData.description" class="info-item description">
+                <span class="label">介绍:</span>
+                <p class="value">{{ infoData.description }}</p>
+              </div>
+            </div>
+            <div class="info-right">
+              <div class="ai-section">
+                <h2 class="ai-title">向智游导游提问</h2>
+                <div class="input-container">
+                  <textarea
+                    v-model="questionText"
+                    class="ask-input"
+                    placeholder="例如：这块瓷片是哪个朝代的？"
+                    @keydown.enter.exact.prevent="submitQuestion"
+                    :disabled="isResponding"
+                  ></textarea>
+                  <button class="attach-btn" @click="triggerFileInput" :disabled="isResponding">📎</button>
+                  <input
+                    ref="fileInputRef"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    @change="handleFileSelect"
+                    style="display: none"
+                  />
+                </div>
+                <div class="preview-area" v-if="previewUrls.length > 0">
+                  <div
+                    v-for="(url, index) in previewUrls"
+                    :key="index"
+                    class="preview-item"
+                  >
+                    <img :src="url" alt="预览" />
+                    <button class="remove-preview" @click="removePreview(index)" :disabled="isResponding">×</button>
+                  </div>
+                </div>
+                <div class="mic-row">
+                  <button class="mic-btn" @click="useVoice" :disabled="isResponding">🎤</button>
+                  <button class="send-btn" @click="submitQuestion" :disabled="isResponding || !canSubmit">
+                    {{ isResponding ? '⏳' : '➤' }}
+                  </button>
+                </div>
+                <div v-if="answer || isResponding" class="answer-box">
+                  <div class="answer-content">{{ answer }}</div>
+                  <div v-if="isResponding" class="typing-indicator">文迹正在思考中...</div>
+                </div>
+                <router-link to="/user/history" class="history-link">
+                  📜 查看历史问答
+                </router-link>
+              </div>
+            </div>
           </div>
-          <button class="ar-button" @click="startAR">
-            👓 AR虚拟体验
-          </button>
+          </div>
         </div>
       </div>
     </transition>
-  </div>
+    </div>
+  </Layout>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { CHINA_NON_HERITAGE_SITES, MAP_CONFIG, PROVINCE_DATA } from '@/assets/data/heritage-sites';
-import { mapApi } from '@/api/mapApi.js';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+import * as echarts from 'echarts'
 import Layout from '@/components/Layout.vue'
-import { ElMessage } from 'element-plus';
-import { useRouter } from 'vue-router';
-const router = useRouter();
-// 定义事件
-const emit = defineEmits(['site-clicked']);
+// 引入非遗景点数据和配置
+import { CHINA_NON_HERITAGE_SITES, MAP_CONFIG, PROVINCE_DATA } from '@/assets/data/heritage-sites.js'
+// 引入SSEHandler
+import { SSEHandler } from '@/utils/sseHandler.js'
 
-// 响应式数据
-const mapContainer = ref(null);
-const mapElement = ref(null);
-const map = ref(null);
-const loading = ref(true);
-const userLocation = ref(null);
-const sites = ref([]);
-const provinces = ref([]);
-const selectedSite = ref(null);
-const showProvinceBorders = ref(true);
-const showHeritageSites = ref(true);
-const siteMarkers = ref([]);
-const clusterLayers = ref([]);
-const selectedProvince = ref(null); // 添加这行
-// 初始化地图
-const initMap = async () => {
-  if (!mapElement.value) return;
+const router = useRouter()
 
-  try {
-    // 1. 获取用户位置
-    userLocation.value = await mapApi.getUserLocation();
-    const center = [userLocation.value.lat, userLocation.value.lng];
+// 定义地图容器的引用
+const mapRef = ref(null)
+let myChart = null
 
-    // 2. 创建地图实例
-    map.value = L.map(mapElement.value).setView(center, MAP_CONFIG.zoom);
+// 弹窗状态
+const showInfoPanel = ref(false)
+const infoData = ref({})
 
-    // 3. 添加底图
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
-      attribution: '© OpenStreetMap contributors, © CARTO',
-      maxZoom: MAP_CONFIG.maxZoom,
-      minZoom: MAP_CONFIG.minZoom
-    }).addTo(map.value);
+// 用户定位相关状态
+const userLocation = ref(null)
+const isLocating = ref(false)
 
-    // 4. 调用接口
-    let initialData = null;
-    try {
-      initialData = await mapApi.getInitialMapData({
-        lat: center[0],
-        lng: center[1],
-        zoom: MAP_CONFIG.zoom
-      });
-    } catch (apiError) {
-      console.warn('接口调用失败，使用本地数据:', apiError);
-      // 接口失败时用本地数据
-      initialData = {
-        nearby_sites: CHINA_NON_HERITAGE_SITES,
-        unlock_status: { provinces: PROVINCE_DATA }
-      };
-    }
+// 图片格式状态
+const imageFormat = ref({})
 
-    // 5. 处理景点数据
-    sites.value = initialData.nearby_sites || CHINA_NON_HERITAGE_SITES;
-    // 处理省份数据
-    provinces.value = processProvinceData(initialData.unlock_status?.provinces || PROVINCE_DATA);
+// AI问答相关状态
+const questionText = ref('')
+const fileInputRef = ref(null)
+const uploadedFiles = ref([])
+const previewUrls = ref([])
+const answer = ref('')
+const isResponding = ref(false)
+const currentChatId = ref(null)
 
-    // 6. 渲染景点
-    if (showHeritageSites.value) {
-      addSiteMarkers();
-    }
+// 计算属性：判断是否可以提交
+const canSubmit = computed(() => {
+  return (questionText.value.trim() || uploadedFiles.value.length > 0) && !isResponding.value
+})
 
-    // 7. 监听地图移动
-    map.value.on('moveend', handleMapMoveEnd);
-
-  } catch (error) {
-    console.error('初始化地图失败:', error);
-    // 直接用本地数据初始化
-    map.value = L.map(mapElement.value).setView(MAP_CONFIG.center, MAP_CONFIG.zoom);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png').addTo(map.value);
-    sites.value = CHINA_NON_HERITAGE_SITES;
-    provinces.value = processProvinceData(PROVINCE_DATA);
-    addSiteMarkers();
-  } finally {
-    loading.value = false;
-  }
-};
-
-// 处理省份数据
-const processProvinceData = (apiProvinces) => {
-  return apiProvinces.map(province => ({
-    name: province.name,
-    code: province.code,
-    center: province.center || MAP_CONFIG.center,
-    color: getProvinceColor(province.code),
-    // 接口返回布尔值，本地返回数字，统一处理
-    unlocked: province.unlocked === true ? 1 : province.unlocked || 0,
-    // 接口返回0-1比例，本地返回百分比，统一处理
-    progress: typeof province.progress === 'number' ?
-      (province.progress > 1 ? province.progress : province.progress * 100) : 0,
-    siteCount: province.total_sites || 0,
-    visited: province.visited_sites || 0
-  }));
-};
-
-// 获取省份颜色
-const getProvinceColor = (provinceCode) => {
-  const colors = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
-    '#F8C471', '#82E0AA', '#F1948A', '#D7BDE2', '#F9E79F'
-  ];
-  const index = parseInt(provinceCode.substring(0, 2), 10) % colors.length;
-  return colors[index];
-};
-
-// 地图移动结束处理
-const handleMapMoveEnd = async () => {
-  if (!map.value) return;
-  loading.value = true;
-
-  const bounds = map.value.getBounds();
-  try {
-    // 尝试调用范围接口
-    //暂时注释
-    // const rangeData = await mapApi.getMapRangeData({
-    //   sw_lat: bounds.getSouthWest().lat,
-    //   sw_lng: bounds.getSouthWest().lng,
-    //   ne_lat: bounds.getNorthEast().lat,
-    //   ne_lng: bounds.getNorthEast().lng,
-    //   zoom_level: map.value.getZoom()
-    // });
-    // // 接口返回数据则更新
-    // if (rangeData.sites) {
-    //   sites.value = rangeData.sites;
-    // }
-    const filteredSites = CHINA_NON_HERITAGE_SITES.filter(site =>
-      bounds.contains([site.lat, site.lng])
-    );
-    sites.value = filteredSites;
-  } catch (apiError) {
-    console.warn('范围接口调用失败，使用本地数据:', apiError);
-    // 接口失败时筛选本地数据
-    sites.value = CHINA_NON_HERITAGE_SITES.filter(site =>
-      bounds.contains([site.lat, site.lng])
-    );
-  }
-
-  // 更新可见景点
-  updateVisibleSites(sites.value);
-  loading.value = false;
-};
-
-// 更新可见景点
-const updateVisibleSites = (visibleSites) => {
-  removeAllSiteMarkers();
-  removeAllClusters();
-
-  if (showHeritageSites.value && visibleSites.length) {
-    visibleSites.forEach(site => {
-      const marker = createSiteMarker(site);
-      if (marker) {
-        marker.addTo(map.value);
-        siteMarkers.value.push(marker);
-      }
-    });
-  }
-};
-
-// 移除所有景点标记
-const removeAllSiteMarkers = () => {
-  siteMarkers.value.forEach(marker => {
-    if (map.value && marker) map.value.removeLayer(marker);
-  });
-  siteMarkers.value = [];
-};
-
-// 移除所有聚合点
-const removeAllClusters = () => {
-  clusterLayers.value.forEach(layer => {
-    if (map.value && layer) map.value.removeLayer(layer);
-  });
-  clusterLayers.value = [];
-};
-
-// 添加所有景点标记
-const addSiteMarkers = () => {
-  if (!map.value) return;
-  const bounds = map.value.getBounds();
-  sites.value.forEach(site => {
-    if (bounds.contains([site.lat, site.lng])) {
-      const marker = createSiteMarker(site);
-      if (marker) {
-        marker.addTo(map.value);
-        siteMarkers.value.push(marker);
-      }
-    }
-  });
-};
-
-// 创建景点标记
-const createSiteMarker = (site) => {
-  let color, icon, size = 28;
-
-  switch(site.status) {
-    case 'unlocked':
-      color = '#4CAF50';
-      icon = getSiteIcon(site.type);
-      break;
-    case 'visited':
-      color = '#2196F3';
-      icon = getSiteIcon(site.type);
-      size = 32;
-      break;
-    case 'locked':
-    default:
-      color = '#FF9800';
-      icon = '🔒';
-      break;
-  }
-
-  const markerHtml = `
-    <div style="
-      background: ${color};
-      width: ${size}px;
-      height: ${size}px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: ${size * 0.5}px;
-      border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      cursor: pointer;
-      transition: transform 0.2s ease;
-    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-      ${icon}
-    </div>
-  `;
-
-  const customIcon = L.divIcon({
-    html: markerHtml,
-    className: 'map-heritage-marker',
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2]
-  });
-
-  const marker = L.marker([site.lat, site.lng], {
-    icon: customIcon,
-    title: site.name
-  });
-
-marker.on('click', (e) => {
-  L.DomEvent.stopPropagation(e);
-  selectedSite.value = site;
-  const province = provinces.value.find(p => p.name === site.province);
-  if (province) selectedProvince.value = province; // 这里之前引用了未定义的 selectedProvince
-});
-
-  return marker;
-};
-
-// 获取景点类型图标
-const getSiteIcon = (type) => {
-  const iconMap = {
-    handicraft: '🏺',
-    museum: '🏛️',
-    archaeology: '🏺',
-    architecture: '🏯',
-    food_craft: '🍵',
-    performance: '🎭',
-    default: '📍'
-  };
-  return iconMap[type] || iconMap.default;
-};
-
-// 显示景点弹窗
-const showSitePopup = (marker, site) => {
-  const popupContent = `
-    <div style="padding: 16px; max-width: 280px;">
-      <h3 style="margin: 0 0 12px 0; color: #333; font-size: 18px;">${site.name}</h3>
-      <div style="color: #666; font-size: 14px;">
-        <div><strong>类型:</strong> ${getSiteTypeText(site.type)}</div>
-        <div><strong>类别:</strong> ${site.category || '未知'}</div>
-        <div><strong>省份:</strong> ${site.province}</div>
-        <div><strong>热度:</strong> ${Math.round((site.heat_level || 0) * 100)}%</div>
-        <div><strong>状态:</strong> ${getStatusText(site.status)}</div>
-        ${site.distance ? `<div><strong>距离:</strong> ${site.distance} 米</div>` : ''}
-      </div>
-      <button onclick="window.mapViewSiteDetail('${site.site_id}', ${JSON.stringify(site).replace(/'/g, '&quot;')})"
-        style="
-          width: 100%;
-          padding: 10px;
-          margin-top: 12px;
-          background: #667eea;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-        ">
-        查看详情
-      </button>
-    </div>
-  `;
-
-  marker.bindPopup(popupContent).openPopup();
-};
-
-// 修改全局函数来发射事件
-window.mapViewSiteDetail = (siteId, siteData) => {
-  console.log('查看景点详情:', siteId);
-  // 发射事件给父组件
-  emit('site-clicked', JSON.parse(siteData.replace(/&quot;/g, '"')));
-};
-
-// 辅助函数
-const getStatusText = (status) => {
-  const map = { 'unlocked': '已解锁', 'locked': '未解锁', 'visited': '已访问' };
-  return map[status] || status;
-};
-
-const getSiteTypeText = (type) => {
-  const map = {
-    'handicraft': '手工艺', 'museum': '博物馆', 'archaeology': '考古遗址',
-    'architecture': '传统建筑', 'food_craft': '食品工艺', 'performance': '表演艺术'
-  };
-  return map[type] || type;
-};
-
-// 控制功能
-const locateUser = async () => {
-  try {
-    const newLocation = await mapApi.getUserLocation();
-    userLocation.value = newLocation;
-    if (userLocation.value && map.value) {
-      map.value.setView([userLocation.value.lat, userLocation.value.lng], 8);
-      const userIcon = L.divIcon({
-        html: '<div style="background: #FF4081; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white;"></div>',
-        className: 'map-user-location',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
-      });
-      L.marker([userLocation.value.lat, userLocation.value.lng], { icon: userIcon })
-        .addTo(map.value).bindPopup('我的位置').openPopup();
-    }
-  } catch (error) {
-    console.error('定位失败:', error);
-    const defaultCenter = MAP_CONFIG.center;
-    map.value.setView(defaultCenter, 8);
-    L.marker(defaultCenter, {
-      icon: L.divIcon({
-        html: '<div style="background: #FF4081; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white;"></div>',
-        className: 'map-user-location',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
-      })
-    }).addTo(map.value).bindPopup('定位失败，已定位到中国中心点').openPopup();
-  }
-};
-
-const zoomIn = () => map.value?.zoomIn();
-const zoomOut = () => map.value?.zoomOut();
-
-const toggleProvinceBorders = () => {
-  console.log('省份边界显示状态:', showProvinceBorders.value);
-};
-
-const toggleHeritageSites = () => {
-  if (showHeritageSites.value) {
-    addSiteMarkers();
-  } else {
-    removeAllSiteMarkers();
-  }
-};
-
-const viewProvinceDetails = () => {
-  if (selectedProvince.value) {
-    console.log('查看省份详情:', selectedProvince.value);
-  }
-};
-
-const startAR = () => {
-  if (!selectedSite.value) return;
-  router.push('/user/ceramicAr');
-  ElMessage.info('特定地点 AR 暂未开放，正在跳转到AR页面');
-  
-  clearSelection();
-};
-const clearSelection=()=>{
-  selectedSite.value = null;
+// 创建新的聊天会话
+function createNewChatSession() {
+  const chatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  currentChatId.value = chatId;
+  return chatId;
 }
-// 生命周期
-onMounted(async () => {
-  // 确保 DOM 已渲染后再初始化地图
-  await nextTick();
-  initMap();
-});
 
-onUnmounted(() => {
-  if (map.value) {
-    map.value.off('moveend', handleMapMoveEnd);
-    map.value.remove();
+// 触发文件选择
+function triggerFileInput() {
+  if (!isResponding.value) {
+    fileInputRef.value?.click()
   }
-  removeAllClusters();
-  delete window.mapViewSiteDetail;
-});
+}
+
+// 处理文件选择
+function handleFileSelect(event) {
+  if (isResponding.value) return
+
+  const files = Array.from(event.target.files).filter(file =>
+    file.type.startsWith('image/')
+  )
+
+  // 清空旧预览 URL（释放内存）
+  previewUrls.value.forEach(url => URL.revokeObjectURL(url))
+  previewUrls.value = []
+
+  uploadedFiles.value = files
+  previewUrls.value = files.map(file => URL.createObjectURL(file))
+}
+
+// 移除预览
+function removePreview(index) {
+  if (isResponding.value) return
+
+  // 释放 URL
+  URL.revokeObjectURL(previewUrls.value[index])
+  // 移除
+  previewUrls.value.splice(index, 1)
+  uploadedFiles.value.splice(index, 1)
+}
+
+// 提交问题
+async function submitQuestion() {
+  const text = questionText.value.trim()
+  const hasImage = uploadedFiles.value.length > 0
+
+  if (!text && !hasImage) {
+    alert('请输入问题，或上传图片')
+    return
+  }
+
+  if (isResponding.value) return // 防止重复提交
+
+  // 如果还没有会话ID，则创建一个
+  if (!currentChatId.value) {
+    createNewChatSession();
+  }
+
+  // 重置答案并设置响应状态
+  answer.value = ''
+  isResponding.value = true
+
+  try {
+    // 构建表单数据
+    const formData = new FormData()
+
+    // 添加必需的参数
+    formData.append('chatId', currentChatId.value)
+
+    if (text) {
+      formData.append('prompt', text)
+    }
+
+    // 添加图片（如果有）
+    uploadedFiles.value.forEach((file, index) => {
+      formData.append('images', file)
+    })
+
+    // 使用SSEHandler处理流式响应
+    const sseHandler = new SSEHandler()
+    
+    sseHandler.onData = (data) => {
+      // 实时追加AI回复内容
+      if (typeof data === 'string') {
+        answer.value += data
+      } else if (data.content) {
+        answer.value += data.content
+      }
+    }
+
+    sseHandler.onError = (error) => {
+      console.error('SSE Error:', error)
+      answer.value = `请求失败: ${error.message || '未知错误'}`
+      isResponding.value = false
+    }
+
+    sseHandler.onComplete = () => {
+      isResponding.value = false
+    }
+
+    await sseHandler.sendStreamRequest('/api/ai/chat', formData)
+
+  } catch (error) {
+    console.error('AI 提问失败:', error)
+    answer.value = '请求发送失败，请检查网络后重试'
+    isResponding.value = false
+  }
+}
+
+// 使用语音
+function useVoice() {
+  if (isResponding.value) return
+
+  const input = prompt('模拟语音输入：', '这块瓷片是什么年代的？')
+  if (input) {
+    questionText.value = input
+    submitQuestion()
+  }
+}
+
+// 获取景点图片URL
+const getImageUrl = (siteName) => {
+  if (!siteName) return ''
+  // 检查是否已经尝试过jpg格式
+  const format = imageFormat.value[siteName] || 'gif'
+  const path = new URL(`/src/assets/data/景点照片/${siteName}.${format}`, import.meta.url).href
+  return path
+}
+
+// 处理图片加载错误
+const handleImageError = (event) => {
+  const siteName = infoData.value.name
+  // 如果当前是gif格式，尝试切换到jpg格式
+  if (imageFormat.value[siteName] !== 'jpg') {
+    imageFormat.value[siteName] = 'jpg'
+    // 更新图片src
+    event.target.src = getImageUrl(siteName)
+  }
+}
+
+// 关闭弹窗
+const closeInfoPanel = () => {
+  showInfoPanel.value = false
+  infoData.value = {}
+}
+
+// 跳转到个人资料页
+function goToProfile() {
+  console.log('跳转到个人资料页');
+  router.push('/user/profile');
+}
+
+// 跳转到AR体验页面
+function goToAR() {
+  console.log('跳转到AR体验页面');
+  router.push('/user/ceramicAr');
+}
+
+// 获取用户位置
+function locateUser() {
+  if (!navigator.geolocation) {
+    alert('您的浏览器不支持地理定位功能');
+    return;
+  }
+
+  isLocating.value = true;
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
+      userLocation.value = {
+        lat: latitude,
+        lng: longitude
+      };
+      
+      // 在地图上显示用户位置
+      updateUserLocationOnMap(latitude, longitude);
+      isLocating.value = false;
+    },
+    (error) => {
+      console.error('获取位置失败:', error);
+      let errorMsg = '无法获取您的位置';
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          errorMsg = '您拒绝了位置权限请求';
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMsg = '位置信息不可用';
+          break;
+        case error.TIMEOUT:
+          errorMsg = '获取位置超时';
+          break;
+      }
+      alert(errorMsg);
+      isLocating.value = false;
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  );
+}
+
+// 在地图上更新用户位置
+function updateUserLocationOnMap(lat, lng) {
+  if (!myChart) return;
+
+  // 添加用户位置标记
+  const option = myChart.getOption();
+  
+  // 检查是否已经有用户位置系列，如果有则更新，没有则添加
+  const userLocationSeries = {
+    name: '我的位置',
+    type: 'scatter',
+    coordinateSystem: 'geo',
+    data: [{
+      name: '我的位置',
+      value: [lng, lat, 100], // 第三个值用于控制点的大小
+      itemStyle: {
+        color: '#ff4d4f'
+      }
+    }],
+    symbolSize: 15,
+    label: {
+      show: true,
+      formatter: '我的位置',
+      position: 'top',
+      color: '#ff4d4f',
+      fontSize: 12,
+      fontWeight: 'bold'
+    },
+    zlevel: 2, // 确保显示在其他点之上
+    emphasis: {
+      label: {
+        show: true
+      }
+    }
+  };
+
+  // 更新图表选项
+  myChart.setOption({
+    series: [...option.series, userLocationSeries]
+  });
+
+  // 移动地图中心到用户位置
+  myChart.setOption({
+    geo: {
+      center: [lng, lat],
+      zoom: 5
+    }
+  });
+}
+
+// 初始化地图函数
+const initMap = async () => {
+  if (!mapRef.value) return
+
+  // 初始化 echarts 实例
+  myChart = echarts.init(mapRef.value)
+
+  try {
+    // 1. 获取中国地图 GeoJSON 数据
+    const response = await fetch('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json')
+    if (!response.ok) {
+      throw new Error('网络请求异常，无法加载地图数据')
+    }
+    const chinaJson = await response.json()
+
+    // 2. 注册地图
+    echarts.registerMap('china', chinaJson)
+
+    // 3. 转换数据格式以适配 ECharts
+    // ECharts scatter 系列的 data 需要 [lng, lat, value, ...other] 格式
+    // 我们将 CHINA_NON_HERITAGE_SITES 转换为需要的格式，并保留原始对象信息以便 tooltip 使用
+    const scatterData = CHINA_NON_HERITAGE_SITES.map(site => {
+      return {
+        name: site.name,
+        value: [site.lng, site.lat, site.heat_level * 100], // 第三个值用于控制气泡大小或视觉映射
+        // 将原始数据挂载到 item 上，方便后续点击或 tooltip 调用
+        raw: site 
+      }
+    })
+
+    // 4. 配置图表选项
+    const option = {
+      backgroundColor: '#f5f5f5',
+      
+      title: {
+        text: '中国非遗景点分布',
+        left: 'center',
+        top: 20,
+        textStyle: {
+          color: '#333'
+        }
+      },
+
+      geo: {
+        map: 'china',
+        roam: true, 
+        zoom: 1.2,
+        label: {
+          show: true, 
+          color: '#333',
+          fontSize: 10
+        },
+        itemStyle: {
+          borderColor: '#999999',
+          borderWidth: 1
+        }
+      },
+
+      series: [
+        {
+          name: '非遗景点',
+          type: 'effectScatter',
+          coordinateSystem: 'geo',
+          data: scatterData, // 使用转换后的数据
+          symbolSize: function (val) {
+            // 根据热度值动态调整气泡大小 (val[2] 是热度值)
+            return val[2] / 5; 
+          },
+          showEffectOn: 'render',
+          rippleEffect: {
+            brushType: 'stroke',
+            scale: 3
+          },
+          label: {
+            formatter: '{b}',
+            position: 'right',
+            show: true,
+            fontSize: 10,
+            color: '#333'
+          },
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: '#333'
+          },
+          zlevel: 1
+        }
+      ]
+    }
+
+    // 5. 设置配置项
+    myChart.setOption(option)
+
+    // 6. 监听点击事件
+    myChart.on('click', function (params) {
+      if (params.componentType === 'series') {
+        // 点击景点
+        const siteData = params.data.raw
+        infoData.value = {
+          ...siteData,
+          description: PROVINCE_DATA.find(p => p.name === siteData.province)?.description || '暂无介绍'
+        }
+        showInfoPanel.value = true
+      }
+    })
+
+  } catch (error) {
+    console.error('地图初始化失败:', error)
+    if (mapRef.value) {
+      mapRef.value.innerHTML = `<div style="text-align:center; padding-top:200px; color:red;">地图加载失败，请检查网络连接。<br>${error.message}</div>`
+    }
+  }
+}
+
+const handleResize = () => {
+  if (myChart) {
+    myChart.resize()
+  }
+}
+
+onMounted(() => {
+  initMap()
+  window.addEventListener('resize', handleResize)
+})
+
+onBeforeUnmount(() => {
+  // 释放所有 object URLs
+  previewUrls.value.forEach(url => URL.revokeObjectURL(url))
+  previewUrls.value = []
+
+  if (myChart) {
+    myChart.dispose()
+    myChart = null
+  }
+  window.removeEventListener('resize', handleResize)
+})
 </script>
 
 <style scoped>
-/* 地图容器 */
-.map-root-container {
-  position: relative;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.map-wrapper {
   width: 100%;
-  height: 100%;
+  min-height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #E8E4D9 0%, #D4CFC3 50%, #C8D8C8 100%);
+  font-family: "Noto Serif SC", serif;
+  color: #3A3530;
+  padding: 20px;
+  position: relative;
   overflow: hidden;
 }
 
-.map {
-  width: 100%;
-  height: 100%;
-  background: #e8f4f8;
-}
-
-/* 加载动画 */
-.map-loading-overlay {
+/* 添加流动的云雾效果 */
+.map-wrapper::before {
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.95);
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(107, 122, 143, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(139, 115, 85, 0.06) 0%, transparent 50%);
+  animation: float 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.1);
+    opacity: 1;
+  }
+}
+
+.map-container {
+  width: 100%;
+  height: calc(100vh - 150px);
+  flex: 1;
+  background: linear-gradient(135deg, rgba(232, 228, 217, 0.95) 0%, rgba(212, 207, 195, 0.95) 100%);
+  border-radius: 12px;
+  border: 2px solid rgba(139, 115, 85, 0.3);
+  box-shadow: 
+    0 4px 16px rgba(107, 122, 143, 0.2),
+    inset 0 2px 8px rgba(139, 115, 85, 0.1),
+    0 0 40px rgba(107, 122, 143, 0.1);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* 添加流动的光影效果 */
+.map-container::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 30% 40%, rgba(159, 179, 200, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 70% 60%, rgba(139, 115, 85, 0.06) 0%, transparent 40%);
+  animation: lightMove 15s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes lightMove {
+  0% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(30%, 20%);
+  }
+  66% {
+    transform: translate(-20%, 30%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* 个人详情按钮 */
+.user-avatar {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #A8B5C0 0%, #7D8FA3 100%);
+  border: 2px solid #D4C5B0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(125, 143, 163, 0.4);
 }
 
-.map-loading-content {
-  text-align: center;
-  padding: 40px;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+.avatar-icon {
+  font-size: 20px;
 }
 
-.map-spinner {
-  margin: 0 auto 25px;
-  width: 70px;
-  height: 70px;
+.user-avatar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(125, 143, 163, 0.6);
 }
 
-.map-spinner-svg {
-  width: 100%;
-  height: 100%;
-  animation: map-spinner-rotate 2s linear infinite;
+/* AR体验按钮容器 */
+.ar-enter-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
 }
 
-.map-spinner-circle {
-  stroke: #e8f4f8;
-  stroke-width: 4;
-  fill: none;
+/* AR体验按钮 */
+.ar-enter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #9FB3C8 0%, #6B7A8F 100%);
+  color: #fff;
+  border: 2px solid #D4C5B0;
+  border-radius: 50px;
+  padding: 15px 30px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(107, 122, 143, 0.4);
+  transition: all 0.3s ease;
 }
 
-.map-spinner-arc {
-  stroke: #667eea;
-  stroke-width: 4;
-  stroke-linecap: round;
-  fill: none;
-  stroke-dasharray: 1, 200;
-  stroke-dashoffset: 0;
-  animation: map-spinner-dash 1.5s ease-in-out infinite;
+.ar-enter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(107, 122, 143, 0.6);
 }
 
-.map-spinner-dot {
-  fill: #667eea;
-  animation: map-spinner-pulse 2s ease-in-out infinite;
+.ar-enter-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(107, 122, 143, 0.4);
 }
 
-.map-loading-text {
-  color: #4a5568;
-  font-size: 16px;
-  font-weight: 500;
+.ar-icon {
+  font-size: 22px;
 }
 
-@keyframes map-spinner-rotate {
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes map-spinner-dash {
-  0% {
-    stroke-dasharray: 1, 200;
-    stroke-dashoffset: 0;
-  }
-  50% {
-    stroke-dasharray: 89, 200;
-    stroke-dashoffset: -35px;
-  }
-  100% {
-    stroke-dasharray: 89, 200;
-    stroke-dashoffset: -124px;
-  }
-}
-
-@keyframes map-spinner-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.1); }
-}
-
-/* 控制面板 */
-.map-control-panel {
+/* 定位按钮 */
+.location-btn {
   position: absolute;
-  top: 20px;
+  bottom: 20px;
   right: 20px;
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  min-width: 220px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-/* —— 定位按钮 —— */
-.locate-btn {
-  position: absolute;
-  bottom: 80px; /* 避开底部抽屉区域 */
-  right: 16px;
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  border: none;
-  font-size: 20px;
-  color: #a68a64;
+  background: linear-gradient(135deg, #9FB3C8 0%, #6B7A8F 100%);
+  border: 2px solid #D4C5B0;
+  box-shadow: 0 2px 8px rgba(107, 122, 143, 0.4);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(4px);
-  transition: all 0.2s;
-  z-index: 1000;
+  transition: all 0.3s ease;
+  z-index: 10;
 }
 
-.locate-btn:hover:not(:disabled) {
-  background: white;
-  transform: scale(1.1);
+.location-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(107, 122, 143, 0.6);
 }
 
-.locate-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-.map-control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.location-btn.locating {
+  animation: pulse 1.5s infinite;
 }
 
-.map-zoom-only {
+.location-icon {
+  font-size: 24px;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 77, 79, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 77, 79, 0);
+  }
+}
+
+/* 底部信息弹窗遮罩层 */
+.info-panel-overlay {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
   display: flex;
-  flex-direction: column;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-.map-zoom-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: white;
-  font-size: 18px;
-  cursor: pointer;
-  color: #4a5568;
-}
-.map-zoom-btn:first-child {
-  border-bottom: 1px solid #eee;
+  align-items: flex-end;
+  justify-content: center;
 }
 
-/* 图层控制 */
-.map-layer-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #4a5568;
-  margin-bottom: 8px;
+/* 底部信息弹窗 */
+.info-panel {
+  background: linear-gradient(180deg, rgba(232, 228, 217, 0.98) 0%, rgba(200, 195, 183, 0.98) 100%);
+  border: 2px solid rgba(139, 115, 85, 0.4);
+  border-radius: 12px 12px 0 0;
+  max-height: 50vh;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: 
+    0 -4px 20px rgba(107, 122, 143, 0.3),
+    0 0 30px rgba(139, 115, 85, 0.1);
+  position: relative;
+  z-index: 2;
 }
 
-.map-layer-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* 添加流动的光晕效果 */
+.info-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 80% 20%, rgba(159, 179, 200, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(139, 115, 85, 0.08) 0%, transparent 50%);
+  animation: glow 8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
 }
 
-.map-layer-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
+@keyframes glow {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
-/* 图例 */
-.map-legend {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+.info-content {
+  padding: 20px;
 }
 
-.map-legend-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #4a5568;
-  margin-bottom: 16px;
-}
-
-.map-legend-items {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.map-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.map-legend-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-.map-legend-unlocked { background: #4CAF50; }
-.map-legend-locked { background: #FF9800; }
-.map-legend-visited { background: #2196F3; }
-.map-legend-selected { background: #FF4081; }
-
-.map-legend-text {
-  font-size: 13px;
-  color: #4a5568;
-}
-
-/* 省份信息 */
-.map-province-info {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.map-province-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 12px;
-}
-
-.map-province-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.map-stat-item {
+.info-header {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 2px solid rgba(139, 115, 85, 0.3);
+  background: linear-gradient(90deg, rgba(159, 179, 200, 0.15) 0%, transparent 50%);
+  position: relative;
 }
 
-.map-stat-label {
-  color: #718096;
-}
-
-.map-stat-value {
-  color: #2d3748;
-  font-weight: 600;
-}
-
-.map-view-btn {
-  width: 100%;
-  padding: 10px;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.2s ease;
-}
-
-.map-view-btn:hover {
-  background: #5a67d8;
-}
-
-/* 比例尺 */
-.map-scale-control {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  background: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  font-size: 12px;
-  color: #4a5568;
-}
-
-@media (max-width: 768px) {
-  .map-control-panel {
-    top: 10px;
-    right: 10px;
-    left: 10px;
-    padding: 16px;
-  }
-
-  .map-scale-control {
-    bottom: 10px;
-    left: 10px;
-  }
-}
-
-:deep(.map-heritage-marker) {
-  pointer-events: auto !important;
-}
-
-:deep(.leaflet-popup-content-wrapper) {
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-}
-
-/* —— 底部抽屉动画 —— */
-.slide-up-enter-active,
-.slide-up-leave-active {
-  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s;
-}
-.slide-up-enter-from,
-.slide-up-leave-to {
-  transform: translateY(100%);
-  opacity: 0;
-}
-
-/* —— 抽屉容器 —— */
-.map-bottom-drawer {
+/* 添加流动的边框光效 */
+.info-header::after {
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
-  right: 0;
-  z-index: 1001;
-  padding: 0 16px 24px;
-  pointer-events: none;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(159, 179, 200, 0.6) 50%, 
+    transparent 100%);
+  animation: borderGlow 3s ease-in-out infinite;
 }
 
-.map-bottom-drawer > * {
-  pointer-events: auto;
+@keyframes borderGlow {
+  0%, 100% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
 }
 
-.drawer-content {
-  background: white;
-  border-radius: 16px 16px 0 0;
-  padding: 20px;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.drawer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.drawer-header h3 {
+.info-header h3 {
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #3a3530;
-  margin: 0;
+  color: #3A3530;
+  font-family: "Noto Serif SC", serif;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 20px;
-  color: #8c7b6b;
+  font-size: 28px;
+  color: #8C7B6B;
+  cursor: pointer;
+  padding: 0;
   width: 30px;
   height: 30px;
+  line-height: 1;
+  transition: color 0.3s;
+}
+
+.close-btn:hover {
+  color: #3A3530;
+}
+
+.info-body {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.info-left {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-middle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-right {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-image {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(107, 122, 143, 0.3);
+  border: 2px solid #D4C5B0;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.info-item .label {
+  min-width: 60px;
+  color: #6B7A8F;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.info-item .value {
+  color: #3A3530;
+  font-size: 14px;
+  flex: 1;
+}
+
+.info-item.description {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-item.description .label {
+  min-width: auto;
+}
+
+.info-item.description .value {
+  line-height: 1.6;
+  margin: 0;
+}
+
+.status-unlocked {
+  color: #52c41a;
+}
+
+.status-locked {
+  color: #f5222d;
+}
+
+/* AI问答区域样式 */
+.ai-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-align: center;
+  color: #3A3530;
+}
+
+.input-container {
+  position: relative;
+}
+
+.ask-input {
+  width: 100%;
+  padding: 12px 13px 12px 16px;
+  border: 2px solid #6B7A8F;
+  border-radius: 10px;
+  background: #F9F7F2;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 14px;
+  color: #3a3530;
+  resize: vertical;
+  min-height: 50px;
+  box-shadow: inset 0 1px 3px rgba(107, 122, 143, 0.1);
+}
+
+.ask-input:disabled {
+  background-color: #f5f5f5;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.attach-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #a68a64;
+  font-size: 18px;
   cursor: pointer;
+}
+
+.attach-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.preview-area {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preview-item {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-preview {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  background: #c44536;
+  color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.close-btn:hover {
-  background-color: #f0f0f0;
-}
-
-.drawer-body p {
-  font-size: 14px;
-  color: #5a524a;
-  margin: 8px 0;
-}
-
-.ar-button {
-  width: 100%;
-  background: linear-gradient(135deg, #a68a64, #8b7355);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 14px;
-  font-size: 16px;
-  font-weight: 600;
-  font-family: "Noto Serif SC", serif;
+  font-size: 10px;
   cursor: pointer;
-  margin-top: 16px;
+  border: none;
+}
+
+.remove-preview:disabled {
+  cursor: not-allowed;
+}
+
+.mic-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mic-btn,
+.send-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: transform 0.2s;
+  cursor: pointer;
+  font-size: 20px;
+  border: none;
 }
 
-.ar-button:hover {
-  transform: scale(1.02);
+.mic-btn {
+  background: linear-gradient(135deg, #9FB3C8 0%, #6B7A8F 100%);
+  color: #fff;
+  border: 2px solid #D4C5B0;
+}
+
+.mic-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.send-btn {
+  background: linear-gradient(135deg, #9FB3C8 0%, #6B7A8F 100%);
+  color: #fff;
+  border: 2px solid #D4C5B0;
+}
+
+.send-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.answer-box {
+  margin-top: 12px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(232, 228, 217, 0.95) 0%, rgba(200, 195, 183, 0.95) 100%);
+  border: 2px solid rgba(139, 115, 85, 0.3);
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 50px;
+  box-shadow: 
+    inset 0 1px 3px rgba(139, 115, 85, 0.1),
+    0 0 20px rgba(159, 179, 200, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 添加流动的背景光效 */
+.answer-box::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 50% 50%, rgba(159, 179, 200, 0.08) 0%, transparent 60%);
+  animation: answerGlow 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes answerGlow {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(10%, -10%) scale(1.05);
+  }
+}
+
+.typing-indicator {
+  margin-top: 8px;
+  font-style: italic;
+  color: #8c7b6b;
+  font-size: 12px;
+}
+
+.history-link {
+  display: block;
+  text-align: center;
+  color: #A68A64;
+  text-decoration: none;
+  font-size: 14px;
+  margin-top: 8px;
+  transition: color 0.2s;
+}
+
+.history-link:hover {
+  color: #8C7B6B;
+}
+
+/* 弹窗动画 */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+}
+
+/* 模型展示区 */
+.model-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #C4B8A8;
+}
+
+.model-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #3A3530;
+  margin-bottom: 12px;
+}
+
+.model-viewer-wrapper {
+  width: 100%;
+  height: 200px;
+  position: relative;
+  min-height: 200px;
+  z-index: 1;
+}
+
+.model-viewer-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #e5e2dd;
+  box-sizing: border-box;
+}
+
+.model-description {
+  margin-top: 12px;
+  padding: 10px;
+  background-color: #f9f7f2;
+  border-radius: 4px;
+  border-left: 3px solid #A68A64;
+}
+
+.model-description p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #5a524a;
+}
+
+/* 竖屏优化 */
+@media screen and (orientation: portrait) {
+  .map-wrapper {
+    padding: 10px;
+    min-height: calc(100vh - 80px);
+  }
+
+  .map-container {
+    height: calc(100vh - 120px);
+  }
+  .info-panel {
+    max-height: 60vh;
+  }
+  
+  .info-content {
+    padding: 16px;
+  }
+  
+  .info-header h3 {
+    font-size: 16px;
+  }
+  
+  .info-item .label,
+  .info-item .value {
+    font-size: 13px;
+  }
+
+  .model-viewer-wrapper {
+    height: 180px;
+  }
+
+  .info-body {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .info-left {
+    width: 100%;
+  }
+
+  .info-middle {
+    width: 100%;
+  }
+
+  .info-right {
+    width: 100%;
+    flex: none;
+  }
+
+  .site-image {
+    max-width: 150px;
+    max-height: 150px;
+  }
+
+  .ai-section {
+    gap: 10px;
+  }
+
+  .ask-input {
+    font-size: 13px;
+  }
+
+  .mic-btn,
+  .send-btn {
+    width: 44px;
+    height: 44px;
+  }
 }
 </style>

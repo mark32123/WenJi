@@ -76,6 +76,8 @@
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { chatService } from '@/api/user' // 使用项目中定义的 API 服务
 import Layout from '@/components/Layout.vue'
+// 引入SSEHandler
+import { SSEHandler } from '@/utils/sseHandler.js'
 // ====== 响应式状态 ======
 const questionText = ref('')
 const fileInputRef = ref(null)
@@ -158,7 +160,7 @@ async function submitQuestion() {
   }
 
   // 重置答案并设置响应状态
-  answer.value = '文迹正在思考中...'
+  answer.value = ''
   isResponding.value = true
 
   try {
@@ -177,30 +179,33 @@ async function submitQuestion() {
       formData.append('images', file)
     })
 
-    // 使用 fetch API 来处理流式响应
-    const token = localStorage.getItem('token');
-    const response = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      body: formData
-    });
-
-    if (response.ok) {
-      // 读取文本响应
-      const result = await response.text();
-      answer.value = result;
-    } else {
-      // 处理错误响应
-      const errorResult = await response.text();
-      answer.value = `请求失败: ${errorResult}`;
+    // 使用SSEHandler处理流式响应
+    const sseHandler = new SSEHandler()
+    
+    sseHandler.onData = (data) => {
+      // 实时追加AI回复内容
+      if (typeof data === 'string') {
+        answer.value += data
+      } else if (data.content) {
+        answer.value += data.content
+      }
     }
+
+    sseHandler.onError = (error) => {
+      console.error('SSE Error:', error)
+      answer.value = `请求失败: ${error.message || '未知错误'}`
+      isResponding.value = false
+    }
+
+    sseHandler.onComplete = () => {
+      isResponding.value = false
+    }
+
+    await sseHandler.sendStreamRequest('/api/ai/chat', formData)
     
   } catch (error) {
     console.error('AI 提问失败:', error)
-    answer.value = '请求发送失败，请检查网络后重试';
-  } finally {
+    answer.value = '请求发送失败，请检查网络后重试'
     isResponding.value = false
   }
 }

@@ -34,6 +34,12 @@
       <!-- 文艺权益 -->
       <div class="benefits">
         <div class="benefit-title">🎁 已兑权益</div>
+        
+        <!-- 积分显示 -->
+        <div class="points-display">
+          <div class="points-label">我的积分</div>
+          <div class="points-value">{{ points }}</div>
+        </div>
         <div 
           v-for="(voucher, index) in vouchers" 
           :key="index" 
@@ -58,14 +64,50 @@
       </div>
 
       <!-- 徽章（圆形瓦当） -->
-      <div class="section-title">🏆 我的徽章</div>
+      <div class="section-title">
+        🏆 我的徽章
+        <button class="view-all-btn" @click="goToAllBadges">所有徽章</button>
+      </div>
       <div class="badges">
         <div 
           v-for="(badge, index) in badges" 
           :key="index" 
           class="badge"
+          @click="showBadgeFullscreen(badge)"
         >
           {{ badge.text }}
+        </div>
+      </div>
+
+      <!-- 全屏徽章展示 -->
+      <div v-if="selectedBadge" class="badge-fullscreen" @click="closeBadgeFullscreen">
+        <div class="badge-fullscreen-content" @click.stop>
+          <div class="badge-fullscreen-close" @click="closeBadgeFullscreen">×</div>
+          <div class="badge-fullscreen-badge">
+            <div class="badge-fullscreen-inner">
+              <div class="badge-fullscreen-text">{{ selectedBadge.text }}</div>
+            </div>
+          </div>
+          <div class="badge-fullscreen-info">
+            <div class="badge-fullscreen-title">{{ selectedBadge.text.replace('\n', '') }}</div>
+            <div class="badge-fullscreen-desc">恭喜您获得此徽章！这是您在文迹之旅中的一大成就。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 已解锁成就 -->
+      <div class="section-title">
+        🎖️ 已解锁成就
+        <button class="view-all-btn" @click="goToAllAchievements">所有成就</button>
+      </div>
+      <div class="achievements">
+        <div
+          v-for="(achievement, index) in achievements"
+          :key="index"
+          class="achievement-item"
+        >
+          <div class="achievement-title">{{ achievement.title }}</div>
+          <div class="achievement-desc">{{ achievement.description }}</div>
         </div>
       </div>
     </div>
@@ -84,6 +126,7 @@ const username = ref('');
 const level = ref('');
 const userAvatar = ref(null);
 const selectedIconPaths = ref([]);
+const points = ref(parseInt(localStorage.getItem('userPoints')) || 1000); // 从localStorage读取积分，默认为1000
 
 // 默认头像路径 - 青瓷瓶
 const defaultAvatarPaths = [
@@ -96,8 +139,16 @@ const goToEditProfile = () => {
 }
 
 const goToShop = () => {
-  ElMessage.info('暂未开放');
-  // router.push('/shop');
+  //ElMessage.info('暂未开放');
+  router.push('/user/shop');
+}
+
+const goToAllBadges = () => {
+  router.push('/user/all-badges');
+}
+
+const goToAllAchievements = () => {
+  router.push('/user/all-achievements');
 }
 
 const loadUserInfo = async () => { 
@@ -189,6 +240,37 @@ const setSelectedIconPaths = (iconName) => {
       { type: 'ellipse', cx: 50, cy: 30, rx: 15, ry: 10, fill: '#A68A64' },
       { d: 'M35,30 h30 v40 h-30 z', rx: 6, fill: '#A68A64' },
       { type: 'ellipse', cx: 50, cy: 70, rx: 10, ry: 6, fill: '#8B7355' }
+    ],
+    inkstone: [
+      { d: 'M20,50 h60 v20 h-60 z', fill: '#6B5B4F' },
+      { d: 'M25,55 h50 v10 h-50 z', fill: '#8B7355' },
+      { d: 'M40,45 a5,5 0 1,0 0,0', fill: '#A68A64' }
+    ],
+    brush: [
+      { d: 'M45,20 h10 v60 h-10 z', fill: '#8B7355' },
+      { d: 'M48,20 a8,8 0 1,0 0,0', fill: '#A68A64' },
+      { d: 'M40,80 h20', stroke: '#6B5B4F', strokeWidth: 3, fill: 'none' }
+    ],
+    seal: [
+      { d: 'M25,25 h50 v50 h-50 z', fill: '#C44536' },
+      { d: 'M30,35 h40 v30 h-40 z', fill: '#D4C5B0' },
+      { d: 'M40,45 a5,5 0 1,0 0,0', fill: '#A68A64' }
+    ],
+    bamboo: [
+      { d: 'M45,10 h10 v80 h-10 z', fill: '#7D9A7E' },
+      { d: 'M42,30 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' },
+      { d: 'M42,50 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' },
+      { d: 'M42,70 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' }
+    ],
+    cloud: [
+      { d: 'M20,50 a15,15 0 1,0 0,0', fill: '#9FB3C8' },
+      { d: 'M35,45 a20,20 0 1,0 0,0', fill: '#A8B5C0' },
+      { d: 'M55,50 a15,15 0 1,0 0,0', fill: '#9FB3C8' }
+    ],
+    mountain: [
+      { d: 'M20,80 L50,30 L80,80 Z', fill: '#6B7A8F' },
+      { d: 'M10,80 L35,50 L60,80 Z', fill: '#8B9BB3' },
+      { d: 'M50,80 L75,45 L100,80 Z', fill: '#7D8FA3' }
     ]
   };
 
@@ -228,6 +310,29 @@ const badges = ref([
   { text: '瓷匠' },
   { text: '古建\n守护者' }
 ]);
+
+const selectedBadge = ref(null);
+
+const showBadgeFullscreen = (badge) => {
+  selectedBadge.value = badge;
+  document.body.style.overflow = 'hidden';
+};
+
+const closeBadgeFullscreen = () => {
+  selectedBadge.value = null;
+  document.body.style.overflow = '';
+};
+
+const achievements = ref([
+  {
+    title: '文化使者',
+    description: '成功完成三次AI导游讲解任务。'
+  },
+  {
+    title: '历史探寻者',
+    description: '参观了五个不同的历史文化景点。'
+  }
+]);
 onMounted(() => {
   loadUserInfo();
 });
@@ -243,11 +348,14 @@ onMounted(() => {
 .page {
   width: 100%;
   max-width: 390px;
-  height: 830px;
+  min-height: calc(100vh - 60px);
   background: white;
-  padding: 28px 20px;
+  padding: 28px 20px 40px 20px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* —————— 用户身份 —————— */
@@ -309,6 +417,29 @@ onMounted(() => {
   color: #5A524A;
 }
 
+/* 积分显示样式 */
+.points-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #A68A64 0%, #8B7355 100%);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(166, 138, 100, 0.2);
+}
+
+.points-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.points-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
 .voucher-item {
   background: #FAF8F5;
   border-left: 3px solid #A68A64;
@@ -340,10 +471,27 @@ onMounted(() => {
 
 /* —————— 地点 —————— */
 .section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 17px;
   font-weight: 600;
   margin: 20px 0 12px;
   color: #5A524A;
+}
+
+.view-all-btn {
+  background: none;
+  border: none;
+  color: #A68A64;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.3s ease;
+}
+
+.view-all-btn:hover {
+  color: #8B7355;
 }
 
 .places {
@@ -391,5 +539,167 @@ onMounted(() => {
   color: #A68A64;
   text-align: center;
   line-height: 1.3;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(166, 138, 100, 0.2);
+  border-color: #A68A64;
+}
+
+/* —————— 成就展示 —————— */
+.achievements {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.achievement-item {
+  background: #FAF8F5;
+  border-left: 3px solid #A68A64;
+  padding: 10px 12px;
+  border-radius: 0 6px 6px 0;
+  contain: layout style;
+}
+
+.achievement-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #3A3530;
+  margin-bottom: 4px;
+}
+
+.achievement-desc {
+  font-size: 13px;
+  color: #8C7B6B;
+  line-height: 1.4;
+}
+
+/* —————— 全屏徽章展示 —————— */
+.badge-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.badge-fullscreen-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: scaleIn 0.3s ease-in-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.badge-fullscreen-close {
+  position: absolute;
+  top: -50px;
+  right: -20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #5A524A;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.badge-fullscreen-close:hover {
+  background: white;
+  transform: scale(1.1);
+}
+
+.badge-fullscreen-badge {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  margin-bottom: 30px;
+}
+
+.badge-fullscreen-inner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #F5EFE9 0%, #E8E0D8 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(166, 138, 100, 0.3), inset 0 0 20px rgba(166, 138, 100, 0.1);
+  border: 4px solid #A68A64;
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-fullscreen-inner::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border-radius: 50%;
+  border: 2px dashed rgba(166, 138, 100, 0.3);
+}
+
+.badge-fullscreen-text {
+  font-size: 36px;
+  font-weight: 700;
+  color: #A68A64;
+  text-align: center;
+  line-height: 1.3;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.badge-fullscreen-info {
+  text-align: center;
+  max-width: 300px;
+}
+
+.badge-fullscreen-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #F5EFE9;
+  margin-bottom: 16px;
+}
+
+.badge-fullscreen-desc {
+  font-size: 16px;
+  color: #E8E0D8;
+  line-height: 1.6;
 }
 </style>

@@ -174,7 +174,7 @@ const login=async()=>{
       if(token && typeof token === 'string' && token.trim() !== '') {
         localStorage.setItem('token', token);
         console.log('Token set successfully:', token.substring(0, 20) + '...');
-        router.push('/user/home');
+        router.push('/user/map');
       } else {
         console.error('No valid token found in response');
         ElMessage.error('登录失败：服务器未返回有效认证令牌');
