@@ -86,13 +86,26 @@
     <!-- 所在地 -->
     <div class="form-group">
       <label class="form-label">常驻之地</label>
-      <input
-        v-model="location"
-        type="text"
-        class="form-input"
-        :placeholder="'当前地址: ' + (location || '未设置')"
-        id="location-input"
-      />
+      <div class="address-inputs">
+        <input
+          v-model="province"
+          type="text"
+          class="form-input address-input"
+          placeholder="省份"
+        />
+        <input
+          v-model="city"
+          type="text"
+          class="form-input address-input"
+          placeholder="城市"
+        />
+        <input
+          v-model="district"
+          type="text"
+          class="form-input address-input"
+          placeholder="区县"
+        />
+      </div>
       <button class="locate-btn" @click="getLocation">📍 自动获取当前位置</button>
     </div>
 
@@ -110,14 +123,13 @@ import Layout from '@/components/Layout.vue'
 import { ElMessage } from 'element-plus'
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getCurrentUserInfo, updateUserInfo, uploadFile } from '@/api/user' // 导入更新用户信息的API
+import { getCurrentUserInfo, updateUserInfo } from '@/api/user' // 导入更新用户信息的API
 import { mapApi } from '@/api/mapApi' // 导入mapApi
 
 const router = useRouter()
 
-// ========== 头像相关 ==========
+// ========== 头像相关 ==========        //新增id值，与后端相关
 const avatarMode = ref('upload') // 'upload' | 'select'
-const selectedFile = ref(null) // 新增：保存选择的文件对象
 
 const builtinIcons = [
   {
@@ -163,9 +175,57 @@ const builtinIcons = [
       { d: 'M35,30 h30 v40 h-30 z', rx: 6, fill: '#A68A64' },
       { type: 'ellipse', cx: 50, cy: 70, rx: 10, ry: 6, fill: '#8B7355' }
     ]
+  },
+  {
+    name: 'inkstone',
+    paths: [
+      { d: 'M20,50 h60 v20 h-60 z', fill: '#6B5B4F' },
+      { d: 'M25,55 h50 v10 h-50 z', fill: '#8B7355' },
+      { d: 'M40,45 a5,5 0 1,0 0,0', fill: '#A68A64' }
+    ]
+  },
+  {
+    name: 'brush',
+    paths: [
+      { d: 'M45,20 h10 v60 h-10 z', fill: '#8B7355' },
+      { d: 'M48,20 a8,8 0 1,0 0,0', fill: '#A68A64' },
+      { d: 'M40,80 h20', stroke: '#6B5B4F', strokeWidth: 3, fill: 'none' }
+    ]
+  },
+  {
+    name: 'seal',
+    paths: [
+      { d: 'M25,25 h50 v50 h-50 z', fill: '#C44536' },
+      { d: 'M30,35 h40 v30 h-40 z', fill: '#D4C5B0' },
+      { d: 'M40,45 a5,5 0 1,0 0,0', fill: '#A68A64' }
+    ]
+  },
+  {
+    name: 'bamboo',
+    paths: [
+      { d: 'M45,10 h10 v80 h-10 z', fill: '#7D9A7E' },
+      { d: 'M42,30 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' },
+      { d: 'M42,50 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' },
+      { d: 'M42,70 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' }
+    ]
+  },
+  {
+    name: 'cloud',
+    paths: [
+      { d: 'M20,50 a15,15 0 1,0 0,0', fill: '#9FB3C8' },
+      { d: 'M35,45 a20,20 0 1,0 0,0', fill: '#A8B5C0' },
+      { d: 'M55,50 a15,15 0 1,0 0,0', fill: '#9FB3C8' }
+    ]
+  },
+  {
+    name: 'mountain',
+    paths: [
+      { d: 'M20,80 L50,30 L80,80 Z', fill: '#6B7A8F' },
+      { d: 'M10,80 L35,50 L60,80 Z', fill: '#8B9BB3' },
+      { d: 'M50,80 L75,45 L100,80 Z', fill: '#7D8FA3' }
+    ]
   }
-]
-
+];
 const selectedIcon = ref(builtinIcons[0])
 
 const avatar = reactive({
@@ -182,7 +242,6 @@ function setAvatarMode(mode) {
 function handleFileUpload(event) {
   const file = event.target.files[0]
   if (file) {
-    selectedFile.value = file // 保存文件对象
     const url = URL.createObjectURL(file)
     avatar.type = 'image'
     avatar.url = url
@@ -196,6 +255,9 @@ function selectBuiltinIcon(icon) {
 
 // ========== 表单数据 ==========
 const elegantName = ref('')
+const province = ref('')
+const city = ref('')
+const district = ref('')
 const location = ref('')
 
 // 从后端获取用户信息
@@ -205,16 +267,7 @@ const loadUserInfo = async () => {
     if (response.code === 1) {
       // 使用后端返回的用户名和位置信息
       elegantName.value = response.data.username || '林砚之'
-      
-      // 检查后端是否返回了位置信息
-      if (response.data.location) {
-        location.value = response.data.location;
-      } else if (response.data.address) {
-        location.value = response.data.address;
-      } else {
-        // 如果后端没有位置信息，则自动尝试获取当前物理位置
-        await getLocation();
-      }
+      location.value = response.data.location || response.data.address || '景德镇'
       
       // 加载头像信息
       if (response.data.avatarUrl) {
@@ -278,27 +331,25 @@ async function reverseGeocode(lat, lng) {
 // 获取当前位置
 async function getLocation() {
   try {
-    ElMessage.info('正在尝试获取当前位置...')
-    // 调用地图API获取实际位置 (使用 HTML5 Geolocation)
+    ElMessage.info('正在获取位置…')
+    // 调用地图API获取实际位置
     const locationData = await mapApi.getUserLocation();
     
-    // 如果获取到的是非默认的有效经纬度
-    if (locationData && locationData.lat !== 35.8617) {
-      // 使用反向地理编码获取城市名称
-      const city = await reverseGeocode(locationData.lat, locationData.lng);
-      location.value = city;
-      ElMessage.success(`位置已自动识别为: ${city}`)
-    } else {
-      // 如果定位失败或返回默认值，则默认设置为景德镇
-      if (!location.value) {
-        location.value = '景德镇'
-      }
+    // 使用反向地理编码获取详细地址
+    const address = await reverseGeocode(locationData.lat, locationData.lng);
+    // 解析地址并填充到相应字段
+    if (address) {
+      const addressParts = address.split(/[省市县区]/).filter(part => part.trim());
+      if (addressParts.length >= 1) province.value = addressParts[0];
+      if (addressParts.length >= 2) city.value = addressParts[1];
+      if (addressParts.length >= 3) district.value = addressParts[2];
+      location.value = address;
     }
+    
+    ElMessage.success('位置获取成功')
   } catch (error) {
-    console.error('获取地理位置失败:', error)
-    if (!location.value) {
-      location.value = '景德镇'
-    }
+    console.error('获取位置失败:', error)
+    ElMessage.error('获取位置失败')
   }
 }
 
@@ -310,53 +361,57 @@ function goToSecurity() {
 
 // 保存用户信息到后端
 async function saveInfo() {
-  const loadingMsg = ElMessage({
-    message: '正在保存信息...',
-    type: 'info',
-    duration: 0 
-  });
-  
   try {
+    // 显示保存中提示
+    const loadingMsg = ElMessage({
+      message: '正在保存信息...',
+      type: 'info',
+      duration: 0 // 持久显示直到手动关闭
+    });
+    
     // 准备要更新的数据
     const updateData = {
       username: elegantName.value,
-      location: location.value
+      // 提供完整的地址信息给后端
+      address: {
+        province: province.value,
+        city: city.value,
+        district: district.value,
+        fullAddress: location.value
+      }
     };
 
     // 处理头像数据
     if (avatar.type === 'image') {
-      // 如果有新选择的文件，先上传
-      if (selectedFile.value) {
-        const uploadRes = await uploadFile(selectedFile.value);
-        if (uploadRes.code === 1) {
-          updateData.avatarUrl = uploadRes.data;
-        } else {
-          throw new Error(uploadRes.msg || '头像上传失败');
-        }
-      } else {
-        // 如果没有新文件，使用原有的 URL
-        updateData.avatarUrl = avatar.url;
-      }
+      // 如果是图片，需要先上传到服务器获取URL
+      // 这里我们先保存图片的Object URL，实际应用中需要上传到服务器
+      updateData.avatarType = 'image';
+      updateData.avatarUrl = avatar.url;
     } else {
-      // 选择内置图标模式，清空 avatarUrl 并设置 iconName
-      updateData.avatarUrl = null;
+      // 保存选择的内置图标名称
+      updateData.avatarType = 'builtin';
       updateData.iconName = selectedIcon.value.name;
     }
 
     // 调用API更新用户信息
     const response = await updateUserInfo(updateData);
     
+    // 关闭加载提示
     loadingMsg.close();
     
     if (response.code === 1) {
       ElMessage.success(response.msg || '个人信息保存成功！');
+      // 保存成功后返回到个人资料页面，这样会重新加载数据
       router.replace('/user/profile')
     } else {
       ElMessage.error(response.msg || '保存失败，请稍后重试');
     }
   } catch (error) {
     console.error('保存用户信息失败:', error);
-    loadingMsg.close();
+    // 关闭加载提示
+    if (typeof loadingMsg !== 'undefined') {
+      loadingMsg.close();
+    }
     ElMessage.error('保存失败：' + (error.message || '网络错误'));
   }
 }
@@ -484,6 +539,16 @@ onMounted(() => {
 .form-input:focus {
   outline: none;
   border-color: #a68a64;
+}
+
+.address-inputs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.address-input {
+  flex: 1;
 }
 
 .locate-btn {

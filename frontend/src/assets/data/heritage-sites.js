@@ -37,18 +37,6 @@ export const CHINA_NON_HERITAGE_SITES = [
     distance: 0
   },
   {
-    site_id: 'site_hz_002',
-    name: '杭州刺绣博物馆',
-    type: 'handicraft',
-    lat: 30.2586,
-    lng: 120.1653,
-    category: '国家级非遗',
-    province: '浙江省',
-    status: 'unlocked',
-    heat_level: 0.80,
-    distance: 0
-  },
-  {
     site_id: 'site_hz_003',
     name: '西湖龙井茶园',
     type: 'food_craft',
@@ -121,18 +109,6 @@ export const CHINA_NON_HERITAGE_SITES = [
     distance: 0
   },
   {
-    site_id: 'site_gz_001',
-    name: '广绣工坊',
-    type: 'handicraft',
-    lat: 23.1291,
-    lng: 113.2644,
-    category: '国家级非遗',
-    province: '广东省',
-    status: 'locked',
-    heat_level: 0.70,
-    distance: 0
-  },
-  {
     site_id: 'site_sz_003',
     name: '粤剧艺术博物馆',
     type: 'performance',
@@ -142,18 +118,6 @@ export const CHINA_NON_HERITAGE_SITES = [
     province: '广东省',
     status: 'locked',
     heat_level: 0.76,
-    distance: 0
-  },
-  {
-    site_id: 'site_yn_001',
-    name: '普洱茶制作技艺展示馆',
-    type: 'food_craft',
-    lat: 22.0079,
-    lng: 100.9781,
-    category: '国家级非遗',
-    province: '云南省',
-    status: 'locked',
-    heat_level: 0.68,
     distance: 0
   },
   {
@@ -229,18 +193,6 @@ export const CHINA_NON_HERITAGE_SITES = [
     distance: 0
   },
   {
-    site_id: 'site_fz_001',
-    name: '福州脱胎漆器展示馆',
-    type: 'handicraft',
-    lat: 26.0745,
-    lng: 119.2965,
-    category: '国家级非遗',
-    province: '福建省',
-    status: 'locked',
-    heat_level: 0.67,
-    distance: 0
-  },
-  {
     site_id: 'site_hb_001',
     name: '武汉汉绣工坊',
     type: 'handicraft',
@@ -311,6 +263,18 @@ export const CHINA_NON_HERITAGE_SITES = [
     status: 'locked',
     heat_level: 0.66,
     distance: 0
+  },
+  {
+    site_id: 'site_jx_001',
+    name: '景德镇古窑民俗博览区',
+    type: 'handicraft',
+    lat: 29.2688,
+    lng: 117.1786,
+    category: '世界文化遗产',
+    province: '江西省',
+    status: 'unlocked',
+    heat_level: 0.91,
+    distance: 0
   }
 ];
 
@@ -342,7 +306,8 @@ export const PROVINCE_DATA = [
     unlocked: 1,
     total_sites: 1,
     visited_sites: 0,
-    progress: 100
+    progress: 100,
+    description: '中国首都,拥有丰富的历史文化遗产,包括故宫、天坛等世界文化遗产。'
   },
   {
     name: '浙江省',
@@ -351,7 +316,8 @@ export const PROVINCE_DATA = [
     unlocked: 3,
     total_sites: 3,
     visited_sites: 1,
-    progress: 100
+    progress: 100,
+    description: '江南水乡的代表,拥有西湖、杭州刺绣等丰富的非遗资源。'
   },
   {
     name: '江苏省',
@@ -360,7 +326,8 @@ export const PROVINCE_DATA = [
     unlocked: 3,
     total_sites: 3,
     visited_sites: 1,
-    progress: 100
+    progress: 100,
+    description: '园林之省,苏州园林、南京云锦等非遗文化闻名遐迩。'
   },
   {
     name: '上海市',
@@ -369,7 +336,8 @@ export const PROVINCE_DATA = [
     unlocked: 1,
     total_sites: 1,
     visited_sites: 0,
-    progress: 100
+    progress: 100,
+    description: '国际化大都市,上海博物馆收藏了大量珍贵文物。'
   },
   {
     name: '四川省',
@@ -378,7 +346,8 @@ export const PROVINCE_DATA = [
     unlocked: 0,
     total_sites: 2,
     visited_sites: 0,
-    progress: 0
+    progress: 0,
+    description: '蜀绣、蜀锦等传统工艺的发源地,拥有丰富的非遗资源。'
   },
   {
     name: '广东省',
@@ -387,7 +356,8 @@ export const PROVINCE_DATA = [
     unlocked: 0,
     total_sites: 2,
     visited_sites: 0,
-    progress: 0
+    progress: 0,
+    description: '广绣、粤剧等岭南文化的重要传承地。'
   },
   {
     name: '云南省',
@@ -396,7 +366,8 @@ export const PROVINCE_DATA = [
     unlocked: 0,
     total_sites: 2,
     visited_sites: 0,
-    progress: 0
+    progress: 0,
+    description: '多民族聚居地,普洱茶制作技艺等非遗文化独具特色。'
   },
   {
     name: '新疆维吾尔自治区',
@@ -405,7 +376,8 @@ export const PROVINCE_DATA = [
     unlocked: 0,
     total_sites: 1,
     visited_sites: 0,
-    progress: 0
+    progress: 0,
+    description: '维吾尔木卡姆艺术等人类非物质文化遗产的重要发源地。'
   },
   {
     name: '安徽省',
@@ -414,7 +386,8 @@ export const PROVINCE_DATA = [
     unlocked: 0,
     total_sites: 2,
     visited_sites: 0,
-    progress: 0
+    progress: 0,
+    description: '徽派建筑、徽墨等传统工艺的代表地。'
   },
   {
     name: '福建省',
@@ -423,7 +396,8 @@ export const PROVINCE_DATA = [
     unlocked: 1,
     total_sites: 2,
     visited_sites: 0,
-    progress: 50
+    progress: 50,
+    description: '福建土楼等世界文化遗产所在地,脱胎漆器等传统工艺闻名。'
   },
   {
     name: '湖北省',
@@ -432,7 +406,8 @@ export const PROVINCE_DATA = [
     unlocked: 0,
     total_sites: 1,
     visited_sites: 0,
-    progress: 0
+    progress: 0,
+    description: '汉绣等传统工艺的重要传承地。'
   },
   {
     name: '山东省',
@@ -441,7 +416,8 @@ export const PROVINCE_DATA = [
     unlocked: 2,
     total_sites: 2,
     visited_sites: 0,
-    progress: 100
+    progress: 100,
+    description: '孔子故里,拥有丰富的儒家文化和传统工艺。'
   },
   {
     name: '河南省',
@@ -450,7 +426,8 @@ export const PROVINCE_DATA = [
     unlocked: 1,
     total_sites: 2,
     visited_sites: 0,
-    progress: 50
+    progress: 50,
+    description: '少林寺等著名景点所在地,中原文化的重要发源地。'
   },
   {
     name: '黑龙江省',
@@ -459,7 +436,18 @@ export const PROVINCE_DATA = [
     unlocked: 0,
     total_sites: 1,
     visited_sites: 0,
-    progress: 0
+    progress: 0,
+    description: '冰灯游园会等冰雪文化的代表地。'
+  },
+  {
+    name: '江西省',
+    code: '360000',
+    center: [28.6820, 115.8579],
+    unlocked: 1,
+    total_sites: 1,
+    visited_sites: 0,
+    progress: 100,
+    description: '景德镇瓷器闻名天下,千年瓷都,陶瓷文化的重要发源地。'
   },
   {
     name: '陕西省',
@@ -468,7 +456,8 @@ export const PROVINCE_DATA = [
     unlocked: 1,
     total_sites: 1,
     visited_sites: 0,
-    progress: 100
+    progress: 100,
+    description: '兵马俑等世界文化遗产所在地,中华文明的重要发祥地。'
   }
 ];
 

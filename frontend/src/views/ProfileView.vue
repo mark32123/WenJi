@@ -29,12 +29,17 @@
         
         <div class="username">{{ username }}</div>
         <div class="level">{{ level }}</div>
-        <div class="points">💰 积分: {{ points }}</div>
       </div>
 
       <!-- 文艺权益 -->
       <div class="benefits">
         <div class="benefit-title">🎁 已兑权益</div>
+        
+        <!-- 积分显示 -->
+        <div class="points-display">
+          <div class="points-label">我的积分</div>
+          <div class="points-value">{{ points }}</div>
+        </div>
         <div 
           v-for="(voucher, index) in vouchers" 
           :key="index" 
@@ -46,37 +51,63 @@
         <a href="#" class="go-to-shop" @click.prevent="goToShop">→ 前往文迹商城兑换更多</a>
       </div>
 
-      <!-- 已点亮地点 (改为足迹博客展示) -->
-      <div class="section-title">🔥 我的足迹（{{ travelBlogs.length }} 次打卡）</div>
-      <div class="travel-blogs">
+      <!-- 已点亮地点 -->
+      <div class="section-title">🔥 已点亮地点（{{ visitedPlaces.length }}/{{ totalPlaces }}）</div>
+      <div class="places">
         <div 
-          v-for="(blog, index) in travelBlogs" 
+          v-for="(place, index) in visitedPlaces" 
           :key="index" 
-          class="blog-card"
+          class="place-tag"
         >
-          <div class="blog-header">
-            <span class="blog-site">📍 {{ blog.siteId }}</span>
-            <span class="blog-date">{{ formatDate(blog.createTime) }}</span>
-          </div>
-          <div class="blog-title">{{ blog.title }}</div>
-          <div class="blog-content">{{ blog.content }}</div>
-          <div v-if="blog.images" class="blog-images">
-             <!-- 解析 JSON 字符串显示图片 -->
-             <img v-for="(img, idx) in parseImages(blog.images)" :key="idx" :src="img" class="blog-img" />
-          </div>
+          <span class="place-icon">·</span>{{ place }}
         </div>
       </div>
 
       <!-- 徽章（圆形瓦当） -->
-      <div class="section-title">🏆 我的徽章</div>
+      <div class="section-title">
+        🏆 我的徽章
+        <button class="view-all-btn" @click="goToAllBadges">所有徽章</button>
+      </div>
       <div class="badges">
         <div 
           v-for="(badge, index) in badges" 
           :key="index" 
-          class="badge-item"
+          class="badge"
+          @click="showBadgeFullscreen(badge)"
         >
-          <div class="badge-icon">🏅</div>
-          <div class="badge-name">{{ badge.name }}</div>
+          {{ badge.text }}
+        </div>
+      </div>
+
+      <!-- 全屏徽章展示 -->
+      <div v-if="selectedBadge" class="badge-fullscreen" @click="closeBadgeFullscreen">
+        <div class="badge-fullscreen-content" @click.stop>
+          <div class="badge-fullscreen-close" @click="closeBadgeFullscreen">×</div>
+          <div class="badge-fullscreen-badge">
+            <div class="badge-fullscreen-inner">
+              <div class="badge-fullscreen-text">{{ selectedBadge.text }}</div>
+            </div>
+          </div>
+          <div class="badge-fullscreen-info">
+            <div class="badge-fullscreen-title">{{ selectedBadge.text.replace('\n', '') }}</div>
+            <div class="badge-fullscreen-desc">恭喜您获得此徽章！这是您在文迹之旅中的一大成就。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 已解锁成就 -->
+      <div class="section-title">
+        🎖️ 已解锁成就
+        <button class="view-all-btn" @click="goToAllAchievements">所有成就</button>
+      </div>
+      <div class="achievements">
+        <div
+          v-for="(achievement, index) in achievements"
+          :key="index"
+          class="achievement-item"
+        >
+          <div class="achievement-title">{{ achievement.title }}</div>
+          <div class="achievement-desc">{{ achievement.description }}</div>
         </div>
       </div>
     </div>
@@ -88,16 +119,14 @@ import { onActivated, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Layout from '@/components/Layout.vue'
 import { ElMessage } from 'element-plus';
-import { getCurrentUserInfo, getUserBadges, getMyTravelBlogs } from '@/api/user';
+import { getCurrentUserInfo } from '@/api/user';
 const router = useRouter();
 
 const username = ref('');
 const level = ref('');
-const points = ref(0);
 const userAvatar = ref(null);
 const selectedIconPaths = ref([]);
-const badges = ref([]);
-const travelBlogs = ref([]);
+const points = ref(parseInt(localStorage.getItem('userPoints')) || 1000); // 从localStorage读取积分，默认为1000
 
 // 默认头像路径 - 青瓷瓶
 const defaultAvatarPaths = [
@@ -110,69 +139,78 @@ const goToEditProfile = () => {
 }
 
 const goToShop = () => {
-  ElMessage.info('暂未开放');
+  //ElMessage.info('暂未开放');
+  router.push('/user/shop');
 }
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return '';
-  return new Date(dateStr).toLocaleDateString();
-};
+const goToAllBadges = () => {
+  router.push('/user/all-badges');
+}
 
-const parseImages = (jsonStr) => {
-  try {
-    return JSON.parse(jsonStr);
-  } catch (e) {
-    return [];
-  }
-};
+const goToAllAchievements = () => {
+  router.push('/user/all-achievements');
+}
 
-const loadProfileData = async () => {
-  try {
-    const [userRes, badgeRes, blogRes] = await Promise.all([
-      getCurrentUserInfo(),
-      getUserBadges(),
-      getMyTravelBlogs()
-    ]);
-
-    if (userRes.code === 1) {
-      username.value = userRes.data.username || '...';
-      level.value = userRes.data.level || '普通用户';
-      points.value = userRes.data.points || 0;
+const loadUserInfo = async () => { 
+  try{
+    const response = await getCurrentUserInfo();
+    console.log('获取用户信息响应:', response); // 调试信息
+    
+    if (response.code === 1) {
+      username.value = response.data.username || '...';
+      level.value = response.data.level || '普通用户';
       
       // 处理头像数据
-      if (userRes.data.avatarUrl) {
+      if (response.data.avatarUrl) {
+        // 用户上传的头像
         userAvatar.value = {
           type: 'image',
-          url: userRes.data.avatarUrl
+          url: response.data.avatarUrl
         };
-      } else if (userRes.data.iconName) {
+        console.log('设置了图片头像:', response.data.avatarUrl);
+      } else if (response.data.iconName) {
+        // 用户选择的内置图标
         userAvatar.value = {
           type: 'builtin',
-          iconName: userRes.data.iconName
+          iconName: response.data.iconName
         };
-        setSelectedIconPaths(userRes.data.iconName);
+        
+        // 根据图标名称设置路径
+        setSelectedIconPaths(response.data.iconName);
+        console.log('设置了内置头像:', response.data.iconName);
       } else {
+        // 使用默认头像
         userAvatar.value = {
           type: 'builtin',
           iconName: 'default'
         };
         selectedIconPaths.value = defaultAvatarPaths;
+        console.log('设置了默认头像');
       }
+    } else {
+      username.value = '...';
+      level.value = '普通用户';
+      // 设置默认头像
+      userAvatar.value = {
+        type: 'builtin',
+        iconName: 'default'
+      };
+      selectedIconPaths.value = defaultAvatarPaths;
+      console.log('响应错误，设置了默认头像');
     }
-    if (badgeRes.code === 1) badges.value = badgeRes.data;
-    if (blogRes.code === 1) travelBlogs.value = blogRes.data;
   } catch (error) {
-    console.error('加载个人主页数据失败:', error);
+    console.error('获取用户信息失败:', error);
+    username.value = '...';
+    level.value = '普通用户';
+    // 设置默认头像
+    userAvatar.value = {
+      type: 'builtin',
+      iconName: 'default'
+    };
+    selectedIconPaths.value = defaultAvatarPaths;
+    console.log('捕获错误，设置了默认头像');
   }
-};
-
-onMounted(() => {
-  loadProfileData();
-});
-
-onActivated(() => {
-  loadProfileData();
-});
+}
 
 // 根据图标名称设置路径
 const setSelectedIconPaths = (iconName) => {
@@ -202,6 +240,37 @@ const setSelectedIconPaths = (iconName) => {
       { type: 'ellipse', cx: 50, cy: 30, rx: 15, ry: 10, fill: '#A68A64' },
       { d: 'M35,30 h30 v40 h-30 z', rx: 6, fill: '#A68A64' },
       { type: 'ellipse', cx: 50, cy: 70, rx: 10, ry: 6, fill: '#8B7355' }
+    ],
+    inkstone: [
+      { d: 'M20,50 h60 v20 h-60 z', fill: '#6B5B4F' },
+      { d: 'M25,55 h50 v10 h-50 z', fill: '#8B7355' },
+      { d: 'M40,45 a5,5 0 1,0 0,0', fill: '#A68A64' }
+    ],
+    brush: [
+      { d: 'M45,20 h10 v60 h-10 z', fill: '#8B7355' },
+      { d: 'M48,20 a8,8 0 1,0 0,0', fill: '#A68A64' },
+      { d: 'M40,80 h20', stroke: '#6B5B4F', strokeWidth: 3, fill: 'none' }
+    ],
+    seal: [
+      { d: 'M25,25 h50 v50 h-50 z', fill: '#C44536' },
+      { d: 'M30,35 h40 v30 h-40 z', fill: '#D4C5B0' },
+      { d: 'M40,45 a5,5 0 1,0 0,0', fill: '#A68A64' }
+    ],
+    bamboo: [
+      { d: 'M45,10 h10 v80 h-10 z', fill: '#7D9A7E' },
+      { d: 'M42,30 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' },
+      { d: 'M42,50 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' },
+      { d: 'M42,70 h16', stroke: '#5A7A65', strokeWidth: 2, fill: 'none' }
+    ],
+    cloud: [
+      { d: 'M20,50 a15,15 0 1,0 0,0', fill: '#9FB3C8' },
+      { d: 'M35,45 a20,20 0 1,0 0,0', fill: '#A8B5C0' },
+      { d: 'M55,50 a15,15 0 1,0 0,0', fill: '#9FB3C8' }
+    ],
+    mountain: [
+      { d: 'M20,80 L50,30 L80,80 Z', fill: '#6B7A8F' },
+      { d: 'M10,80 L35,50 L60,80 Z', fill: '#8B9BB3' },
+      { d: 'M50,80 L75,45 L100,80 Z', fill: '#7D8FA3' }
     ]
   };
 
@@ -216,16 +285,57 @@ const setSelectedIconPaths = (iconName) => {
 
 const vouchers = ref([
   {
-    name: '唐三彩陶马周边',
-    description: '景德镇博物馆文创中心领取'
+    name: '龙井春茗话费券',
+    description: '可抵扣10元通信费用 · 有效期至2026.12'
   },
   {
-    name: '古窑遗址体验券',
-    description: '凭码至古窑民俗博览区核销'
+    name: '青瓷守护礼包',
+    description: '含AR体验券 ×2 + 专属徽章'
   }
 ]);
 
+const visitedPlaces = ref([
+  '杭州',
+  '苏州',
+  '景德镇',
+  '泉州',
+  '西安'
+]);
+
 const totalPlaces = ref(36);
+
+const badges = ref([
+  { text: '茶艺\n传人' },
+  { text: '绣坊\n学徒' },
+  { text: '瓷匠' },
+  { text: '古建\n守护者' }
+]);
+
+const selectedBadge = ref(null);
+
+const showBadgeFullscreen = (badge) => {
+  selectedBadge.value = badge;
+  document.body.style.overflow = 'hidden';
+};
+
+const closeBadgeFullscreen = () => {
+  selectedBadge.value = null;
+  document.body.style.overflow = '';
+};
+
+const achievements = ref([
+  {
+    title: '文化使者',
+    description: '成功完成三次AI导游讲解任务。'
+  },
+  {
+    title: '历史探寻者',
+    description: '参观了五个不同的历史文化景点。'
+  }
+]);
+onMounted(() => {
+  loadUserInfo();
+});
 </script>
 
 <style scoped>
@@ -238,11 +348,14 @@ const totalPlaces = ref(36);
 .page {
   width: 100%;
   max-width: 390px;
-  height: 830px;
+  min-height: calc(100vh - 60px);
   background: white;
-  padding: 28px 20px;
+  padding: 28px 20px 40px 20px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* —————— 用户身份 —————— */
@@ -304,6 +417,29 @@ const totalPlaces = ref(36);
   color: #5A524A;
 }
 
+/* 积分显示样式 */
+.points-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #A68A64 0%, #8B7355 100%);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(166, 138, 100, 0.2);
+}
+
+.points-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.points-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
 .voucher-item {
   background: #FAF8F5;
   border-left: 3px solid #A68A64;
@@ -335,10 +471,27 @@ const totalPlaces = ref(36);
 
 /* —————— 地点 —————— */
 .section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 17px;
   font-weight: 600;
   margin: 20px 0 12px;
   color: #5A524A;
+}
+
+.view-all-btn {
+  background: none;
+  border: none;
+  color: #A68A64;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.3s ease;
+}
+
+.view-all-btn:hover {
+  color: #8B7355;
 }
 
 .places {
@@ -372,87 +525,181 @@ const totalPlaces = ref(36);
   gap: 12px;
 }
 
-.badge-item {
+.badge {
   width: 68px;
-  height: 80px;
+  height: 68px;
+  background: white;
+  border: 1px solid #C4B8A8;
+  border-radius: 50%; /* 圆形瓦当 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #A68A64;
+  text-align: center;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(166, 138, 100, 0.2);
+  border-color: #A68A64;
+}
+
+/* —————— 成就展示 —————— */
+.achievements {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.achievement-item {
+  background: #FAF8F5;
+  border-left: 3px solid #A68A64;
+  padding: 10px 12px;
+  border-radius: 0 6px 6px 0;
+  contain: layout style;
+}
+
+.achievement-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #3A3530;
+  margin-bottom: 4px;
+}
+
+.achievement-desc {
+  font-size: 13px;
+  color: #8C7B6B;
+  line-height: 1.4;
+}
+
+/* —————— 全屏徽章展示 —————— */
+.badge-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.badge-fullscreen-content {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  animation: scaleIn 0.3s ease-in-out;
 }
 
-.badge-icon {
-  width: 50px;
-  height: 50px;
-  background: #FAF8F5;
-  border: 1px solid #C4B8A8;
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.badge-fullscreen-close {
+  position: absolute;
+  top: -50px;
+  right: -20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
-}
-
-.badge-name {
-  font-size: 11px;
-  color: #8C7B6B;
-  text-align: center;
-}
-
-/* —————— 足迹博客 —————— */
-.travel-blogs {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.blog-card {
-  background: #FAF8F5;
-  border-radius: 8px;
-  padding: 12px;
-  border: 1px solid #EFEAE5;
-}
-
-.blog-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 12px;
-}
-
-.blog-site {
-  color: #A68A64;
-  font-weight: 600;
-}
-
-.blog-date {
-  color: #999;
-}
-
-.blog-title {
-  font-weight: 700;
-  font-size: 15px;
-  margin-bottom: 6px;
-  color: #3A3530;
-}
-
-.blog-content {
-  font-size: 13px;
   color: #5A524A;
-  line-height: 1.5;
-  margin-bottom: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
 }
 
-.blog-images {
+.badge-fullscreen-close:hover {
+  background: white;
+  transform: scale(1.1);
+}
+
+.badge-fullscreen-badge {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  margin-bottom: 30px;
+}
+
+.badge-fullscreen-inner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #F5EFE9 0%, #E8E0D8 100%);
+  border-radius: 50%;
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(166, 138, 100, 0.3), inset 0 0 20px rgba(166, 138, 100, 0.1);
+  border: 4px solid #A68A64;
+  position: relative;
+  overflow: hidden;
 }
 
-.blog-img {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 4px;
+.badge-fullscreen-inner::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border-radius: 50%;
+  border: 2px dashed rgba(166, 138, 100, 0.3);
+}
+
+.badge-fullscreen-text {
+  font-size: 36px;
+  font-weight: 700;
+  color: #A68A64;
+  text-align: center;
+  line-height: 1.3;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.badge-fullscreen-info {
+  text-align: center;
+  max-width: 300px;
+}
+
+.badge-fullscreen-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #F5EFE9;
+  margin-bottom: 16px;
+}
+
+.badge-fullscreen-desc {
+  font-size: 16px;
+  color: #E8E0D8;
+  line-height: 1.6;
 }
 </style>

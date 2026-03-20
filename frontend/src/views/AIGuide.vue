@@ -18,12 +18,6 @@
     <section class="ai-section">
       <h2 class="ai-title">向智游导游提问</h2>
 
-      <!-- 会话信息 -->
-      <div v-if="currentChatId" class="session-info">
-        <span class="continue-message">继续之前的对话</span>
-        <span class="session-time">{{ formatDate(sessionStartTime || new Date()) }}</span>
-      </div>
-
       <div class="input-container">
         <textarea
           v-model="questionText"
@@ -68,7 +62,7 @@
 
       <!-- AI 回答区域 -->
       <div v-if="answer || isResponding" class="answer-box">
-        <div v-if="!isResponding" class="answer-content">{{ answer }}</div>
+        <div class="answer-content">{{ answer }}</div>
         <div v-if="isResponding" class="typing-indicator">文迹正在思考中...</div>
       </div>
     </section>
@@ -79,10 +73,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onBeforeUnmount, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { chatService } from '@/api/user' // 使用项目中定义的 API 服务
 import Layout from '@/components/Layout.vue'
+// 引入SSEHandler
+import { SSEHandler } from '@/utils/sseHandler.js'
 // ====== 响应式状态 ======
 const questionText = ref('')
 const fileInputRef = ref(null)
@@ -91,31 +86,6 @@ const previewUrls = ref([])
 const answer = ref('')
 const isResponding = ref(false)
 const currentChatId = ref(null) // 添加这一行
-
-const route = useRoute()
-
-// 格式化日期函数
-function formatDate(date) {
-  if (!date) return '未知时间'
-  const d = new Date(date)
-  return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-}
-
-// 组件挂载时检查URL参数
-const sessionStartTime = ref(null)
-onMounted(() => {
-  const chatIdFromUrl = route.query.chatId
-  const startTimeFromUrl = route.query.startTime
-  if (chatIdFromUrl) {
-    console.log('从URL获取到会话ID:', chatIdFromUrl)
-    console.log('从URL获取到开始时间:', startTimeFromUrl)
-    currentChatId.value = chatIdFromUrl
-    sessionStartTime.value = startTimeFromUrl
-  } else {
-    // 如果没有URL参数，创建新会话
-    createNewChatSession()
-  }
-})
 
 // 当前景点（可从路由或 API 获取）
 const currentSpot = {
@@ -184,12 +154,10 @@ async function submitQuestion() {
 
   if (isResponding.value) return // 防止重复提交
 
-  // 确保有会话ID
+  // 如果还没有会话ID，则创建一个
   if (!currentChatId.value) {
     createNewChatSession();
   }
-
-  console.log('提交问题，使用会话ID:', currentChatId.value)
 
   // 重置答案并设置响应状态
   answer.value = ''
@@ -211,83 +179,33 @@ async function submitQuestion() {
       formData.append('images', file)
     })
 
-    // 使用 fetch API 来处理流式响应
-    const token = localStorage.getItem('token');
-    const response = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      body: formData
-    });
+    // 使用SSEHandler处理流式响应
+    const sseHandler = new SSEHandler()
     
-    if (response.ok) {
-      // 检查是否是流式响应
-      if (response.body) {
-        // 使用流式读取
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let accumulatedText = '';
-            
-        console.log('开始流式读取');
-        
-        while (true) {
-          const { done, value } = await reader.read();
-                  
-          if (done) {
-            console.log('流式读取完成');
-            break;
-          }
-                  
-          // 解码流式数据
-          const chunk = decoder.decode(value, { stream: true });
-          console.log('收到原始流式数据:', chunk);
-          
-          // 处理SSE格式：提取data字段的内容
-          const lines = chunk.split('\n');
-          for (const line of lines) {
-            if (line.startsWith('data:')) {
-              const data = line.substring(5).trim();
-              if (data) {
-                accumulatedText += data;
-                // 实时更新回答
-                answer.value = accumulatedText;
-                console.log('处理后的流式数据:', data);
-                console.log('当前累计文本:', accumulatedText);
-              }
-            }
-          }
-        }
-                
-        console.log('AI 回答完成:', accumulatedText);
-      } else {
-        // 非流式响应
-        const responseText = await response.text();
-        answer.value = responseText;
-        console.log('非流式响应:', responseText);
-      }
-    } else {
-      // 处理错误响应
-      const errorResult = await response.text();
-      console.error('请求失败:', errorResult)
-      try {
-        const errorObj = JSON.parse(errorResult);
-        answer.value = `请求失败：${errorObj.msg || '服务器内部错误'}`;
-      } catch {
-        answer.value = '请求失败：服务器内部错误';
+    sseHandler.onData = (data) => {
+      // 实时追加AI回复内容
+      if (typeof data === 'string') {
+        answer.value += data
+      } else if (data.content) {
+        answer.value += data.content
       }
     }
+
+    sseHandler.onError = (error) => {
+      console.error('SSE Error:', error)
+      answer.value = `请求失败: ${error.message || '未知错误'}`
+      isResponding.value = false
+    }
+
+    sseHandler.onComplete = () => {
+      isResponding.value = false
+    }
+
+    await sseHandler.sendStreamRequest('/api/ai/chat', formData)
     
   } catch (error) {
     console.error('AI 提问失败:', error)
-    if (error.message.includes('Network')) {
-      answer.value = '网络连接失败，请检查网络后重试';
-    } else if (error.message.includes('401')) {
-      answer.value = '登录已过期，请重新登录';
-    } else {
-      answer.value = '请求发送失败，请稍后重试';
-    }
-  } finally {
+    answer.value = '请求发送失败，请检查网络后重试'
     isResponding.value = false
   }
 }
@@ -358,33 +276,6 @@ onBeforeUnmount(() => {
   font-weight: 600;
   margin-bottom: 12px;
   text-align: center;
-}
-
-.session-info {
-  background-color: #f8f5f0;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 16px;
-  border-left: 4px solid #a68a64;
-}
-
-.session-id-tag {
-  font-size: 12px;
-  color: #8c7b6b;
-  font-weight: 500;
-}
-
-.continue-message {
-  font-size: 14px;
-  color: #a68a64;
-  font-weight: 600;
-}
-
-.session-time {
-  font-size: 12px;
-  color: #8c7b6b;
-  margin-left: 12px;
-  font-weight: 500;
 }
 .history-link {
   display: block;
