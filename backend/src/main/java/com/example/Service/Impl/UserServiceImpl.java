@@ -1,6 +1,7 @@
 package com.example.Service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.Common.Result;
 import com.example.DTO.LoginFormDTO;
 import com.example.DTO.UserUpdateDTO;
@@ -38,7 +39,7 @@ import static com.example.Common.Utils.UersUtils.getLoginKey;
 @Service
 @Transactional
 @Slf4j
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     @Autowired
     private UserMapper userMapper;

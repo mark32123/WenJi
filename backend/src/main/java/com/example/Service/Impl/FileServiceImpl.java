@@ -17,7 +17,7 @@ public class FileServiceImpl implements FileService {
     @Value("${file.upload-path:D:/develop/Projectes/WenJi/uploads/}")
     private String uploadPath;
 
-    @Value("${file.access-url:http://localhost:8080/uploads/}")
+    @Value("${file.access-url:/uploads/}")
     private String accessUrl;
 
     @Override

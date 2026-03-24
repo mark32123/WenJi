@@ -34,7 +34,7 @@ public class AIChatMessageServiceImpl implements AIChatMessageService {
 
     private final AIChatSessionMapper chatSessionMapper;
     @Autowired
-    private final RedisChatMemory redisChatMemory;
+    private RedisChatMemory redisChatMemory;
 
     /**
      * 保存消息

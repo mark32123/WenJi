@@ -1,50 +1,41 @@
-<!-- App.vue -->
 <template>
   <div id="app">
-    <transition
-      :name="transitionName"
-      mode="out-in"
-    >
-      <router-view />
-    </transition>
+    <router-view v-slot="{ Component }">
+      <transition name="fade" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
+    
+    <LoginModal :visible="authStore.showLoginModal" />
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      transitionName: 'slide-right'
-    };
-  },
-  watch: {
-     $route(to, from) {
-      // 简单判断：路径深度增加 → 进入；减少 → 返回
-      const toDepth = to.path.split('/').length;
-      const fromDepth = from.path.split('/').length;
-      
-      // 如果是从引导页跳转到登录页，使用淡入淡出效果
-      if (from.path === '/guide' && to.path === '/login') {
-        this.transitionName = 'fade';
-      } else {
-        this.transitionName = toDepth > fromDepth ? 'slide-right' : 'slide-left';
-      }
-    }
-  }
-};
+<script setup>
+import { onMounted } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
+import LoginModal from '@/components/organisms/LoginModal.vue'
+
+const authStore = useAuthStore()
+
+onMounted(() => {
+  authStore.loadFromStorage()
+})
 </script>
 
 <style>
-/* 淡入淡出过渡效果 */
+#app {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #F0F4F8;
+}
+
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 1s ease-in-out;
+  transition: opacity 0.4s ease;
 }
 
-.fade-enter-from {
-  opacity: 0;
-}
-
+.fade-enter-from,
 .fade-leave-to {
   opacity: 0;
 }

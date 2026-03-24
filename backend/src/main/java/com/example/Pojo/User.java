@@ -1,5 +1,6 @@
 package com.example.Pojo;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @TableName("user")
 public class User {
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long userId;// 用户id
     @NotBlank
     private String username;// 用户名

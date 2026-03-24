@@ -1,24 +1,52 @@
-body {
-  margin: 0;
-  background: linear-gradient(135deg, #E8E4D9 0%, #D4CFC3 50%, #C8D8C8 100%);
-  background-size: 400% 400%;
-  animation: gradientFlow 15s ease infinite;
-  font-family: "Noto Serif SC", serif;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    background: #F0F4F8;
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+
+  .font-serif {
+    font-family: 'STSong', 'SimSun', 'Songti SC', serif;
+  }
 }
 
-@keyframes gradientFlow {
-  0% {
-    background-position: 0% 50%;
+@layer components {
+  .paper-texture {
+    position: relative;
   }
-  50% {
-    background-position: 100% 50%;
+  
+  .paper-texture::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 0;
   }
-  100% {
-    background-position: 0% 50%;
+
+  .vertical-text {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    letter-spacing: 0.1em;
+  }
+
+  .ink-border {
+    border: 1px solid rgba(45, 64, 89, 0.1);
+    box-shadow: 0 2px 8px rgba(45, 64, 89, 0.06);
   }
 }
 
-/* fade-slide */
 .fade-slide-leave-active,
 .fade-slide-enter-active {
   transition: all 0.3s;
@@ -33,48 +61,14 @@ body {
   transform: translateX(30px);
   opacity: 0;
 }
-// 额外新增
+
 #app {
   width: 100%;
-  max-width: 450px; 
   min-height: 100vh;
-  background: linear-gradient(180deg, rgba(232, 228, 217, 0.95) 0%, rgba(200, 195, 183, 0.95) 100%);
-  box-shadow: 
-    0 0 20px rgba(107, 122, 143, 0.15),
-    0 0 40px rgba(139, 115, 85, 0.1);
+  min-height: 100dvh;
+  background: #F0F4F8;
   position: relative;
-  margin: 0 auto; 
-  box-sizing: border-box; 
+  margin: 0 auto;
+  box-sizing: border-box;
   overflow-x: hidden;
-}
-
-/* 添加流动的光影效果 */
-#app::before {
-  content: "";
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: 
-    radial-gradient(circle at 30% 40%, rgba(159, 179, 200, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 70% 60%, rgba(139, 115, 85, 0.05) 0%, transparent 40%);
-  animation: lightMove 20s ease-in-out infinite;
-  pointer-events: none;
-  z-index: -1;
-}
-
-@keyframes lightMove {
-  0% {
-    transform: translate(0, 0);
-  }
-  33% {
-    transform: translate(30%, 20%);
-  }
-  66% {
-    transform: translate(-20%, 30%);
-  }
-  100% {
-    transform: translate(0, 0);
-  }
 }

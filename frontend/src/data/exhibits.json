@@ -1,0 +1,554 @@
+{
+  "$schema": "./exhibits.schema.json",
+  "version": "1.0.0",
+  "exhibits": [
+    {
+      "id": "qinghuaci",
+      "name": "青花瓷瓶",
+      "targetImage": "/targets/qinghuaci.mind",
+      "description": "青花瓷是中国陶瓷艺术的瑰宝，以其典雅的蓝白配色闻名于世。采用钴料在瓷胎上绑绑，施以透明釉，经高温一次烧成。",
+      "layers": [
+        {
+          "id": "bg-qinghuaci",
+          "type": "background",
+          "src": "/images/qinghuaci.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/qinghuaci-narration.mp3",
+        "duration": 45
+      },
+      "unlockReward": {
+        "experience": 100,
+        "points": 50,
+        "badge": "qinghuaci-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "明清",
+        "location": "江西省景德镇",
+        "category": "陶瓷艺术",
+        "museum": "故宫博物院",
+        "tags": ["青花瓷", "景德镇", "陶瓷"]
+      }
+    },
+    {
+      "id": "fencaici",
+      "name": "粉彩瓷瓶",
+      "targetImage": "/targets/fencaici.mind",
+      "description": "粉彩瓷是清代康熙年间创烧的釉上彩新品种，色彩柔和粉润，又称'软彩'。在烧好的白瓷上用含砷的玻璃白打底，再施彩料。",
+      "layers": [
+        {
+          "id": "bg-fencaici",
+          "type": "background",
+          "src": "/images/fencaici.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/fencaici-narration.mp3",
+        "duration": 45
+      },
+      "unlockReward": {
+        "experience": 100,
+        "points": 50,
+        "badge": "fencaici-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "清代",
+        "location": "江西省景德镇",
+        "category": "陶瓷艺术",
+        "museum": "南京博物院",
+        "tags": ["粉彩瓷", "景德镇", "陶瓷"]
+      }
+    },
+    {
+      "id": "qinghuacimianju",
+      "name": "青花瓷面具",
+      "targetImage": "/targets/qinghuacimianju.mind",
+      "description": "青花瓷面具是将传统青花瓷工艺与面具艺术相结合的创新作品，展现了传统工艺的当代演绎。",
+      "layers": [
+        {
+          "id": "bg-qinghuacimianju",
+          "type": "background",
+          "src": "/images/qinghuacimianju.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/qinghuacimianju-narration.mp3",
+        "duration": 45
+      },
+      "unlockReward": {
+        "experience": 120,
+        "points": 60,
+        "badge": "mask-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "现代",
+        "location": "江西省景德镇",
+        "category": "陶瓷艺术",
+        "museum": "景德镇陶瓷博物馆",
+        "tags": ["青花瓷", "面具", "陶瓷"]
+      }
+    },
+    {
+      "id": "beijing-gugong",
+      "name": "故宫博物院",
+      "targetImage": "/targets/gugong.mind",
+      "description": "故宫是明清两代的皇家宫殿，是世界上现存规模最大的宫殿建筑群，珍藏文物超过180万件。",
+      "layers": [
+        {
+          "id": "bg-gugong",
+          "type": "background",
+          "src": "/images/beijing1.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/gugong-narration.mp3",
+        "duration": 60
+      },
+      "unlockReward": {
+        "experience": 150,
+        "points": 80,
+        "badge": "gugong-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "明清",
+        "location": "北京市东城区",
+        "category": "历史遗迹",
+        "museum": "故宫博物院",
+        "tags": ["故宫", "紫禁城", "世界遗产"]
+      }
+    },
+    {
+      "id": "simuwuding",
+      "name": "后母戊鼎",
+      "targetImage": "/targets/simuwuding.mind",
+      "description": "后母戊鼎是商代晚期青铜器，1939年出土于河南安阳，是迄今为止出土的最重的青铜器，重达832.84公斤。",
+      "layers": [
+        {
+          "id": "bg-simuwuding",
+          "type": "background",
+          "src": "/images/simuwuding.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/simuwuding-narration.mp3",
+        "duration": 50
+      },
+      "unlockReward": {
+        "experience": 200,
+        "points": 100,
+        "badge": "bronze-master",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "商代",
+        "location": "河南省安阳市",
+        "category": "青铜器",
+        "museum": "中国国家博物馆",
+        "tags": ["青铜器", "鼎", "国宝"]
+      }
+    },
+    {
+      "id": "sijunzhang",
+      "name": "四羊方尊",
+      "targetImage": "/targets/sijunzhang.mind",
+      "description": "四羊方尊是商代晚期青铜礼器，四角各铸一只卷角羊头，造型雄奇，工艺精湛，被誉为'臻于极致的青铜典范'。",
+      "layers": [
+        {
+          "id": "bg-sijunzhang",
+          "type": "background",
+          "src": "/images/sijunzhang.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/sijunzhang-narration.mp3",
+        "duration": 45
+      },
+      "unlockReward": {
+        "experience": 180,
+        "points": 90,
+        "badge": "bronze-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "商代",
+        "location": "湖南省宁乡市",
+        "category": "青铜器",
+        "museum": "中国国家博物馆",
+        "tags": ["青铜器", "尊", "商代艺术"]
+      }
+    },
+    {
+      "id": "qingmingshanghetu",
+      "name": "清明上河图",
+      "targetImage": "/targets/qingming.mind",
+      "description": "北宋画家张择端仅见的存世精品，描绘了北宋都城汴京的繁华景象，被誉为'中华第一神品'。",
+      "layers": [
+        {
+          "id": "bg-qingming",
+          "type": "background",
+          "src": "/images/qingming.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/qingming-narration.mp3",
+        "duration": 60
+      },
+      "unlockReward": {
+        "experience": 250,
+        "points": 120,
+        "badge": "painting-master",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "北宋",
+        "location": "河南省开封市",
+        "category": "书画艺术",
+        "museum": "故宫博物院",
+        "tags": ["国画", "长卷", "风俗画"]
+      }
+    },
+    {
+      "id": "fuchunshanju",
+      "name": "富春山居图",
+      "targetImage": "/targets/fuchun.mind",
+      "description": "元代画家黄公望的作品，以浙江富春江为背景，被誉为'画中之兰亭'，是中国十大传世名画之一。",
+      "layers": [
+        {
+          "id": "bg-fuchun",
+          "type": "background",
+          "src": "/images/fuchun.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/fuchun-narration.mp3",
+        "duration": 55
+      },
+      "unlockReward": {
+        "experience": 220,
+        "points": 110,
+        "badge": "landscape-painter",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "元代",
+        "location": "浙江省杭州市",
+        "category": "书画艺术",
+        "museum": "浙江省博物馆/台北故宫博物院",
+        "tags": ["山水画", "元四家", "黄公望"]
+      }
+    },
+    {
+      "id": "yucong",
+      "name": "良渚玉琮",
+      "targetImage": "/targets/yucong.mind",
+      "description": "良渚文化玉器的代表作品，外方内圆，象征'天圆地方'，是古代祭祀礼器，展现了5000年前的精湛工艺。",
+      "layers": [
+        {
+          "id": "bg-yucong",
+          "type": "background",
+          "src": "/images/yucong.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/yucong-narration.mp3",
+        "duration": 50
+      },
+      "unlockReward": {
+        "experience": 180,
+        "points": 90,
+        "badge": "jade-master",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "新石器时代",
+        "location": "浙江省杭州市",
+        "category": "玉器",
+        "museum": "浙江省博物馆",
+        "tags": ["玉器", "良渚文化", "礼器"]
+      }
+    },
+    {
+      "id": "heyinyang",
+      "name": "何尊",
+      "targetImage": "/targets/hezun.mind",
+      "description": "西周早期青铜器，铭文中首次出现'中国'二字，是研究中国名称起源的重要文物。",
+      "layers": [
+        {
+          "id": "bg-hezun",
+          "type": "background",
+          "src": "/images/hezun.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/hezun-narration.mp3",
+        "duration": 45
+      },
+      "unlockReward": {
+        "experience": 200,
+        "points": 100,
+        "badge": "china-origin",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "西周",
+        "location": "陕西省宝鸡市",
+        "category": "青铜器",
+        "museum": "宝鸡青铜器博物院",
+        "tags": ["青铜器", "铭文", "中国起源"]
+      }
+    },
+    {
+      "id": "changxin-gongdeng",
+      "name": "长信宫灯",
+      "targetImage": "/targets/changxin.mind",
+      "description": "西汉时期的鎏金铜灯，造型为跪坐宫女执灯，设计巧妙，兼具实用与艺术价值，被誉为'中华第一灯'。",
+      "layers": [
+        {
+          "id": "bg-changxin",
+          "type": "background",
+          "src": "/images/changxin.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/changxin-narration.mp3",
+        "duration": 45
+      },
+      "unlockReward": {
+        "experience": 160,
+        "points": 80,
+        "badge": "lamp-keeper",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "西汉",
+        "location": "河北省满城县",
+        "category": "青铜器",
+        "museum": "河北博物院",
+        "tags": ["灯具", "鎏金", "汉代艺术"]
+      }
+    },
+    {
+      "id": "boshilun",
+      "name": "博山炉",
+      "targetImage": "/targets/boshan.mind",
+      "description": "汉代熏香器具，炉盖雕成海上仙山博山形状，香烟从山间袅袅升起，意境深远。",
+      "layers": [
+        {
+          "id": "bg-boshan",
+          "type": "background",
+          "src": "/images/boshan.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/boshan-narration.mp3",
+        "duration": 40
+      },
+      "unlockReward": {
+        "experience": 140,
+        "points": 70,
+        "badge": "incense-master",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "汉代",
+        "location": "陕西省西安市",
+        "category": "青铜器",
+        "museum": "陕西历史博物馆",
+        "tags": ["熏香", "博山", "汉代工艺"]
+      }
+    },
+    {
+      "id": "dunhuang-feitian",
+      "name": "敦煌飞天",
+      "targetImage": "/targets/feitian.mind",
+      "description": "敦煌壁画中的飞天形象，融合印度、西域和中原文化，展现了佛教艺术的巅峰，是丝路文明的象征。",
+      "layers": [
+        {
+          "id": "bg-feitian",
+          "type": "background",
+          "src": "/images/feitian.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/feitian-narration.mp3",
+        "duration": 55
+      },
+      "unlockReward": {
+        "experience": 200,
+        "points": 100,
+        "badge": "dunhuang-guardian",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "北魏至元代",
+        "location": "甘肃省敦煌市",
+        "category": "壁画艺术",
+        "museum": "敦煌研究院",
+        "tags": ["敦煌", "飞天", "佛教艺术"]
+      }
+    },
+    {
+      "id": "mawangdui-yifu",
+      "name": "素纱襌衣",
+      "targetImage": "/targets/susha.mind",
+      "description": "西汉辛追夫人的陪葬品，整件衣服仅重49克，薄如蝉翼，展现了汉代纺织技术的巅峰水平。",
+      "layers": [
+        {
+          "id": "bg-susha",
+          "type": "background",
+          "src": "/images/susha.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/susha-narration.mp3",
+        "duration": 45
+      },
+      "unlockReward": {
+        "experience": 180,
+        "points": 90,
+        "badge": "textile-master",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "西汉",
+        "location": "湖南省长沙市",
+        "category": "丝织品",
+        "museum": "湖南省博物馆",
+        "tags": ["丝绸", "汉代", "纺织"]
+      }
+    },
+    {
+      "id": "sanxingdui-mask",
+      "name": "三星堆青铜面具",
+      "targetImage": "/targets/sanxingdui.mind",
+      "description": "古蜀文明的神秘象征，造型夸张，眼球突出，展现了与中原文化截然不同的艺术风格。",
+      "layers": [
+        {
+          "id": "bg-sanxingdui",
+          "type": "background",
+          "src": "/images/sanxingdui.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/sanxingdui-narration.mp3",
+        "duration": 50
+      },
+      "unlockReward": {
+        "experience": 200,
+        "points": 100,
+        "badge": "shu-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "商代",
+        "location": "四川省广汉市",
+        "category": "青铜器",
+        "museum": "三星堆博物馆",
+        "tags": ["青铜器", "古蜀文明", "面具"]
+      }
+    },
+    {
+      "id": "jinsha-sunbird",
+      "name": "太阳神鸟金饰",
+      "targetImage": "/targets/sunbird.mind",
+      "description": "商周时期古蜀金器，外层为四只逆时针飞行的神鸟，内层为旋转的太阳，是中国文化遗产标志。",
+      "layers": [
+        {
+          "id": "bg-sunbird",
+          "type": "background",
+          "src": "/images/sunbird.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/sunbird-narration.mp3",
+        "duration": 45
+      },
+      "unlockReward": {
+        "experience": 180,
+        "points": 90,
+        "badge": "sun-worshipper",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "商周",
+        "location": "四川省成都市",
+        "category": "金器",
+        "museum": "金沙遗址博物馆",
+        "tags": ["金器", "太阳崇拜", "古蜀文明"]
+      }
+    }
+  ],
+  "targetImagesDir": "/targets/",
+  "imagesDir": "/images/",
+  "videosDir": "/videos/",
+  "audioDir": "/audio/"
+}
