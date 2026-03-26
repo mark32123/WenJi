@@ -3,17 +3,17 @@ package com.example.Common.Utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.Map;
 
+@Component
 public class JwtUtils {
 
-    // 使用符合安全要求的密钥，HS256 算法
-    // 注意：在生产环境中，密钥应通过安全的方式存储和管理，不要硬编码在代码中
-    private static final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private static SecretKey SECRET_KEY;
+
 
     // 设置令牌的有效期为 24 小时（单位：毫秒）
     private static final long EXPIRATION_TIME = 24 * 60 * 60 * 1000L; // 24小时

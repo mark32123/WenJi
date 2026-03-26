@@ -1,6 +1,6 @@
 package com.example.Service;
 
-import com.example.Pojo.Entity.AI.AIChatMessage;
+import com.example.Pojo.AIChatMessage;
 
 import java.util.List;
 

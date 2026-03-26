@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @TableName("site_image")
-public class SiteImage {
+public class SiteImages {
     @TableId(type = IdType.AUTO)
     private Long imageId;
     private String siteId;

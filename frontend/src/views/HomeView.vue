@@ -1,9 +1,28 @@
+<!--
+  HomeView.vue - 首页/山河卷视图
+  
+  功能说明：
+  1. 展示地图界面，用户可以浏览和探索文化遗产景点
+  2. 集成 AI 助手面板，用户可以与"文迹书生"进行对话
+  3. 点击景点后显示文物详情卡片（AiGuideCard）
+  4. 底部导航栏：山河卷、AR鉴赏、藏经阁
+  
+  主要组件：
+  - CityMap: 地图组件，显示景点标记和城市切换
+  - AiGuideCard: 文物详情卡片，包含 AI 讲解功能
+  - AI Panel: AI 对话面板，支持多会话管理
+  
+  数据流：
+  - defaultNodes: 预设的文物节点数据
+  - userStore: 用户状态管理（阅历、收藏等）
+  - backendSites: 从后端获取的附近景点数据
+-->
 <template>
   <div class="home-view">
     <div class="view-header">
       <h1 class="view-title font-serif">山河卷</h1>
       <div class="header-actions">
-        <button class="ai-btn" @click="showAiPanel = true">
+        <button class="ai-btn" @click="openAiPanel">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
             <path d="M12 16v-4"/>
@@ -52,33 +71,107 @@
     <transition name="slide-up">
       <div v-if="showAiPanel" class="ai-panel">
         <div class="ai-panel-header">
-          <span class="ai-title font-serif">文迹书生</span>
+          <div class="header-left">
+            <button class="menu-btn" @click="showSidebar = !showSidebar" :class="{ active: showSidebar }">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+            <span class="ai-title font-serif">文迹书生</span>
+          </div>
           <button class="close-btn" @click="showAiPanel = false">×</button>
         </div>
-        <div class="ai-panel-messages" ref="messagesContainer">
-          <div 
-            v-for="(msg, idx) in aiMessages" 
-            :key="idx" 
-            class="message"
-            :class="{ 'from-user': msg.fromUser }"
-          >
-            <div class="message-content">{{ msg.text }}</div>
-          </div>
-          <div v-if="isAiTyping" class="message typing">
-            <div class="typing-indicator">
-              <span></span><span></span><span></span>
+        
+        <div class="ai-panel-body">
+          <transition name="slide-left">
+            <div v-if="showSidebar" class="ai-sidebar">
+              <button class="new-chat-btn" @click="createNewChat">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                新对话
+              </button>
+              
+              <div class="chat-list">
+                <div 
+                  v-for="session in chatSessions" 
+                  :key="session.id"
+                  class="chat-item"
+                  :class="{ active: currentSessionId === session.id }"
+                  @click="loadSession(session.id)"
+                >
+                  <div class="chat-item-info">
+                    <span class="chat-item-title">{{ session.title || '新对话' }}</span>
+                    <span class="chat-item-time">{{ formatTime(session.updateTime) }}</span>
+                  </div>
+                  <button class="delete-btn" @click.stop="deleteSession(session.id)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+                
+                <div v-if="chatSessions.length === 0" class="empty-tip">
+                  暂无对话记录
+                </div>
+              </div>
+            </div>
+          </transition>
+          
+          <div class="ai-main">
+            <div class="ai-panel-messages" ref="messagesContainer">
+              <div 
+                v-for="(msg, idx) in aiMessages" 
+                :key="idx" 
+                class="message"
+                :class="{ 'from-user': msg.fromUser }"
+              >
+                <div class="message-content">{{ msg.text }}</div>
+              </div>
+              <div v-if="isAiTyping" class="message typing">
+                <div class="typing-indicator">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="ai-panel-input">
+              <input 
+                v-model="aiInput" 
+                placeholder="问我任何关于传统文化的问题..."
+                @keyup.enter="sendAiMessage"
+              />
+              <button class="send-btn" @click="sendAiMessage" :disabled="!aiInput.trim() || isAiTyping">
+                发送
+              </button>
             </div>
           </div>
         </div>
-        <div class="ai-panel-input">
-          <input 
-            v-model="aiInput" 
-            placeholder="问我任何关于传统文化的问题..."
-            @keyup.enter="sendAiMessage"
-          />
-          <button class="send-btn" @click="sendAiMessage" :disabled="!aiInput.trim() || isAiTyping">
-            发送
-          </button>
+      </div>
+    </transition>
+    
+    <transition name="fade">
+      <div v-if="showDeleteConfirm" class="confirm-overlay" @click.self="cancelDelete">
+        <div class="confirm-dialog">
+          <div class="confirm-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#E63946" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <h3 class="confirm-title">确认删除</h3>
+          <p class="confirm-message">确定要删除这个对话吗？删除后将无法恢复。</p>
+          <div class="confirm-actions">
+            <button class="confirm-btn cancel" @click="cancelDelete">取消</button>
+            <button class="confirm-btn delete" @click="confirmDelete" :disabled="isDeleting">
+              {{ isDeleting ? '删除中...' : '确认删除' }}
+            </button>
+          </div>
         </div>
       </div>
     </transition>
@@ -86,6 +179,15 @@
 </template>
 
 <script setup>
+/**
+ * HomeView - 首页/山河卷视图
+ * 
+ * 核心功能：
+ * 1. 地图展示与景点探索
+ * 2. AI 助手对话功能
+ * 3. 文物详情展示与收藏
+ */
+
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
@@ -97,18 +199,33 @@ const router = useRouter()
 const userStore = useUserStore()
 const authStore = useAuthStore()
 
+// ==================== 文物详情卡片相关状态 ====================
 const showAiCard = ref(false)
 const selectedArtifact = ref(null)
 const backendSites = ref([])
 
+// ==================== AI 对话面板相关状态 ====================
 const showAiPanel = ref(false)
-const aiMessages = ref([
-  { text: '您好！我是文迹书生，有什么关于传统文化的问题可以问我~', fromUser: false }
-])
+const showSidebar = ref(false)
+const aiMessages = ref([])
 const aiInput = ref('')
 const isAiTyping = ref(false)
 const messagesContainer = ref(null)
 
+// ==================== 对话会话管理 ====================
+const chatSessions = ref([])
+const currentSessionId = ref(null)
+
+// ==================== 删除确认弹窗 ====================
+const showDeleteConfirm = ref(false)
+const deleteTargetId = ref(null)
+const isDeleting = ref(false)
+
+/**
+ * 预设文物节点数据
+ * 用于在没有后端数据时展示默认景点
+ * 每个节点包含：id、名称、朝代、位置、图片、分类、地点、博物馆、诗词、描述等
+ */
 const defaultNodes = [
   {
     id: 'qinghuaci',
@@ -137,145 +254,82 @@ const defaultNodes = [
     description: '粉彩瓷是清代康熙年间创烧的釉上彩新品种，色彩柔和粉润。'
   },
   {
-    id: 'simuwuding',
-    name: '后母戊鼎',
-    dynasty: '商代',
+    id: 'qinghuacimianju',
+    name: '青花瓷面具',
+    dynasty: '明代',
     positionX: 28,
     positionY: 48,
-    imageUrl: '/images/simuwuding.jpg',
-    category: '青铜器',
-    location: '河南安阳',
-    museum: '中国国家博物馆',
-    poem: '鼎定天下，礼乐文明',
-    description: '后母戊鼎是商代晚期青铜器，是迄今为止出土的最重的青铜器，重达832.84公斤。',
+    imageUrl: '/images/qinghuacimianju.jpg',
+    category: '陶瓷艺术',
+    location: '景德镇',
+    museum: '故宫博物院',
+    poem: '面具藏真，青花传神',
+    description: '青花瓷面具是明代陶瓷艺术的珍品，展现了精湛的青花绘制工艺。',
     special: true,
-    icon: '👑'
+    icon: '🎭'
   },
   {
-    id: 'sijunzhang',
-    name: '四羊方尊',
-    dynasty: '商代',
+    id: 'beijing1',
+    name: '故宫博物院',
+    dynasty: '明清',
     positionX: 35,
     positionY: 38,
-    imageUrl: '/images/sijunzhang.jpg',
-    category: '青铜器',
-    location: '湖南宁乡',
-    museum: '中国国家博物馆',
-    poem: '四羊方尊，青铜典范',
-    description: '四羊方尊是商代晚期青铜礼器，四角各铸一只卷角羊头，造型雄奇。'
+    imageUrl: '/images/beijing1.jpg',
+    category: '皇家建筑',
+    location: '北京',
+    museum: '故宫博物院',
+    poem: '紫禁城中，皇权象征',
+    description: '故宫是明清两代的皇家宫殿，是世界上现存规模最大、保存最为完整的木质结构古建筑之一。'
   },
   {
-    id: 'qingmingshanghetu',
-    name: '清明上河图',
-    dynasty: '北宋',
+    id: 'beijing2',
+    name: '天坛',
+    dynasty: '明代',
     positionX: 42,
     positionY: 45,
-    imageUrl: '/images/qingming.jpg',
-    category: '书画艺术',
-    location: '河南开封',
-    museum: '故宫博物院',
-    poem: '汴京繁华，尽在画卷',
-    description: '北宋画家张择端仅见的存世精品，描绘了北宋都城汴京的繁华景象。',
-    special: true,
-    icon: '📜'
-  },
-  {
-    id: 'fuchunshanju',
-    name: '富春山居图',
-    dynasty: '元代',
-    positionX: 50,
-    positionY: 32,
-    imageUrl: '/images/fuchun.jpg',
-    category: '书画艺术',
-    location: '浙江杭州',
-    museum: '浙江省博物馆',
-    poem: '山水之间，画中有诗',
-    description: '元代画家黄公望的作品，以浙江富春江为背景，被誉为"画中之兰亭"。'
-  },
-  {
-    id: 'yucong',
-    name: '良渚玉琮',
-    dynasty: '新石器',
-    positionX: 58,
-    positionY: 40,
-    imageUrl: '/images/yucong.jpg',
-    category: '玉器',
-    location: '浙江杭州',
-    museum: '浙江省博物馆',
-    poem: '天圆地方，玉润千年',
-    description: '良渚文化玉器的代表作品，外方内圆，象征"天圆地方"，展现了5000年前的精湛工艺。'
-  },
-  {
-    id: 'heyinyang',
-    name: '何尊',
-    dynasty: '西周',
-    positionX: 65,
-    positionY: 50,
-    imageUrl: '/images/hezun.jpg',
-    category: '青铜器',
-    location: '陕西宝鸡',
-    museum: '宝鸡青铜器博物院',
-    poem: '铭文镌刻，中国之源',
-    description: '西周早期青铜器，铭文中首次出现"中国"二字，是研究中国名称起源的重要文物。',
+    imageUrl: '/images/beijing2.jpg',
+    category: '皇家建筑',
+    location: '北京',
+    museum: '天坛公园',
+    poem: '祭天祈谷，天人合一',
+    description: '天坛是明清两代皇帝祭天祈谷的场所，是中国现存最大的古代祭祀性建筑群。',
     special: true,
     icon: '🏛️'
   },
   {
-    id: 'changxin-gongdeng',
-    name: '长信宫灯',
-    dynasty: '西汉',
-    positionX: 72,
-    positionY: 36,
-    imageUrl: '/images/changxin.jpg',
-    category: '青铜器',
-    location: '河北满城',
-    museum: '河北博物院',
-    poem: '宫灯长明，照亮千年',
-    description: '西汉时期的鎏金铜灯，造型为跪坐宫女执灯，被誉为"中华第一灯"。'
+    id: 'beijing3',
+    name: '颐和园',
+    dynasty: '清代',
+    positionX: 50,
+    positionY: 32,
+    imageUrl: '/images/beijing3.jpg',
+    category: '皇家园林',
+    location: '北京',
+    museum: '颐和园',
+    poem: '山水之间，皇家园林',
+    description: '颐和园是中国现存规模最大、保存最完整的皇家园林，被誉为"皇家园林博物馆"。'
   },
   {
-    id: 'dunhuang-feitian',
-    name: '敦煌飞天',
-    dynasty: '北魏',
-    positionX: 80,
-    positionY: 44,
-    imageUrl: '/images/feitian.jpg',
-    category: '壁画艺术',
-    location: '甘肃敦煌',
-    museum: '敦煌研究院',
-    poem: '飞天曼舞，丝路遗珍',
-    description: '敦煌壁画中的飞天形象，融合印度、西域和中原文化，是丝路文明的象征。',
+    id: 'beijing4',
+    name: '长城',
+    dynasty: '明代',
+    positionX: 58,
+    positionY: 40,
+    imageUrl: '/images/beijing4.jpg',
+    category: '军事建筑',
+    location: '北京',
+    museum: '八达岭长城',
+    poem: '万里长城，雄关漫道',
+    description: '长城是中国古代的军事防御工程，是世界上最伟大的人工建筑之一。',
     special: true,
-    icon: '🎨'
-  },
-  {
-    id: 'sanxingdui-mask',
-    name: '三星堆面具',
-    dynasty: '商代',
-    positionX: 88,
-    positionY: 38,
-    imageUrl: '/images/sanxingdui.jpg',
-    category: '青铜器',
-    location: '四川广汉',
-    museum: '三星堆博物馆',
-    poem: '古蜀神秘，面具藏真',
-    description: '古蜀文明的神秘象征，造型夸张，眼球突出，展现了与中原文化截然不同的艺术风格。'
-  },
-  {
-    id: 'jinsha-sunbird',
-    name: '太阳神鸟',
-    dynasty: '商周',
-    positionX: 95,
-    positionY: 46,
-    imageUrl: '/images/sunbird.jpg',
-    category: '金器',
-    location: '四川成都',
-    museum: '金沙遗址博物馆',
-    poem: '金乌负日，神鸟翱翔',
-    description: '商周时期古蜀金器，外层为四只逆时针飞行的神鸟，是中国文化遗产标志。'
+    icon: '�'
   }
 ]
 
+/**
+ * 计算属性：地图节点数据
+ * 为每个节点添加解锁状态和收藏状态
+ */
 const mapNodes = computed(() => {
   return defaultNodes.map(node => ({
     ...node,
@@ -284,44 +338,64 @@ const mapNodes = computed(() => {
   }))
 })
 
+/**
+ * 处理景点探索事件
+ * 当用户点击地图上的景点标记时触发
+ * @param {Object} site - 景点数据对象
+ */
 const handleSiteExplore = (site) => {
   selectedArtifact.value = {
     id: site.id,
     name: site.name,
     dynasty: site.dynasty || site.type,
-    category: site.type,
+    category: site.category || site.type,
     location: site.address,
     museum: site.name,
     description: site.description,
-    imageUrl: site.image
+    imageUrl: site.coverImage || site.image
   }
   showAiCard.value = true
   userStore.visitSite(site)
 }
 
+/**
+ * 处理节点点击事件
+ * 用于预设节点的点击交互
+ * @param {Object} node - 节点数据对象
+ */
 const handleNodeClick = (node) => {
   userStore.visitSite(node)
   selectedArtifact.value = node
   showAiCard.value = true
 }
 
+/**
+ * 处理节点收藏事件
+ * 收藏文物并增加阅历值
+ * @param {Object} node - 节点数据对象
+ */
 const handleNodeCollect = (node) => {
   userStore.collectArtifact(node)
   userStore.addExperience(10)
   userStore.saveToStorage()
 }
 
+/** 关闭文物详情卡片 */
 const closeAiCard = () => {
   showAiCard.value = false
   selectedArtifact.value = null
 }
 
+/** 处理点赞事件 */
 const handleLike = ({ artifact, liked }) => {
-  console.log('Like:', artifact.name, liked)
 }
 
+/**
+ * 处理分享事件
+ * 使用 Web Share API 进行原生分享
+ * @param {Object} artifact - 文物数据对象
+ */
 const handleShare = (artifact) => {
-  console.log('Share:', artifact.name)
   if (navigator.share) {
     navigator.share({
       title: artifact.name,
@@ -331,10 +405,20 @@ const handleShare = (artifact) => {
   }
 }
 
+/**
+ * 处理 AR 体验事件
+ * 跳转到 AR 鉴赏页面
+ * @param {Object} artifact - 文物数据对象
+ */
 const handleArExperience = (artifact) => {
   router.push({ path: '/ar', query: { id: artifact.id } })
 }
 
+/**
+ * 处理 AI 讲解完成事件
+ * 答对问题后增加阅历值
+ * @param {Object} param0 - 包含 artifact 和 correct 的对象
+ */
 const handleAiComplete = ({ artifact, correct }) => {
   if (correct) {
     userStore.addExperience(5)
@@ -342,8 +426,154 @@ const handleAiComplete = ({ artifact, correct }) => {
   }
 }
 
+// ==================== AI 对话面板功能 ====================
+
+/**
+ * 打开 AI 对话面板
+ * 检查登录状态，加载历史会话或创建新会话
+ */
+const openAiPanel = async () => {
+  showAiPanel.value = true
+  
+  if (!authStore.isLoggedIn) {
+    aiMessages.value = [
+      { text: '您好！我是小游。请先登录后即可与我对话~', fromUser: false }
+    ]
+    return
+  }
+  
+  await loadChatSessions()
+  
+  if (chatSessions.value.length > 0) {
+    await loadSession(chatSessions.value[0].id)
+  } else {
+    createNewChat()
+  }
+}
+
+/**
+ * 加载用户的对话会话列表
+ * 从后端获取所有会话 ID
+ */
+const loadChatSessions = async () => {
+  if (!authStore.isLoggedIn) return
+  const result = await aiApi.getChatIds('chat')
+  if (result.success && result.data) {
+    chatSessions.value = result.data.map(id => ({
+      id,
+      title: '对话 ' + id.substring(0, 6),
+      updateTime: new Date()
+    }))
+  }
+}
+
+/**
+ * 创建新的对话会话
+ * 初始化会话 ID 和欢迎消息
+ */
+const createNewChat = () => {
+  currentSessionId.value = 'session_' + Date.now()
+  aiMessages.value = [
+    { text: '您好！我是文迹书生，有什么关于传统文化的问题可以问我~', fromUser: false }
+  ]
+  showSidebar.value = false
+}
+
+/**
+ * 加载指定会话的历史消息
+ * @param {string} sessionId - 会话 ID
+ */
+const loadSession = async (sessionId) => {
+  if (!authStore.isLoggedIn) return
+  currentSessionId.value = sessionId
+  const result = await aiApi.getChatHistory('chat', sessionId)
+  if (result.success && result.data && result.data[0]) {
+    const sessionData = result.data[0]
+    aiMessages.value = sessionData.messages.map(msg => ({
+      text: msg.content,
+      fromUser: msg.role === 'user'
+    }))
+    await nextTick()
+    scrollToBottom()
+  }
+  showSidebar.value = false
+}
+
+/**
+ * 显示删除会话确认弹窗
+ * @param {string} sessionId - 要删除的会话 ID
+ */
+const deleteSession = (sessionId) => {
+  if (!authStore.isLoggedIn) return
+  deleteTargetId.value = sessionId
+  showDeleteConfirm.value = true
+}
+
+/** 取消删除操作 */
+const cancelDelete = () => {
+  showDeleteConfirm.value = false
+  deleteTargetId.value = null
+}
+
+/**
+ * 确认删除会话
+ * 调用 API 删除会话，更新本地列表
+ */
+const confirmDelete = async () => {
+  if (!deleteTargetId.value || isDeleting.value) return
+  
+  isDeleting.value = true
+  
+  try {
+    const result = await aiApi.deleteSession(deleteTargetId.value)
+    
+    if (result.success) {
+      chatSessions.value = chatSessions.value.filter(s => s.id !== deleteTargetId.value)
+      
+      if (currentSessionId.value === deleteTargetId.value) {
+        createNewChat()
+      }
+    } else {
+      console.error('删除失败:', result.message)
+    }
+  } catch (error) {
+    console.error('删除对话失败')
+  } finally {
+    isDeleting.value = false
+    showDeleteConfirm.value = false
+    deleteTargetId.value = null
+  }
+}
+
+/**
+ * 格式化时间显示
+ * 将时间戳转换为友好的相对时间格式
+ * @param {Date|string} time - 时间对象或时间戳
+ * @returns {string} 格式化后的时间字符串
+ */
+const formatTime = (time) => {
+  if (!time) return ''
+  const date = new Date(time)
+  const now = new Date()
+  const diff = now - date
+  
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
+  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
+  return date.toLocaleDateString()
+}
+
+/**
+ * 发送 AI 消息
+ * 将用户消息发送到后端，使用流式响应接收 AI 回复
+ */
 const sendAiMessage = async () => {
   if (!aiInput.value.trim() || isAiTyping.value) return
+  
+  if (!authStore.isLoggedIn) {
+    aiMessages.value.push({ text: '请先登录后再与小游进行沟通~', fromUser: false })
+    return
+  }
   
   const userMessage = aiInput.value.trim()
   aiMessages.value.push({ text: userMessage, fromUser: true })
@@ -353,11 +583,21 @@ const sendAiMessage = async () => {
   await nextTick()
   scrollToBottom()
   
+  const aiMessageIndex = aiMessages.value.length
+  aiMessages.value.push({ text: '', fromUser: false })
+  
   try {
-    const response = await aiApi.chat(userMessage, 'home_ai')
+    // 调用 AI API，使用流式响应
+    const response = await aiApi.chat(userMessage, currentSessionId.value)
+    
+    if (response.status === 401) {
+      aiMessages.value[aiMessageIndex].text = '登录已过期，请重新登录'
+      return
+    }
+    
+    // 读取流式响应
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
-    let aiReply = ''
     let buffer = ''
     
     while (true) {
@@ -370,33 +610,38 @@ const sendAiMessage = async () => {
       
       for (const line of lines) {
         if (line.startsWith('data:')) {
-          const content = line.slice(5).trim()
+          const content = line.slice(5)
           if (content && content !== '[DONE]') {
-            aiReply += content
+            aiMessages.value[aiMessageIndex].text += content
+            await nextTick()
+            scrollToBottom()
           }
         }
       }
     }
     
-    if (aiReply.trim()) {
-      aiMessages.value.push({ text: aiReply.trim(), fromUser: false })
-      await nextTick()
-      scrollToBottom()
+    if (!aiMessages.value[aiMessageIndex].text.trim()) {
+      aiMessages.value[aiMessageIndex].text = '抱歉，我暂时无法回答这个问题。'
     }
   } catch (error) {
-    console.error('AI回复失败:', error)
-    aiMessages.value.push({ text: '抱歉，我暂时无法回答这个问题，请稍后再试。', fromUser: false })
+    console.error('AI回复失败')
+    aiMessages.value[aiMessageIndex].text = '抱歉，我暂时无法回答这个问题，请稍后再试。'
   } finally {
     isAiTyping.value = false
   }
 }
 
+/** 滚动消息容器到底部 */
 const scrollToBottom = () => {
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
   }
 }
 
+/**
+ * 组件挂载时的初始化
+ * 加载用户存储数据，获取用户信息，获取附近景点
+ */
 onMounted(() => {
   userStore.loadFromStorage()
   
@@ -407,6 +652,10 @@ onMounted(() => {
   fetchNearbySites()
 })
 
+/**
+ * 获取附近的遗产景点
+ * 使用浏览器定位或默认位置（北京）获取景点数据
+ */
 const fetchNearbySites = async () => {
   try {
     if (navigator.geolocation) {
@@ -419,6 +668,7 @@ const fetchNearbySites = async () => {
           }
         },
         async () => {
+          // 定位失败时使用默认位置（北京）
           const result = await heritageApi.getNearbySites(116.4074, 39.9042)
           if (result.success && result.data) {
             backendSites.value = result.data
@@ -426,13 +676,13 @@ const fetchNearbySites = async () => {
         }
       )
     } else {
+      // 不支持定位时使用默认位置（北京）
       const result = await heritageApi.getNearbySites(116.4074, 39.9042)
       if (result.success && result.data) {
         backendSites.value = result.data
       }
     }
   } catch (error) {
-    console.warn('获取附近景点失败:', error)
   }
 }
 
@@ -603,6 +853,34 @@ watch(() => authStore.isLoggedIn, (isLoggedIn) => {
   color: #F5F2EB;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.menu-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: #F5F2EB;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.menu-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.menu-btn.active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 .ai-title {
   font-size: 18px;
   letter-spacing: 0.1em;
@@ -617,6 +895,119 @@ watch(() => authStore.isLoggedIn, (isLoggedIn) => {
   color: #F5F2EB;
   font-size: 20px;
   cursor: pointer;
+}
+
+.ai-panel-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.ai-sidebar {
+  width: 260px;
+  background: #E8ECEF;
+  border-right: 1px solid rgba(45, 64, 89, 0.1);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.new-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px;
+  padding: 10px 16px;
+  background: #2D4059;
+  color: #F5F2EB;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.new-chat-btn:hover {
+  background: #3D5A80;
+}
+
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px;
+}
+
+.chat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.chat-item:hover {
+  background: rgba(45, 64, 89, 0.08);
+}
+
+.chat-item.active {
+  background: rgba(45, 64, 89, 0.15);
+}
+
+.chat-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-item-title {
+  display: block;
+  font-size: 14px;
+  color: #2D4059;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-item-time {
+  display: block;
+  font-size: 11px;
+  color: #8B9A9C;
+  margin-top: 2px;
+}
+
+.delete-btn {
+  padding: 4px;
+  background: transparent;
+  border: none;
+  color: #8B9A9C;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.chat-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  color: #E63946;
+}
+
+.empty-tip {
+  text-align: center;
+  padding: 24px;
+  color: #8B9A9C;
+  font-size: 13px;
+}
+
+.ai-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .ai-panel-messages {
@@ -716,5 +1107,104 @@ watch(() => authStore.isLoggedIn, (isLoggedIn) => {
 .slide-up-leave-to {
   opacity: 0;
   transform: translateY(100%);
+}
+
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-left-enter-from,
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.confirm-dialog {
+  background: #F5F2EB;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 320px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.confirm-icon {
+  margin-bottom: 16px;
+}
+
+.confirm-title {
+  font-size: 18px;
+  color: #2D4059;
+  margin: 0 0 8px 0;
+}
+
+.confirm-message {
+  font-size: 14px;
+  color: #8B9A9C;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.confirm-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.confirm-btn.cancel {
+  background: #E8ECEF;
+  color: #2D4059;
+}
+
+.confirm-btn.cancel:hover {
+  background: #D8DCE0;
+}
+
+.confirm-btn.delete {
+  background: #E63946;
+  color: #fff;
+}
+
+.confirm-btn.delete:hover {
+  background: #D62836;
+}
+
+.confirm-btn.delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

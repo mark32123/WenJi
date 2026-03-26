@@ -1,3 +1,25 @@
+<!--
+  CityMap.vue - 地图组件
+  
+  功能说明：
+  1. 使用高德地图 API 展示文化遗产景点
+  2. 支持城市切换（清远、北京）
+  3. 用户定位功能
+  4. 景点标记点击显示详情卡片
+  5. 导航功能（跳转高德地图导航）
+  6. 彩蛋系统（靠近景点时触发奖励）
+  
+  主要交互：
+  - 点击城市按钮切换城市
+  - 点击地图标记显示景点详情
+  - 点击"我的位置"定位用户位置
+  - 点击"探索文物"触发父组件的 explore 事件
+  - 点击"导航"跳转高德地图进行导航
+  
+  依赖：
+  - 高德地图 JS API (@amap/amap-jsapi-loader)
+  - 后端 API (heritageApi.getNearbySites)
+-->
 <template>
   <div class="city-map">
     <div class="city-selector">
@@ -22,12 +44,6 @@
         </svg>
         <span>{{ isLocating ? '定位中...' : '我的位置' }}</span>
       </button>
-      <button class="control-btn" @click="checkNearbyEasterEggs">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-        </svg>
-        <span>探索彩蛋</span>
-      </button>
     </div>
     
     <transition name="fade-slide">
@@ -40,8 +56,13 @@
     <transition name="slide-up">
       <div v-if="selectedSite" class="site-card">
         <button class="close-btn" @click="selectedSite = null">×</button>
-        <div class="site-image" :style="{ backgroundImage: `url(${selectedSite.image})` }">
-          <div class="site-type-tag">{{ selectedSite.type }}</div>
+        <div 
+          class="site-image" 
+          :style="selectedSite.coverImage ? { backgroundImage: `url(${selectedSite.coverImage})` } : {}"
+          :class="{ 'no-image': !selectedSite.coverImage }"
+        >
+          <div v-if="!selectedSite.coverImage" class="image-placeholder">🏛️</div>
+          <div class="site-type-tag">{{ selectedSite.category || '文化遗址' }}</div>
         </div>
         <div class="site-content">
           <h3 class="site-name font-serif">{{ selectedSite.name }}</h3>
@@ -55,7 +76,8 @@
           <p class="site-desc">{{ selectedSite.description }}</p>
           
           <div class="site-tags">
-            <span v-for="tag in selectedSite.tags" :key="tag" class="tag">{{ tag }}</span>
+            <span class="tag">{{ selectedSite.level }}</span>
+            <span v-if="selectedSite.distance" class="tag">{{ selectedSite.distance.toFixed(1) }}km</span>
           </div>
           
           <div class="site-actions">
@@ -95,28 +117,49 @@
 </template>
 
 <script setup>
+/**
+ * CityMap - 地图组件
+ * 
+ * 核心功能：
+ * 1. 高德地图初始化与管理
+ * 2. 景点标记渲染
+ * 3. 用户定位
+ * 4. 城市切换
+ * 5. 彩蛋系统
+ */
+
 import { ref, onMounted, onUnmounted } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
+import { heritageApi } from '@/api'
 
+// ==================== 事件定义 ====================
 const emit = defineEmits(['site-select', 'explore', 'easter-egg-found'])
 
-const mapContainer = ref(null)
-const selectedSite = ref(null)
-const currentCity = ref(null)
-const isLocating = ref(false)
-const showEasterEgg = ref(false)
-const showCityInfo = ref(false)
-const easterEggMessage = ref('')
-const easterEggReward = ref(0)
+// ==================== 响应式状态 ====================
+const mapContainer = ref(null)     // 地图容器 DOM 引用
+const selectedSite = ref(null)     // 当前选中的景点
+const currentCity = ref(null)      // 当前城市
+const isLocating = ref(false)      // 是否正在定位
+const showEasterEgg = ref(false)   // 是否显示彩蛋弹窗
+const showCityInfo = ref(false)    // 是否显示城市信息卡片
+const easterEggMessage = ref('')   // 彩蛋消息
+const easterEggReward = ref(0)     // 彩蛋奖励阅历值
+const sites = ref([])              // 景点列表
 
-let map = null
-let AMap = null
-let markers = []
-let userMarker = null
-let cityInfoTimer = null
+// ==================== 地图相关变量 ====================
+let map = null           // 高德地图实例
+let AMap = null          // 高德地图 API 对象
+let markers = []         // 景点标记数组
+let userMarker = null    // 用户位置标记
+let cityInfoTimer = null // 城市信息显示定时器
 
+// 高德地图 API Key
 const AMAP_KEY = '774b31a8e76ec13cb1e73c4686e5de0e'
 
+/**
+ * 支持的城市列表
+ * 每个城市包含：id、名称、描述、中心坐标、缩放级别、城市编码
+ */
 const cities = [
   {
     id: 'qingyuan',
@@ -124,13 +167,7 @@ const cities = [
     description: '山水清远，岭南明珠',
     center: [113.0562, 23.6817],
     zoom: 12,
-    sites: [
-      { id: 'qy1', name: '清远市博物馆', type: '博物馆', dynasty: '现代', lat: 23.7066, lng: 113.0541, address: '清远市清城区银泉北路', description: '展示清远历史文化，收藏大量珍贵文物', image: '/images/beijing1.jpg', tags: ['历史文物', '岭南文化', '免费开放'], easterEgg: '清远博物馆藏着一件千年古镜，传说能照见前世今生...' },
-      { id: 'qy2', name: '飞来寺', type: '古建筑', dynasty: '南朝梁', lat: 23.6892, lng: 113.1234, address: '清远市清城区飞来峡', description: '始建于梁武帝时期，千年古刹，岭南名寺', image: '/images/beijing2.jpg', tags: ['佛教文化', '古建筑', '祈福'], easterEgg: '飞来寺的钟声据说能传到三里之外，每逢初一十五格外灵验...' },
-      { id: 'qy3', name: '连州地下河', type: '自然景观', dynasty: '自然', lat: 24.7806, lng: 112.3814, address: '清远市连州市东陂镇', description: '典型的亚热带喀斯特地貌溶洞，被誉为"广东地下第一河"', image: '/images/beijing3.jpg', tags: ['溶洞奇观', '地下河', '自然遗产'], easterEgg: '地下河深处有一处"龙宫"，据说曾有蛟龙在此栖息...' },
-      { id: 'qy4', name: '英德宝晶宫', type: '自然景观', dynasty: '自然', lat: 24.1856, lng: 113.4012, address: '清远市英德市燕子岩', description: '集溶洞、湖泊、山林于一体的综合性景区', image: '/images/beijing4.jpg', tags: ['溶洞', '湖泊', '避暑胜地'], easterEgg: '宝晶宫的石笋千姿百态，其中一根形似观音，香火鼎盛...' },
-      { id: 'qy5', name: '瑶族文化博物馆', type: '博物馆', dynasty: '现代', lat: 24.1706, lng: 112.0876, address: '清远市连南瑶族自治县', description: '展示瑶族历史文化，体验瑶族风情', image: '/images/qinghuaci.jpg', tags: ['瑶族文化', '民族风情', '非遗'], easterEgg: '瑶族的盘王节是国家级非遗，每年农历十月十六举行盛大庆典...' }
-    ]
+    cityCode: '441800'
   },
   {
     id: 'beijing',
@@ -138,17 +175,11 @@ const cities = [
     description: '六朝古都，文化名城',
     center: [116.4074, 39.9042],
     zoom: 12,
-    sites: [
-      { id: 'bj1', name: '故宫博物院', type: '博物馆', dynasty: '明清', lat: 39.9163, lng: 116.3972, address: '北京市东城区景山前街4号', description: '中国最大的古代文化艺术博物馆，世界五大宫殿之首', image: '/images/beijing1.jpg', tags: ['世界遗产', '皇家宫殿', '珍贵文物'], easterEgg: '故宫有9999间半房屋，传说少半间是为了不僭越天帝...' },
-      { id: 'bj2', name: '中国国家博物馆', type: '博物馆', dynasty: '现代', lat: 39.9054, lng: 116.3976, address: '北京市东城区东长安街16号', description: '世界上单体建筑面积最大的博物馆，藏品143万余件', image: '/images/beijing2.jpg', tags: ['国家级', '历史文物', '免费参观'], easterEgg: '国博的司母戊鼎是迄今出土最重的青铜器，重达832.84公斤...' },
-      { id: 'bj3', name: '天坛', type: '古建筑', dynasty: '明清', lat: 39.8822, lng: 116.4066, address: '北京市东城区天坛内东里7号', description: '明清两代皇帝祭天的场所，世界文化遗产', image: '/images/beijing3.jpg', tags: ['世界遗产', '皇家祭祀', '古建筑'], easterEgg: '天坛的回音壁可以传声，站在两端轻声说话，对方能清晰听到...' },
-      { id: 'bj4', name: '颐和园', type: '皇家园林', dynasty: '清代', lat: 39.9999, lng: 116.2755, address: '北京市海淀区新建宫门路19号', description: '中国现存规模最大的皇家园林，世界文化遗产', image: '/images/beijing4.jpg', tags: ['世界遗产', '皇家园林', '山水景观'], easterEgg: '颐和园的长廊有728米，上面绘有14000多幅彩画，没有一幅重复...' },
-      { id: 'bj5', name: '首都博物馆', type: '博物馆', dynasty: '现代', lat: 39.9073, lng: 116.3516, address: '北京市西城区复兴门外大街16号', description: '展示北京历史文化的综合性博物馆', image: '/images/qinghuaci.jpg', tags: ['北京历史', '民俗文化', '免费开放'], easterEgg: '首博的镇馆之宝是乾隆御制碑，记载了北京城的建城历史...' },
-      { id: 'bj6', name: '雍和宫', type: '古建筑', dynasty: '清代', lat: 39.9474, lng: 116.4175, address: '北京市东城区雍和宫大街12号', description: '北京最大的藏传佛教寺院，曾是雍正皇帝府邸', image: '/images/fencaici.jpg', tags: ['藏传佛教', '皇家寺庙', '祈福'], easterEgg: '雍和宫是雍正皇帝的出生地，也是乾隆皇帝的出生地，出了两位皇帝...' }
-    ]
+    cityCode: '110100'
   }
 ]
 
+/** 彩蛋消息列表 */
 const easterEggMessages = [
   '你发现了一个隐藏的历史故事！',
   '恭喜你解锁了这片土地的秘密！',
@@ -157,26 +188,62 @@ const easterEggMessages = [
   '历史的长河中，你拾起了一颗明珠！'
 ]
 
-const getMarkerColor = (type) => {
+/**
+ * 根据景点分类获取标记颜色
+ * @param {string} category - 景点分类
+ * @returns {string} 颜色值
+ */
+const getMarkerColor = (category) => {
   const colors = {
     '博物馆': '#2D4059',
     '古建筑': '#8B4513',
     '自然景观': '#4A7C59',
     '皇家园林': '#B8860B'
   }
-  return colors[type] || '#2D4059'
+  return colors[category] || '#2D4059'
 }
 
+/**
+ * 从后端获取附近景点数据
+ * @param {number} lng - 经度
+ * @param {number} lat - 纬度
+ * @returns {Array} 景点列表
+ */
+const fetchSites = async (lng, lat) => {
+  try {
+    const result = await heritageApi.getNearbySites(lng, lat)
+    
+    if (result.success && result.data && result.data.length > 0) {
+      sites.value = result.data
+      return result.data
+    }
+  } catch (error) {
+    console.error('获取景点失败')
+  }
+  return []
+}
+
+/**
+ * 初始化高德地图
+ * 加载地图 API，创建地图实例，添加控件和标记
+ */
 const initMap = async () => {
   try {
+    // 配置高德地图安全密钥
+    window._AMapSecurityConfig = {
+      securityJsCode: '5b40f7c1679c23ec1d86c9c7be001ff9',
+    }
+    
     AMap = await AMapLoader.load({
       key: AMAP_KEY,
       version: '2.0',
       plugins: ['AMap.Scale', 'AMap.ToolBar', 'AMap.Geolocation', 'AMap.Marker']
     })
     
+    // 设置默认城市
     currentCity.value = cities[0]
     
+    // 创建地图实例
     map = new AMap.Map(mapContainer.value, {
       zoom: currentCity.value.zoom,
       center: currentCity.value.center,
@@ -184,26 +251,48 @@ const initMap = async () => {
       viewMode: '2D'
     })
     
+    // 添加比例尺控件
     map.addControl(new AMap.Scale())
     
-    addMarkers(currentCity.value.sites)
+    // 获取并添加景点标记
+    const siteData = await fetchSites(currentCity.value.center[0], currentCity.value.center[1])
+    if (siteData.length > 0) {
+      addMarkers(siteData)
+    }
     
+    // 显示城市信息卡片，3秒后自动隐藏
     showCityInfo.value = true
     cityInfoTimer = setTimeout(() => {
       showCityInfo.value = false
     }, 3000)
   } catch (error) {
-    console.error('地图加载失败:', error)
+    console.error('地图加载失败')
   }
 }
 
-const addMarkers = (sites) => {
+/**
+ * 在地图上添加景点标记
+ * @param {Array} siteList - 景点列表
+ */
+const addMarkers = (siteList) => {
+  // 清除现有标记
   markers.forEach(marker => map.remove(marker))
   markers = []
   
-  sites.forEach(site => {
-    const color = getMarkerColor(site.type)
+  if (!siteList || siteList.length === 0) return
+  
+  siteList.forEach(site => {
+    const lng = Number(site.longitude)
+    const lat = Number(site.latitude)
     
+    // 跳过无效坐标
+    if (isNaN(lng) || isNaN(lat)) {
+      return
+    }
+    
+    const color = getMarkerColor(site.category)
+    
+    // 创建自定义标记 HTML
     const markerContent = `
       <div class="custom-marker" style="
         position: relative;
@@ -232,8 +321,9 @@ const addMarkers = (sites) => {
       </div>
     `
     
+    // 创建标记并添加点击事件
     const marker = new AMap.Marker({
-      position: [site.lng, site.lat],
+      position: [lng, lat],
       content: markerContent,
       offset: new AMap.Pixel(-16, -40)
     })
@@ -247,12 +337,22 @@ const addMarkers = (sites) => {
   })
 }
 
-const switchCity = (city) => {
+/**
+ * 切换城市
+ * @param {Object} city - 城市配置对象
+ */
+const switchCity = async (city) => {
+  if (!map) return
+  
   currentCity.value = city
   selectedSite.value = null
   map.setZoomAndCenter(city.zoom, city.center)
-  addMarkers(city.sites)
   
+  // 获取新城市的景点数据
+  const siteData = await fetchSites(city.center[0], city.center[1])
+  addMarkers(siteData)
+  
+  // 显示城市信息卡片
   showCityInfo.value = true
   if (cityInfoTimer) clearTimeout(cityInfoTimer)
   cityInfoTimer = setTimeout(() => {
@@ -260,9 +360,14 @@ const switchCity = (city) => {
   }, 3000)
 }
 
+/**
+ * 定位用户位置
+ * 优先使用浏览器定位，失败则使用高德定位，最后使用模拟定位
+ */
 const locateUser = () => {
   isLocating.value = true
   
+  // 尝试浏览器原生定位
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -271,7 +376,7 @@ const locateUser = () => {
         isLocating.value = false
       },
       (error) => {
-        console.log('浏览器定位失败:', error.message)
+        // 浏览器定位失败，尝试高德定位
         aMapLocate()
       },
       {
@@ -281,12 +386,18 @@ const locateUser = () => {
       }
     )
   } else {
+    // 不支持浏览器定位，使用高德定位
     aMapLocate()
   }
 }
 
+/**
+ * 使用高德地图定位
+ * 当浏览器定位不可用时使用
+ */
 const aMapLocate = () => {
   if (!AMap) {
+    // 高德地图未加载，使用模拟定位
     simulateLocation()
     return
   }
@@ -305,12 +416,17 @@ const aMapLocate = () => {
         const { lng, lat } = result.position
         showUserLocation(lng, lat)
       } else {
+        // 高德定位失败，使用模拟定位
         simulateLocation()
       }
     })
   })
 }
 
+/**
+ * 模拟定位
+ * 当所有定位方式都失败时，使用当前城市中心位置加随机偏移
+ */
 const simulateLocation = () => {
   isLocating.value = false
   const city = currentCity.value
@@ -319,16 +435,24 @@ const simulateLocation = () => {
   const simLat = city.center[1] + randomOffset()
   showUserLocation(simLng, simLat)
   
+  // 显示提示彩蛋
   easterEggMessage.value = '已为您定位到' + city.name + '市中心区域'
   easterEggReward.value = 5
   showEasterEgg.value = true
 }
 
+/**
+ * 在地图上显示用户位置
+ * @param {number} lng - 经度
+ * @param {number} lat - 纬度
+ */
 const showUserLocation = (lng, lat) => {
+  // 移除旧的用户标记
   if (userMarker) {
     map.remove(userMarker)
   }
   
+  // 创建用户位置标记（带脉冲动画）
   const userContent = `
     <div style="
       position: relative;
@@ -371,16 +495,15 @@ const showUserLocation = (lng, lat) => {
 }
 
 const checkNearbySites = (lng, lat) => {
-  const nearbySites = currentCity.value.sites.filter(site => {
-    const distance = calculateDistance(lat, lng, site.lat, site.lng)
+  if (sites.value.length === 0) return
+  
+  const nearbySites = sites.value.filter(site => {
+    const distance = calculateDistance(lat, lng, site.latitude, site.longitude)
     return distance < 2
   })
   
   if (nearbySites.length > 0) {
     const randomSite = nearbySites[Math.floor(Math.random() * nearbySites.length)]
-    triggerEasterEgg(randomSite)
-  } else {
-    const randomSite = currentCity.value.sites[Math.floor(Math.random() * currentCity.value.sites.length)]
     triggerEasterEgg(randomSite)
   }
 }
@@ -396,13 +519,8 @@ const calculateDistance = (lat1, lng1, lat2, lng2) => {
   return R * c
 }
 
-const checkNearbyEasterEggs = () => {
-  const randomSite = currentCity.value.sites[Math.floor(Math.random() * currentCity.value.sites.length)]
-  triggerEasterEgg(randomSite)
-}
-
 const triggerEasterEgg = (site) => {
-  easterEggMessage.value = site.easterEgg || easterEggMessages[Math.floor(Math.random() * easterEggMessages.length)]
+  easterEggMessage.value = `在${site.name}发现了隐藏的历史故事！`
   easterEggReward.value = Math.floor(Math.random() * 50) + 10
   showEasterEgg.value = true
   
@@ -417,20 +535,20 @@ const handleExplore = (site) => {
 }
 
 const handleNavigate = (site) => {
-  const url = `https://uri.amap.com/navigation?to=${site.lng},${site.lat},${encodeURIComponent(site.name)}&mode=car&policy=1&src=myapp&coordinate=gaode&callnative=1`
+  const url = `https://uri.amap.com/navigation?to=${site.longitude},${site.latitude},${encodeURIComponent(site.name)}&mode=car&policy=1&src=myapp&coordinate=gaode&callnative=1`
   window.open(url, '_blank')
 }
 
 onMounted(() => {
-  window._AMapSecurityConfig = {
-    securityJsCode: '',
-  }
   initMap()
 })
 
 onUnmounted(() => {
   if (map) {
     map.destroy()
+  }
+  if (cityInfoTimer) {
+    clearTimeout(cityInfoTimer)
   }
 })
 </script>
@@ -582,6 +700,18 @@ onUnmounted(() => {
   background-size: cover;
   background-position: center;
   position: relative;
+  background-color: rgba(45, 64, 89, 0.08);
+}
+
+.site-image.no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.site-image .image-placeholder {
+  font-size: 48px;
+  opacity: 0.5;
 }
 
 .site-type-tag {

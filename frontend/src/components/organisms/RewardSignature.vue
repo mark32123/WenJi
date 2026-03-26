@@ -8,6 +8,7 @@
               v-if="artifact.imageUrl"
               :src="artifact.imageUrl"
               :alt="artifact.name"
+              @error="handleImageError"
             />
             <div v-else class="image-placeholder">
               <span>🏺</span>
@@ -20,23 +21,11 @@
         
         <div class="info-section">
           <div class="artifact-header">
-            <VerticalText
-              :text="artifact.name"
-              font-size="xl"
-              font-weight="medium"
-              color="dailan"
-              :letter-spacing="'0.2em'"
-            />
+            <h3 class="artifact-name font-serif">{{ artifact.name }}</h3>
           </div>
           
           <div class="poem-section">
-            <VerticalText
-              :text="matchedPoem"
-              font-size="sm"
-              color="mohei"
-              :letter-spacing="'0.15em'"
-              :animate="animatePoem"
-            />
+            <p class="poem-text font-serif">{{ displayPoem }}</p>
           </div>
           
           <div class="meta-section">
@@ -75,11 +64,16 @@
         <div v-if="showPreview" class="image-preview-overlay" @click="closeImagePreview">
           <div class="preview-container">
             <img 
-              v-if="artifact.imageUrl"
+              v-if="artifact.imageUrl && !imageError"
               :src="artifact.imageUrl"
               :alt="artifact.name"
               class="preview-image"
+              @error="handleImageError"
             />
+            <div v-else class="preview-placeholder">
+              <span>🏺</span>
+              <p>图片暂不可用</p>
+            </div>
             <div class="preview-info">
               <h3 class="preview-title font-serif">{{ artifact.name }}</h3>
               <p class="preview-meta">{{ artifact.dynasty }} · {{ artifact.location }}</p>
@@ -104,7 +98,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import PaperSurface from '@/components/atoms/PaperSurface.vue'
-import VerticalText from '@/components/atoms/VerticalText.vue'
 import InkButton from '@/components/atoms/InkButton.vue'
 
 const props = defineProps({
@@ -132,10 +125,15 @@ const emit = defineEmits(['collect', 'save'])
 const animatePoem = ref(false)
 const showCollectedMessage = ref(false)
 const showPreview = ref(false)
+const imageError = ref(false)
 
-const matchedPoem = computed(() => {
+const displayPoem = computed(() => {
   return props.poem || props.artifact.poem || '岁月无声，文物有灵'
 })
+
+const handleImageError = () => {
+  imageError.value = true
+}
 
 const openImagePreview = () => {
   showPreview.value = true
@@ -268,29 +266,40 @@ onMounted(() => {
 
 .info-section {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
 }
 
 .artifact-header {
-  flex-shrink: 0;
+  text-align: center;
+}
+
+.artifact-name {
+  font-size: 24px;
+  color: #2D4059;
+  margin: 0;
+  letter-spacing: 0.15em;
 }
 
 .poem-section {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  text-align: center;
+  padding: 12px 0;
+}
+
+.poem-text {
+  font-size: 14px;
+  color: #5A6B6E;
+  line-height: 2;
+  margin: 0;
+  letter-spacing: 0.1em;
 }
 
 .meta-section {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  flex-shrink: 0;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .meta-item {
@@ -360,6 +369,28 @@ onMounted(() => {
   max-height: 70vh;
   object-fit: contain;
   border-radius: 8px;
+}
+
+.preview-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 40px;
+  background: rgba(45, 64, 89, 0.2);
+  border-radius: 8px;
+}
+
+.preview-placeholder span {
+  font-size: 64px;
+  opacity: 0.5;
+}
+
+.preview-placeholder p {
+  font-size: 14px;
+  color: rgba(245, 242, 235, 0.6);
+  margin: 0;
 }
 
 .preview-info {
@@ -487,14 +518,15 @@ onMounted(() => {
   }
   
   .info-section {
-    flex-direction: column;
-    align-items: center;
     gap: 12px;
   }
   
-  .artifact-header,
-  .meta-section {
-    align-items: center;
+  .artifact-name {
+    font-size: 20px;
+  }
+  
+  .poem-text {
+    font-size: 13px;
   }
   
   .action-buttons {

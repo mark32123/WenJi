@@ -3,7 +3,7 @@ package com.example.Repository.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.Common.Utils.RedisChatHistoryUtils;
 import com.example.Mapper.AIChatSessionMapper;
-import com.example.Pojo.Entity.AI.AIChatSession;
+import com.example.Pojo.AIChatSession;
 import com.example.Repository.ChatHistoryRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,7 +1,7 @@
 package com.example.Mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.Pojo.Entity.AI.AIChatSession;
+import com.example.Pojo.AIChatSession;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

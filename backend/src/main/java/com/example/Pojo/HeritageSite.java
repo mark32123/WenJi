@@ -56,7 +56,7 @@ public class HeritageSite {
     private Double distance;
 
     // 关联数据
-    private List<SiteImage> images;
+    private List<SiteImages> images;
     private List<OpeningHours> openingHours;
     private Boolean isOpening;
 }

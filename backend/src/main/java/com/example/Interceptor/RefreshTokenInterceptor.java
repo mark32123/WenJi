@@ -36,61 +36,49 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        // 获取请求的令牌,去掉Bearer前缀
-        String authorization=request.getHeader("Authorization");
+        String uri = request.getRequestURI();
+        
+        if (uri.startsWith("/map/")) {
+            return true;
+        }
+        
+        String authorization = request.getHeader("Authorization");
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             response.setStatus(401);
-            response.getWriter().write("未登录");
             return false;
         }
 
-        // 解析令牌
-        String token=authorization.substring(7).trim();
+        String token = authorization.substring(7).trim();
         try {
-            // 解析令牌
             JwtUtils.parseToken(token);
-            String key=USER_LOGIN_KEY+token;
-
-            // 从redis中获取用户数据
-            Map<Object, Object> userMap=stringRedisTemplate.opsForHash().entries(key);
-
-            // 如果用户数据为空，直接放行
-            if(userMap.isEmpty()){
+            String key = USER_LOGIN_KEY + token;
+        
+            Map<Object, Object> userMap = stringRedisTemplate.opsForHash().entries(key);
+        
+            if (userMap.isEmpty()) {
                 response.setStatus(401);
-                response.getWriter().write("Token已失效，请重新登录");
                 return false;
             }
-
-            //使用ObjectMapper的convertValue方法将userMap转为User对象
-            ObjectMapper objectMapper=new ObjectMapper();
-            User user=objectMapper.convertValue(userMap,User.class);
-
-            //存储到ThreadLocal中
-            Map<String,Object> claimsMap=new HashMap<>();
-            claimsMap.put("userId",user.getUserId());
-            claimsMap.put("username",user.getUsername());
-            claimsMap.put("phone",user.getPhone());
+        
+            ObjectMapper objectMapper = new ObjectMapper();
+            User user = objectMapper.convertValue(userMap, User.class);
+        
+            Map<String, Object> claimsMap = new HashMap<>();
+            claimsMap.put("userId", user.getUserId());
+            claimsMap.put("username", user.getUsername());
+            claimsMap.put("phone", user.getPhone());
             ThreadLocalUtil.set(claimsMap);
-
-            //放行后重新设置令牌有效期
-            stringRedisTemplate.expire(key,USER_LOGIN_EXPIRE, TimeUnit.MINUTES);
+        
+            stringRedisTemplate.expire(key, USER_LOGIN_EXPIRE, TimeUnit.MINUTES);
             return true;
         } catch (Exception e) {
-            //token解析失败，放行让LoginInterceptor进行处理
+            response.setStatus(401);
             return false;
         }
     }
-    
-    /**
-     * 请求处理后拦截器
-     * @param request 请求对象
-     * @param response 响应对象
-     * @param handler 处理器对象
-     * @param ex 异常对象
-     */
+
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
-        //请求处理完成后，清空ThreadLocal中的数据,防止内存泄露
         ThreadLocalUtil.remove();
     }
 }

@@ -5,10 +5,13 @@ import com.example.Pojo.HeritageSite;
 import com.example.Service.SiteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+@Slf4j
 @RestController
 @RequestMapping("/map")
 @Tag(name = "历史遗迹", description = " 历史遗迹相关接口")
@@ -16,23 +19,19 @@ public class HeritageController {
     @Autowired
     private SiteService siteService;
 
-    /**
-     * 获取附近 HeritageSite
-     * @param lng
-     * @param lat
-     * @return
-     */
     @Operation(summary = "获取附近历史遗迹", description = "获取附近历史遗迹")
     @GetMapping("/initial")
-    public ResponseEntity<?> getNearby(@RequestParam Double lng, @RequestParam Double lat) {
-        return ResponseEntity.ok(Result.success(siteService.getNearbyHeritageSites(lng, lat)));
+    public Result<List<HeritageSite>> getNearby(@RequestParam Double lng, @RequestParam Double lat) {
+        try {
+            List<HeritageSite> sites = siteService.getNearbyHeritageSites(lng, lat);
+            log.info("查询到 {} 个景点", sites != null ? sites.size() : 0);
+            return Result.success(sites);
+        } catch (Exception e) {
+            log.error("查询景点失败: ", e);
+            return Result.error("查询景点失败: " + e.getMessage());
+        }
     }
 
-    /**
-     * 根据ID获取景点详细介绍
-     * * @param id 景点ID
-     * @return 包含介绍、历史、图片的详情对象
-     */
     @GetMapping("/{id}")
     public Result<HeritageSite> getSiteDetail(@PathVariable("id") String id) {
         HeritageSite detail = siteService.getDetail(id);

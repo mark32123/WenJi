@@ -1,23 +1,38 @@
 const BASE_URL = '/api'
 
+const TOKEN_KEY = 'wenji_auth'
+
 const getToken = () => {
   try {
-    const auth = localStorage.getItem('wenji_auth')
-    if (auth) {
-      const data = JSON.parse(auth)
-      return data.token
+    const auth = localStorage.getItem(TOKEN_KEY)
+    if (!auth) {
+      return null
     }
+    
+    let data
+    try {
+      data = JSON.parse(auth)
+    } catch (parseError) {
+      return auth
+    }
+    
+    if (data && data.token) {
+      return data.token
+    } else if (typeof data === 'string') {
+      return data
+    }
+    
+    return null
   } catch (e) {
-    console.warn('获取token失败:', e)
+    return null
   }
-  return null
 }
 
 const getGuestId = () => {
   return localStorage.getItem('wenji_guest_id')
 }
 
-const request = async (url, options = {}) => {
+const request = async (url, options = {}, skipAuth = false) => {
   const token = getToken()
   const guestId = getGuestId()
   
@@ -25,13 +40,15 @@ const request = async (url, options = {}) => {
     'Content-Type': 'application/json',
   }
   
-  if (token) {
-    defaultHeaders['Authorization'] = `Bearer ${token}`
-  }
-  
-  if (!token && guestId) {
-    defaultHeaders['X-User-Type'] = 'GUEST'
-    defaultHeaders['X-User-Id'] = guestId
+  if (!skipAuth) {
+    if (token) {
+      defaultHeaders['Authorization'] = `Bearer ${token}`
+    }
+    
+    if (!token && guestId) {
+      defaultHeaders['X-User-Type'] = 'GUEST'
+      defaultHeaders['X-User-Id'] = guestId
+    }
   }
   
   const config = {
@@ -56,7 +73,7 @@ const request = async (url, options = {}) => {
         data = { code: 0, msg: '服务器返回空响应' }
       }
     } catch (parseError) {
-      console.error('JSON解析失败:', parseError)
+      console.error('请求失败: 响应格式错误')
       data = { code: 0, msg: '服务器响应格式错误' }
     }
     
@@ -76,7 +93,7 @@ const request = async (url, options = {}) => {
       data: data.data
     }
   } catch (error) {
-    console.error('请求错误:', error)
+    console.error('网络错误:', error.message)
     return {
       success: false,
       code: -1,
@@ -87,14 +104,14 @@ const request = async (url, options = {}) => {
 }
 
 export const api = {
-  get(url, params = {}) {
+  get(url, params = {}, options = {}) {
     const queryString = Object.keys(params)
       .filter(key => params[key] !== undefined && params[key] !== null)
       .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
       .join('&')
     
     const fullUrl = queryString ? `${url}?${queryString}` : url
-    return request(fullUrl, { method: 'GET' })
+    return request(fullUrl, { method: 'GET' }, options.skipAuth)
   },
   
   post(url, data = {}) {
@@ -145,10 +162,6 @@ export const userApi = {
 export const badgeApi = {
   getUserBadges() {
     return api.get('/badge/myBadges')
-  },
-  
-  unlockBadge(badgeId) {
-    return api.post(`/badge/unlock/${badgeId}`)
   }
 }
 
@@ -192,11 +205,11 @@ export const fileApi = {
 
 export const heritageApi = {
   getNearbySites(lng, lat) {
-    return api.get('/map/initial', { lng, lat })
+    return api.get('/map/initial', { lng, lat }, { skipAuth: true })
   },
   
   getHeritageDetail(id) {
-    return api.get(`/map/${id}`)
+    return api.get(`/map/${id}`, {}, { skipAuth: true })
   }
 }
 

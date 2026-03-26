@@ -1,6 +1,6 @@
 package com.example.VO.AI;
 
-import com.example.Pojo.Entity.AI.AIChatMessage;
+import com.example.Pojo.AIChatMessage;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.ai.chat.messages.Message;

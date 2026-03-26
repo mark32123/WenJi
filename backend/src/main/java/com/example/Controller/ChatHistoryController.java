@@ -2,12 +2,12 @@ package com.example.Controller;
 
 
 import com.example.Common.Result;
-import com.example.Pojo.Entity.AI.AIChatMessage;
+import com.example.Pojo.AIChatMessage;
 import com.example.VO.AI.MessageVO;
 import com.example.VO.AI.ChatSessionVO;
 import com.example.Repository.ChatHistoryRepository;
 import com.example.Mapper.AIChatSessionMapper;
-import com.example.Pojo.Entity.AI.AIChatSession;
+import com.example.Pojo.AIChatSession;
 import com.example.Service.AIChatMessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

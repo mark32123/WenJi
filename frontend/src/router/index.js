@@ -48,7 +48,7 @@ const routes = [
     name: 'compiler',
     component: () => import('@/views/TargetCompilerView.vue'),
     meta: {
-      title: 'AR目标编译器 - 文迹'
+      title: '管理工具 - 文迹'
     }
   }
 ]

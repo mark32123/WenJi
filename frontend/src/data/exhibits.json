@@ -5,7 +5,7 @@
     {
       "id": "qinghuaci",
       "name": "青花瓷瓶",
-      "targetImage": "/targets/qinghuaci.mind",
+      "targetImage": "/targets/targets.mind",
       "description": "青花瓷是中国陶瓷艺术的瑰宝，以其典雅的蓝白配色闻名于世。采用钴料在瓷胎上绑绑，施以透明釉，经高温一次烧成。",
       "layers": [
         {

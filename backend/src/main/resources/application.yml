@@ -54,3 +54,7 @@ mybatis-plus:
       table-underline: true
   mapper-locations: classpath*:com/example/Mapper/*.xml
   type-aliases-package: com.example.Pojo
+
+# JWT 配置
+jwt:
+  secret: "wenji-jwt-secret-key-at-least-32-characters-long-for-security-2024"

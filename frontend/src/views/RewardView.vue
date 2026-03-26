@@ -73,7 +73,6 @@ const handleCollect = (collectedArtifact) => {
 }
 
 const handleSave = (savedArtifact) => {
-  console.log('Save artifact:', savedArtifact)
 }
 
 const goExplore = () => {
@@ -146,7 +145,7 @@ onMounted(() => {
       dynasty: '明朝',
       category: '瓷器',
       location: '景德镇',
-      imageUrl: '/images/demo-porcelain.jpg',
+      imageUrl: '/images/qinghuaci.jpg',
       poem: '素胚勾勒出青花笔锋浓转淡，瓶身描绘的牡丹一如你初妆'
     }
   }

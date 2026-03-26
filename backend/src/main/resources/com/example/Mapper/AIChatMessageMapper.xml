@@ -3,7 +3,7 @@
 <mapper namespace="com.example.Mapper.AIChatMessageMapper">
 
     <!-- 根据会话 ID 查询消息列表 -->
-    <select id="selectBySessionId" resultType="com.example.Pojo.Entity.AI.AIChatMessage">
+    <select id="selectBySessionId" resultType="com.example.Pojo.AIChatMessage">
         SELECT * FROM ai_chat_message
         WHERE session_id = #{sessionId}
         ORDER BY create_time ASC
@@ -19,7 +19,7 @@
     </insert>
 
     <!-- 查询用户的历史消息 -->
-    <select id="selectUserHistoryMessages" resultType="com.example.Pojo.Entity.AI.AIChatMessage">
+    <select id="selectUserHistoryMessages" resultType="com.example.Pojo.AIChatMessage">
         SELECT m.* FROM ai_chat_message m
         INNER JOIN ai_chat_session s ON m.session_id = s.session_id
         WHERE s.user_id = #{userId}

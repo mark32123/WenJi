@@ -28,6 +28,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns("/user/login","/user/captcha","/",
                         "/uploads/**",
+                        "/map/**",
                         "/doc.html",
                         "/webjars/**",
                         "/swagger-resources/**",
@@ -36,11 +37,13 @@ public class WebConfig implements WebMvcConfigurer {
                         "/swagger-ui.html");
         //拦截所有请求，但是要避免拦截登录和注册接口
         registry.addInterceptor(loginInterceptor)//添加拦截器，但是要避免拦截登录和注册接口
+                .order(1)//在 RefreshTokenInterceptor 之后执行
                 .addPathPatterns("/**")//拦截所有接口
                 .excludePathPatterns("/user/login",
                         "/user/captcha",
                         "/",
                         "/uploads/**",
+                        "/map/**",
                         "/doc.html",
                         "/webjars/**",
                         "/swagger-resources/**",

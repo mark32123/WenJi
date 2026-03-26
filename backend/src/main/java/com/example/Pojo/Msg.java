@@ -1,4 +1,4 @@
-package com.example.Pojo.Entity.AI;
+package com.example.Pojo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

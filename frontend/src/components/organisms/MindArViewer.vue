@@ -1,9 +1,50 @@
 <template>
   <div class="mind-ar-viewer">
     <div class="ar-scene" ref="sceneRef">
-      <video ref="videoRef" class="ar-video" playsinline autoplay muted></video>
+      <a-scene
+        v-if="arMode === 'image' && hasMindFiles && currentTarget"
+        :mindar-image="`imageTargetSrc: ${currentTarget};`"
+        color-space="sRGB"
+        renderer="colorManagement: true, physicallyCorrectLights"
+        vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false"
+        embedded
+      >
+        <a-assets>
+          <img 
+            v-for="layer in backgroundLayers" 
+            :key="layer.id"
+            :id="layer.id" 
+            :src="layer.src" 
+          />
+        </a-assets>
+        
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        
+        <a-entity mindar-image-target="targetIndex: 0">
+          <a-plane 
+            :src="'#' + backgroundLayers[0]?.id"
+            position="0 0 0"
+            height="0.552"
+            width="1"
+            rotation="0 0 0"
+          ></a-plane>
+        </a-entity>
+      </a-scene>
       
-      <div v-if="!isTracking" class="scanning-overlay">
+      <video ref="videoRef" class="ar-video" playsinline autoplay muted v-show="arMode !== 'image' || !hasMindFiles"></video>
+      
+      <div v-if="!isTracking && arMode === 'qrcode'" class="scanning-overlay">
+        <div class="scan-frame">
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
+        </div>
+        <p class="scan-hint font-serif">将二维码放入框内</p>
+      </div>
+      
+      <div v-if="!isTracking && arMode === 'image' && !hasMindFiles" class="scanning-overlay">
         <div class="scan-frame">
           <div class="corner tl"></div>
           <div class="corner tr"></div>
@@ -59,18 +100,17 @@
           <polyline points="15 18 9 12 15 6"/>
         </svg>
       </button>
-      <h2 class="header-title font-serif">AR 识图</h2>
-      <button class="switch-btn" @click="switchCamera">
+      <h2 class="header-title font-serif">{{ modeTitle }}</h2>
+      <button class="switch-btn" @click="switchMode">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-          <circle cx="12" cy="13" r="4"/>
+          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
         </svg>
       </button>
     </div>
     
     <div v-if="loading" class="loading-overlay">
       <div class="loading-spinner"></div>
-      <p class="loading-text">正在初始化摄像头...</p>
+      <p class="loading-text">{{ loadingText }}</p>
     </div>
     
     <div v-if="error" class="error-overlay">
@@ -80,36 +120,80 @@
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
       <p class="error-text">{{ error }}</p>
-      <button class="retry-btn" @click="initCamera">重试</button>
+      <button class="retry-btn" @click="initAR">重试</button>
     </div>
     
-    <div class="demo-controls">
-      <button class="demo-btn" @click="simulateRecognition">
-        演示识别
-      </button>
+    <div v-if="!loading && !isTracking" class="mode-selector">
+      <div class="mode-tabs">
+        <button 
+          class="mode-tab" 
+          :class="{ active: arMode === 'qrcode' }"
+          @click="setMode('qrcode')"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          扫码识别
+        </button>
+        <button 
+          class="mode-tab" 
+          :class="{ active: arMode === 'image' }"
+          @click="setMode('image')"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          图片识别
+        </button>
+      </div>
+      
+      <div v-if="arMode === 'image' && !hasMindFiles" class="demo-section">
+        <p class="demo-hint">暂无识别文件，可使用演示模式</p>
+        <button class="demo-btn" @click="simulateRecognition">
+          演示识别
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
 import exhibitsData from '@/data/exhibits.json'
+import jsQR from 'jsqr'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 const sceneRef = ref(null)
 const videoRef = ref(null)
+const canvasRef = ref(null)
 
 const loading = ref(true)
+const loadingText = ref('正在初始化...')
 const error = ref(null)
 const isTracking = ref(false)
 const currentExhibit = ref(null)
+const currentTarget = ref(null)
 const facingMode = ref('environment')
+const hasMindFiles = ref(false)
+const arMode = ref('qrcode')
 
 let stream = null
+let availableTargets = []
+let qrScanInterval = null
+
+const modeTitle = computed(() => {
+  return arMode.value === 'qrcode' ? '扫码识别' : '图片识别'
+})
 
 const backgroundLayers = computed(() => {
   if (!currentExhibit.value) return []
@@ -123,44 +207,195 @@ const getLayerStyle = (layer) => {
   }
 }
 
-const initCamera = async () => {
+const checkMindFiles = async () => {
+  loadingText.value = '检查识别文件...'
+  const exhibits = exhibitsData.exhibits
+  
+  for (const exhibit of exhibits) {
+    if (exhibit.targetImage) {
+      try {
+        const response = await fetch(exhibit.targetImage, { method: 'GET' })
+        if (response.ok) {
+          const buffer = await response.arrayBuffer()
+          if (buffer.byteLength > 1000) {
+            const header = new Uint8Array(buffer, 0, 4)
+            if (header[0] === 0x4D && header[1] === 0x49 && header[2] === 0x4E && header[3] === 0x44) {
+              availableTargets.push({
+                exhibit,
+                mindFile: exhibit.targetImage
+              })
+            }
+          }
+        }
+      } catch (e) {
+        console.warn(`识别文件不存在: ${exhibit.targetImage}`)
+      }
+    }
+  }
+  
+  hasMindFiles.value = availableTargets.length > 0
+  console.log(`可用识别目标: ${availableTargets.length} 个`)
+  
+  if (hasMindFiles.value) {
+    currentTarget.value = availableTargets[0].mindFile
+    currentExhibit.value = availableTargets[0].exhibit
+  }
+}
+
+const initAR = async () => {
   loading.value = true
   error.value = null
   
   try {
+    await checkMindFiles()
+    
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw new Error('您的设备不支持摄像头访问')
     }
     
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: facingMode.value,
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: false
-    })
-    
-    if (videoRef.value) {
-      videoRef.value.srcObject = stream
-      await videoRef.value.play()
+    if (arMode.value === 'image' && hasMindFiles.value && availableTargets.length > 0) {
+      loadingText.value = '正在加载 AR 引擎...'
+      await initAFrameAR()
+    } else {
+      loadingText.value = '正在启动摄像头...'
+      await startCamera()
     }
     
     loading.value = false
   } catch (e) {
-    console.error('摄像头初始化失败:', e)
+    console.error('AR初始化失败:', e)
     error.value = e.message || '初始化失败，请检查摄像头权限'
     loading.value = false
   }
 }
 
+const startCamera = async () => {
+  stream = await navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: facingMode.value,
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    },
+    audio: false
+  })
+  
+  if (videoRef.value) {
+    videoRef.value.srcObject = stream
+    await videoRef.value.play()
+  }
+  
+  if (arMode.value === 'qrcode') {
+    startQRScan()
+  }
+}
+
+const startQRScan = () => {
+  if (qrScanInterval) {
+    clearInterval(qrScanInterval)
+  }
+  
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  
+  qrScanInterval = setInterval(() => {
+    if (!videoRef.value || videoRef.value.readyState !== 4) return
+    
+    canvas.width = videoRef.value.videoWidth
+    canvas.height = videoRef.value.videoHeight
+    ctx.drawImage(videoRef.value, 0, 0, canvas.width, canvas.height)
+    
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const code = jsQR(imageData.data, imageData.width, imageData.height)
+    
+    if (code) {
+      console.log('扫描到二维码:', code.data)
+      handleQRCode(code.data)
+    }
+  }, 200)
+}
+
+const handleQRCode = (data) => {
+  let exhibitId = null
+  
+  if (data.startsWith('wenji://exhibit/')) {
+    exhibitId = data.replace('wenji://exhibit/', '')
+  } else if (data.startsWith('http') && data.includes('exhibit=')) {
+    const url = new URL(data)
+    exhibitId = url.searchParams.get('exhibit')
+  } else {
+    const exhibit = exhibitsData.exhibits.find(e => 
+      e.id === data || e.name.includes(data)
+    )
+    if (exhibit) {
+      exhibitId = exhibit.id
+    }
+  }
+  
+  if (exhibitId) {
+    const exhibit = exhibitsData.exhibits.find(e => e.id === exhibitId)
+    if (exhibit) {
+      stopQRScan()
+      currentExhibit.value = exhibit
+      isTracking.value = true
+      
+      if (exhibit.unlockReward) {
+        userStore.addExperience(exhibit.unlockReward.experience || 0)
+      }
+    }
+  }
+}
+
+const stopQRScan = () => {
+  if (qrScanInterval) {
+    clearInterval(qrScanInterval)
+    qrScanInterval = null
+  }
+}
+
+const initAFrameAR = async () => {
+  await nextTick()
+  
+  const scene = document.querySelector('a-scene')
+  if (scene) {
+    scene.addEventListener('loaded', () => {
+      console.log('A-Frame 场景加载完成')
+      
+      const target = document.querySelector('[mindar-image-target]')
+      if (target) {
+        target.addEventListener('targetFound', () => {
+          console.log('识别到目标')
+          isTracking.value = true
+          
+          if (currentExhibit.value?.unlockReward) {
+            userStore.addExperience(currentExhibit.value.unlockReward.experience || 0)
+          }
+        })
+        
+        target.addEventListener('targetLost', () => {
+          console.log('目标丢失')
+          isTracking.value = false
+        })
+      }
+    })
+  }
+}
+
+const setMode = (mode) => {
+  if (arMode.value === mode) return
+  arMode.value = mode
+  cleanup()
+  initAR()
+}
+
+const switchMode = () => {
+  const newMode = arMode.value === 'qrcode' ? 'image' : 'qrcode'
+  setMode(newMode)
+}
+
 const simulateRecognition = () => {
   const exhibits = exhibitsData.exhibits
-  console.log('所有展品:', exhibits)
   if (exhibits.length > 0) {
     const randomExhibit = exhibits[Math.floor(Math.random() * exhibits.length)]
-    console.log('选中展品:', randomExhibit)
-    console.log('展品图片:', randomExhibit.layers)
     currentExhibit.value = randomExhibit
     isTracking.value = true
     
@@ -173,6 +408,10 @@ const simulateRecognition = () => {
 const closeTracking = () => {
   isTracking.value = false
   currentExhibit.value = null
+  
+  if (arMode.value === 'qrcode') {
+    startQRScan()
+  }
 }
 
 const handleImageError = (e) => {
@@ -193,18 +432,14 @@ const showExhibitDetail = () => {
   }
 }
 
-const switchCamera = async () => {
-  facingMode.value = facingMode.value === 'environment' ? 'user' : 'environment'
-  cleanup()
-  await initCamera()
-}
-
 const handleBack = () => {
   cleanup()
   router.back()
 }
 
 const cleanup = () => {
+  stopQRScan()
+  
   if (stream) {
     stream.getTracks().forEach(track => track.stop())
     stream = null
@@ -216,7 +451,16 @@ const cleanup = () => {
 }
 
 onMounted(() => {
-  initCamera()
+  const exhibitId = route.query.exhibit
+  if (exhibitId) {
+    const exhibit = exhibitsData.exhibits.find(e => e.id === exhibitId)
+    if (exhibit) {
+      currentExhibit.value = exhibit
+      isTracking.value = true
+    }
+  }
+  
+  initAR()
 })
 
 onUnmounted(() => {
@@ -248,15 +492,6 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.ar-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
 }
 
 .scanning-overlay {
@@ -404,10 +639,6 @@ onUnmounted(() => {
   font-size: 14px;
 }
 
-.ar-layer.video {
-  mix-blend-mode: screen;
-}
-
 .ar-controls {
   position: absolute;
   bottom: 40px;
@@ -516,12 +747,57 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-.demo-controls {
+.mode-selector {
   position: absolute;
-  bottom: 100px;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 6px;
+  border-radius: 30px;
+  backdrop-filter: blur(10px);
+}
+
+.mode-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 24px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-tab.active {
+  background: linear-gradient(135deg, #C9A227, #D4AF37);
+  color: #fff;
+}
+
+.demo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.demo-hint {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  margin: 0;
 }
 
 .demo-btn {

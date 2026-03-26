@@ -3,7 +3,7 @@ package com.example.Controller;
 
 import com.example.Repository.ChatHistoryRepository;
 import com.example.Service.AIChatMessageService;
-import com.example.Pojo.Entity.AI.AIChatMessage;
+import com.example.Pojo.AIChatMessage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

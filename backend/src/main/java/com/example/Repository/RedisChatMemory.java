@@ -1,7 +1,7 @@
 package com.example.Repository;
 
 
-import com.example.Pojo.Entity.AI.Msg;
+import com.example.Pojo.Msg;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
