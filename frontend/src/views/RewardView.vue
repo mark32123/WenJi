@@ -119,10 +119,32 @@ const handleCollect = (collectedArtifact) => {
 
 /**
  * 处理保存事件
+ * 将文物卡片保存为图片
  * @param {Object} savedArtifact - 要保存的文物
  */
-const handleSave = (savedArtifact) => {
-  // TODO: 实现保存图片功能
+const handleSave = async (savedArtifact) => {
+  if (!savedArtifact) return
+  
+  try {
+    if (savedArtifact.imageUrl) {
+      const response = await fetch(savedArtifact.imageUrl)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${savedArtifact.name || '文物'}_${Date.now()}.jpg`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } else {
+      alert('暂无图片可保存')
+    }
+  } catch (error) {
+    console.error('保存图片失败:', error)
+    alert('保存图片失败，请稍后重试')
+  }
 }
 
 /** 跳转到探索页面 */

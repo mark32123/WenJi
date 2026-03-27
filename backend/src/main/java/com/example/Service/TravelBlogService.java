@@ -17,4 +17,11 @@ public interface TravelBlogService {
      * @return 博客列表
      */
     List<TravelBlog> getUserBlogs(Integer userId);
+    
+    /**
+     * 删除游记
+     * @param userId 用户ID
+     * @param blogId 博客ID
+     */
+    void deleteBlog(Integer userId, Long blogId);
 }

@@ -135,12 +135,22 @@
               v-for="item in poemCollection"
               :key="item.id"
               class="poem-card"
-              :class="{ unlocked: item.unlocked }"
+              :class="{ unlocked: item.unlocked, 'blog-card': item.isBlog }"
               @click="handlePoemClick(item)"
             >
               <div v-if="item.unlocked" class="poem-content" :class="{ 'has-image': item.image }" :style="getPoemBackground(item)">
+                <button class="delete-btn" @click.stop="handleDeleteItem(item)" title="删除">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
                 <div class="poem-location-tag">{{ item.location }}</div>
-                <div class="poem-lines">
+                <div v-if="item.isBlog" class="blog-preview">
+                  <p class="blog-title-text">{{ item.title }}</p>
+                  <p class="blog-excerpt">{{ item.content?.slice(0, 50) }}{{ item.content?.length > 50 ? '...' : '' }}</p>
+                </div>
+                <div v-else class="poem-lines">
                   <p v-for="(line, idx) in item.lines.slice(0, 2)" :key="idx" class="poem-line font-serif">{{ line }}</p>
                 </div>
                 <div class="poem-date">{{ item.date }}</div>
@@ -297,52 +307,88 @@
               <div class="poem-type-toggle">
                 <button 
                   class="toggle-btn" 
-                  :class="{ active: newPoem.type === 'ai' }"
-                  @click="newPoem.type = 'ai'"
+                  :class="{ active: newPoem.type === 'poem' }"
+                  @click="newPoem.type = 'poem'"
                 >
-                  AI 生成
+                  写诗
                 </button>
                 <button 
                   class="toggle-btn" 
-                  :class="{ active: newPoem.type === 'custom' }"
-                  @click="newPoem.type = 'custom'"
+                  :class="{ active: newPoem.type === 'blog' }"
+                  @click="newPoem.type = 'blog'"
                 >
-                  自定义
+                  写游记
                 </button>
               </div>
               
-              <div v-if="newPoem.type === 'custom'" class="custom-poem-area">
-                <textarea 
-                  v-model="newPoem.customContent" 
-                  class="poem-textarea font-serif"
-                  placeholder="写下你的诗句...&#10;每行一句，最多四句"
-                  rows="4"
-                  maxlength="100"
-                />
+              <div v-if="newPoem.type === 'poem'" class="poem-mode-area">
+                <div class="poem-sub-toggle">
+                  <button 
+                    class="sub-toggle-btn" 
+                    :class="{ active: newPoem.poemMode === 'ai' }"
+                    @click="newPoem.poemMode = 'ai'"
+                  >
+                    AI 生成
+                  </button>
+                  <button 
+                    class="sub-toggle-btn" 
+                    :class="{ active: newPoem.poemMode === 'custom' }"
+                    @click="newPoem.poemMode = 'custom'"
+                  >
+                    自定义
+                  </button>
+                </div>
+                
+                <div v-if="newPoem.poemMode === 'custom'" class="custom-poem-area">
+                  <textarea 
+                    v-model="newPoem.customContent" 
+                    class="poem-textarea font-serif"
+                    placeholder="写下你的诗句...&#10;每行一句，最多四句"
+                    rows="4"
+                    maxlength="100"
+                  />
+                </div>
+                
+                <div v-else class="ai-preview">
+                  <div v-if="aiGenerating" class="ai-loading">
+                    <div class="loading-spinner" />
+                    <span>AI 正在创作中...</span>
+                  </div>
+                  <div v-else-if="newPoem.aiLines.length" class="ai-lines font-serif">
+                    <p v-for="(line, idx) in newPoem.aiLines" :key="idx">{{ line }}</p>
+                  </div>
+                  <div v-else class="ai-hint">
+                    <span>点击下方按钮让 AI 为你创作</span>
+                  </div>
+                  <button 
+                    v-if="!aiGenerating" 
+                    class="generate-btn"
+                    :disabled="!newPoem.location"
+                    @click="generateAiPoem"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    生成诗词
+                  </button>
+                </div>
               </div>
               
-              <div v-else class="ai-preview">
-                <div v-if="aiGenerating" class="ai-loading">
-                  <div class="loading-spinner" />
-                  <span>AI 正在创作中...</span>
+              <div v-else class="blog-mode-area">
+                <div class="blog-title-input">
+                  <label class="input-label">标题</label>
+                  <input v-model="newPoem.blogTitle" type="text" class="input-field" placeholder="给游记起个标题" />
                 </div>
-                <div v-else-if="newPoem.aiLines.length" class="ai-lines font-serif">
-                  <p v-for="(line, idx) in newPoem.aiLines" :key="idx">{{ line }}</p>
+                <div class="blog-content-area">
+                  <label class="input-label">游记内容</label>
+                  <textarea 
+                    v-model="newPoem.blogContent" 
+                    class="blog-textarea"
+                    placeholder="记录你的旅途见闻...&#10;分享你的文化探索之旅"
+                    rows="6"
+                    maxlength="500"
+                  />
                 </div>
-                <div v-else class="ai-hint">
-                  <span>点击下方按钮让 AI 为你创作</span>
-                </div>
-                <button 
-                  v-if="!aiGenerating" 
-                  class="generate-btn"
-                  :disabled="!newPoem.location"
-                  @click="generateAiPoem"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                  </svg>
-                  生成诗词
-                </button>
               </div>
             </div>
             
@@ -507,7 +553,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
 import { useAuthStore } from '@/stores/authStore'
-import { aiApi } from '@/api'
+import { aiApi, travelBlogApi } from '@/api'
 import LoginModal from '@/components/organisms/LoginModal.vue'
 import EditProfileModal from '@/components/organisms/EditProfileModal.vue'
 import L from 'leaflet'
@@ -597,9 +643,12 @@ const mockPoems = [
 const newPoem = ref({
   image: '',
   location: '',
-  type: 'ai',
+  type: 'poem',
+  poemMode: 'ai',
   customContent: '',
-  aiLines: []
+  aiLines: [],
+  blogTitle: '',
+  blogContent: ''
 })
 
 const mockSeals = [
@@ -613,6 +662,34 @@ const mockSeals = [
 
 const poemCollection = ref(mockPoems)
 const sealCollection = ref(mockSeals)
+
+const POEM_STORAGE_KEY = 'wenji_user_poems'// 用户诗词存储的键
+
+const loadUserPoems = () => {
+  try {
+    const stored = localStorage.getItem(POEM_STORAGE_KEY)
+    if (stored) {
+      const userPoems = JSON.parse(stored)
+      const existingIds = new Set(poemCollection.value.map(p => p.id))
+      userPoems.forEach(poem => {
+        if (!existingIds.has(poem.id)) {
+          poemCollection.value.unshift(poem)
+        }
+      })
+    }
+  } catch (error) {
+    console.error('加载诗词失败:', error)
+  }
+}
+
+const saveUserPoems = () => {
+  try {
+    const userPoems = poemCollection.value.filter(p => !p.id.startsWith('poem1') && !p.id.startsWith('poem2') && !p.id.startsWith('poem3') && !p.id.startsWith('poem4'))
+    localStorage.setItem(POEM_STORAGE_KEY, JSON.stringify(userPoems))
+  } catch (error) {
+    console.error('保存诗词失败:', error)
+  }
+}
 
 const getUserTitle = computed(() => {
   const level = userStore.currentLevel
@@ -692,11 +769,19 @@ const getPoemBackground = (item) => {
 }
 
 const canSavePoem = computed(() => {
-  if (!newPoem.value.location) return false
-  if (newPoem.value.type === 'custom') {
-    return newPoem.value.customContent.trim().length > 0
+  if (newPoem.value.type === 'poem') {
+    if (!newPoem.value.location) return false
+    if (newPoem.value.poemMode === 'custom') {
+      return newPoem.value.customContent.trim().length > 0
+    }
+    return newPoem.value.aiLines.length > 0
   }
-  return newPoem.value.aiLines.length > 0
+  
+  if (newPoem.value.type === 'blog') {
+    return newPoem.value.blogTitle.trim().length > 0 && newPoem.value.blogContent.trim().length > 0
+  }
+  
+  return false
 })
 
 const triggerImageUpload = () => {
@@ -764,8 +849,16 @@ const generateAiPoem = async () => {
   }
 }
 
-const savePoem = () => {
-  const lines = newPoem.value.type === 'custom' 
+const savePoem = async () => {
+  if (newPoem.value.type === 'blog') {
+    await saveBlog()
+  } else {
+    await savePoemContent()
+  }
+}
+
+const savePoemContent = async () => {
+  const lines = newPoem.value.poemMode === 'custom' 
     ? newPoem.value.customContent.split('\n').filter(l => l.trim())
     : newPoem.value.aiLines
   
@@ -779,21 +872,84 @@ const savePoem = () => {
   }
   
   poemCollection.value.unshift(poem)
+  saveUserPoems()
   
+  resetNewPoem()
+  showAddPoemModal.value = false
+}
+
+const saveBlog = async () => {
+  try {
+    const blogData = {
+      title: newPoem.value.blogTitle,
+      content: newPoem.value.blogContent,
+      siteId: newPoem.value.location,
+      images: newPoem.value.image ? JSON.stringify([newPoem.value.image]) : null
+    }
+    
+    const result = await travelBlogApi.publishBlog(blogData)
+    
+    if (result.success) {
+      const blog = {
+        id: `blog_${Date.now()}`,
+        location: newPoem.value.location,
+        date: new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.'),
+        title: newPoem.value.blogTitle,
+        content: newPoem.value.blogContent,
+        image: newPoem.value.image,
+        unlocked: true,
+        isBlog: true
+      }
+      
+      poemCollection.value.unshift(blog)
+      
+      resetNewPoem()
+      showAddPoemModal.value = false
+    } else {
+      console.error('保存游记失败:', result.message)
+    }
+  } catch (error) {
+    console.error('保存游记失败:', error)
+  }
+}
+
+const resetNewPoem = () => {
   newPoem.value = {
     image: '',
     location: '',
-    type: 'ai',
+    type: 'poem',
+    poemMode: 'ai',
     customContent: '',
-    aiLines: []
+    aiLines: [],
+    blogTitle: '',
+    blogContent: ''
   }
-  
-  showAddPoemModal.value = false
 }
 
 const handlePoemClick = (item) => {
   if (!item.unlocked) return
   selectedPoem.value = item
+}
+
+const handleDeleteItem = async (item) => {
+  if (!confirm(`确定要删除这篇${item.isBlog ? '游记' : '诗词'}吗？`)) return
+  
+  if (item.isBlog) {
+    const blogId = item.id.replace('blog_', '')
+    try {
+      const result = await travelBlogApi.deleteBlog(blogId)
+      if (result.success) {
+        poemCollection.value = poemCollection.value.filter(p => p.id !== item.id)
+      } else {
+        console.error('删除游记失败:', result.message)
+      }
+    } catch (error) {
+      console.error('删除游记失败:', error)
+    }
+  } else {
+    poemCollection.value = poemCollection.value.filter(p => p.id !== item.id)
+    saveUserPoems()
+  }
 }
 
 const handleCardClick = (item) => {
@@ -1275,10 +1431,48 @@ const initPage = async () => {
   authStore.loadFromStorage()
   userStore.loadFromStorage()
   
+  loadUserPoems()
+  
   if (authStore.isLoggedIn && !userStore.username) {
     loading.value = true
     await userStore.fetchUserInfo()
     loading.value = false
+  }
+  
+  await loadUserBlogs()
+}
+
+const loadUserBlogs = async () => {
+  if (!authStore.isLoggedIn) return
+  
+  try {
+    const result = await travelBlogApi.getMyBlogs()
+    if (result.success && result.data) {
+      const blogs = result.data.map(blog => ({
+        id: `blog_${blog.blogId}`,
+        location: blog.siteId || '',
+        date: blog.createTime ? new Date(blog.createTime).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.') : '',
+        title: blog.title,
+        content: blog.content,
+        image: blog.images ? JSON.parse(blog.images)[0] : null,
+        unlocked: true,
+        isBlog: true
+      }))
+      
+      const existingBlogIds = new Set(
+        poemCollection.value
+          .filter(p => p.isBlog)
+          .map(p => p.id)
+      )
+      
+      blogs.forEach(blog => {
+        if (!existingBlogIds.has(blog.id)) {
+          poemCollection.value.unshift(blog)
+        }
+      })
+    }
+  } catch (error) {
+    console.error('加载游记失败:', error)
   }
 }
 
@@ -1637,6 +1831,38 @@ onUnmounted(() => {
   background: linear-gradient(145deg, #FFF 0%, #F8F6F1 100%);
   border-radius: 12px;
   border: 1px solid rgba(45, 64, 89, 0.08);
+  position: relative;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(45, 64, 89, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.poem-card:hover .delete-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover {
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+  color: #fff;
+}
+
+.poem-content {
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -2341,6 +2567,92 @@ onUnmounted(() => {
   background: rgba(45, 64, 89, 0.04);
   border-radius: 10px;
   padding: 4px;
+}
+
+.poem-mode-area {
+  margin-top: 16px;
+}
+
+.poem-sub-toggle {
+  display: flex;
+  background: rgba(45, 64, 89, 0.04);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 12px;
+}
+
+.sub-toggle-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #2D4059;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sub-toggle-btn.active {
+  background: #FFF;
+  color: #C9A227;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.blog-mode-area {
+  margin-top: 16px;
+}
+
+.blog-title-input {
+  margin-bottom: 16px;
+}
+
+.blog-content-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.blog-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(45, 64, 89, 0.12);
+  border-radius: 10px;
+  font-size: 14px;
+  color: #2D4059;
+  background: #FFF;
+  resize: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+.blog-textarea:focus {
+  outline: none;
+  border-color: #C9A227;
+}
+
+.blog-card .poem-content {
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.1) 0%, rgba(45, 64, 89, 0.05) 100%);
+}
+
+.blog-preview {
+  padding: 8px 0;
+}
+
+.blog-title-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2D4059;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.blog-excerpt {
+  font-size: 12px;
+  color: rgba(45, 64, 89, 0.7);
+  line-height: 1.5;
 }
 
 .toggle-btn {

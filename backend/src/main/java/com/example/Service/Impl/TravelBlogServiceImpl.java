@@ -49,4 +49,13 @@ public class TravelBlogServiceImpl implements TravelBlogService {
                         .orderByDesc(TravelBlog::getCreateTime)
         );
     }
+
+    @Override
+    @Transactional
+    public void deleteBlog(Integer userId, Long blogId) {
+        TravelBlog blog = travelBlogMapper.selectById(blogId);
+        if (blog != null && blog.getUserId().equals(userId)) {
+            travelBlogMapper.deleteById(blogId);
+        }
+    }
 }

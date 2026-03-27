@@ -31,13 +31,32 @@ public class TravelBlogController {
         return Result.success();
     }
 
+    /**
+     * 获取我的足迹 (博客列表)
+     * 该接口用于获取当前登录用户的所有博客列表
+     * @return 返回操作结果，包含博客列表数据或错误信息
+     */
     @Operation(summary = "获取我的足迹 (博客列表)")
     @GetMapping("/myBlogs")
     public Result<List<TravelBlog>> getMyBlogs() {
+        // 获取当前登录用户的ID
+        Long userId = getCurrentUserId();
+        // 如果用户未登录，返回错误信息
+        if (userId == null) return Result.error("未登录");
+        
+        // 调用服务层方法获取用户的博客列表
+        List<TravelBlog> blogs = travelBlogService.getUserBlogs(userId.intValue());
+        // 返回成功结果，包含博客列表数据
+        return Result.success(blogs);
+    }
+
+    @Operation(summary = "删除游记")
+    @DeleteMapping("/delete/{blogId}")
+    public Result<Void> deleteBlog(@PathVariable Long blogId) {
         Long userId = getCurrentUserId();
         if (userId == null) return Result.error("未登录");
         
-        List<TravelBlog> blogs = travelBlogService.getUserBlogs(userId.intValue());
-        return Result.success(blogs);
+        travelBlogService.deleteBlog(userId.intValue(), blogId);
+        return Result.success();
     }
 }

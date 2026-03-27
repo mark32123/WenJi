@@ -165,6 +165,20 @@ export const badgeApi = {
   }
 }
 
+export const travelBlogApi = {
+  publishBlog(data) {
+    return api.post('/travel/publish', data)
+  },
+  
+  getMyBlogs() {
+    return api.get('/travel/myBlogs')
+  },
+  
+  deleteBlog(blogId) {
+    return api.delete(`/travel/delete/${blogId}`)
+  }
+}
+
 export const fileApi = {
   async upload(file) {
     const formData = new FormData()
