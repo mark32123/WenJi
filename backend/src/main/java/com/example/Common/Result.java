@@ -64,4 +64,17 @@ public class Result<T> implements Serializable {
         result.msg = msg;
         return result;
     }
+
+    /**
+     * 失败返回结果（带错误码）
+     *
+     * @param msg 提示信息
+     * @param code 错误码
+     */
+    public static <T> Result<T> error(String msg, Integer code) {
+        Result<T> result = new Result<>();
+        result.msg = msg;
+        result.code = code;
+        return result;
+    }
 }

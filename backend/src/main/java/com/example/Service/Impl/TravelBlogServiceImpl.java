@@ -1,6 +1,7 @@
 package com.example.Service.Impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.example.Exception.BusinessException;
 import com.example.Mapper.TravelBlogMapper;
 import com.example.Pojo.TravelBlog;
 import com.example.Service.BadgeService;
@@ -54,8 +55,12 @@ public class TravelBlogServiceImpl implements TravelBlogService {
     @Transactional
     public void deleteBlog(Integer userId, Long blogId) {
         TravelBlog blog = travelBlogMapper.selectById(blogId);
-        if (blog != null && blog.getUserId().equals(userId)) {
-            travelBlogMapper.deleteById(blogId);
+        if (blog == null) {
+            throw new BusinessException(404, "游记不存在");
         }
+        if (!blog.getUserId().equals(userId)) {
+            throw new BusinessException(403, "无权限删除该游记");
+        }
+        travelBlogMapper.deleteById(blogId);
     }
 }
