@@ -491,25 +491,42 @@ const showUserLocation = (lng, lat) => {
   map.setCenter([lng, lat])
   map.setZoom(15)
   
+  // 检查附近是否有景点，触发彩蛋
   checkNearbySites(lng, lat)
 }
 
+/**
+ * 检查用户附近是否有景点
+ * 如果用户在景点 2km 范围内，触发彩蛋
+ * @param {number} lng - 用户经度
+ * @param {number} lat - 用户纬度
+ */
 const checkNearbySites = (lng, lat) => {
   if (sites.value.length === 0) return
   
+  // 筛选 2km 范围内的景点
   const nearbySites = sites.value.filter(site => {
     const distance = calculateDistance(lat, lng, site.latitude, site.longitude)
     return distance < 2
   })
   
   if (nearbySites.length > 0) {
+    // 随机选择一个附近景点触发彩蛋
     const randomSite = nearbySites[Math.floor(Math.random() * nearbySites.length)]
     triggerEasterEgg(randomSite)
   }
 }
 
+/**
+ * 计算两点之间的距离（Haversine 公式）
+ * @param {number} lat1 - 点1纬度
+ * @param {number} lng1 - 点1经度
+ * @param {number} lat2 - 点2纬度
+ * @param {number} lng2 - 点2经度
+ * @returns {number} 距离（公里）
+ */
 const calculateDistance = (lat1, lng1, lat2, lng2) => {
-  const R = 6371
+  const R = 6371 // 地球半径（公里）
   const dLat = (lat2 - lat1) * Math.PI / 180
   const dLng = (lng2 - lng1) * Math.PI / 180
   const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -519,30 +536,51 @@ const calculateDistance = (lat1, lng1, lat2, lng2) => {
   return R * c
 }
 
+/**
+ * 触发彩蛋
+ * 显示彩蛋弹窗并发放奖励
+ * @param {Object} site - 触发彩蛋的景点
+ */
 const triggerEasterEgg = (site) => {
   easterEggMessage.value = `在${site.name}发现了隐藏的历史故事！`
-  easterEggReward.value = Math.floor(Math.random() * 50) + 10
+  easterEggReward.value = Math.floor(Math.random() * 50) + 10 // 随机 10-60 阅历
   showEasterEgg.value = true
   
+  // 触发父组件事件
   emit('easter-egg-found', {
     site: site,
     reward: easterEggReward.value
   })
 }
 
+/**
+ * 处理探索按钮点击
+ * 触发父组件的 explore 事件
+ * @param {Object} site - 景点数据
+ */
 const handleExplore = (site) => {
   emit('explore', site)
 }
 
+/**
+ * 处理导航按钮点击
+ * 跳转到高德地图进行导航
+ * @param {Object} site - 景点数据
+ */
 const handleNavigate = (site) => {
+  // 构建高德地图导航 URL
   const url = `https://uri.amap.com/navigation?to=${site.longitude},${site.latitude},${encodeURIComponent(site.name)}&mode=car&policy=1&src=myapp&coordinate=gaode&callnative=1`
   window.open(url, '_blank')
 }
 
+// ==================== 生命周期钩子 ====================
+
+/** 组件挂载时初始化地图 */
 onMounted(() => {
   initMap()
 })
 
+/** 组件卸载时清理资源 */
 onUnmounted(() => {
   if (map) {
     map.destroy()

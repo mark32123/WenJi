@@ -3,6 +3,7 @@ package com.example.Common.Utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -12,47 +13,24 @@ import java.util.Map;
 @Component
 public class JwtUtils {
 
-    private static SecretKey SECRET_KEY;
+    private static final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
+    private static final long EXPIRATION_TIME = 24 * 60 * 60 * 1000L;
 
-    // 设置令牌的有效期为 24 小时（单位：毫秒）
-    private static final long EXPIRATION_TIME = 24 * 60 * 60 * 1000L; // 24小时
-
-    /**
-     * 生成 JWT 令牌
-     *
-     * @param claims 令牌中包含的自定义信息，如用户ID、用户名等
-     * @return 生成的 JWT 令牌字符串
-     */
     public static String generateToken(Map<String, Object> claims) {
         return Jwts.builder()
-                // 设置自定义声明（Payload）
                 .addClaims(claims)
-                // 设置签名算法和密钥
                 .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
-                // 设置令牌的过期时间（当前时间 + 有效期）
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                // 构建并返回紧凑的 JWT 字符串
                 .compact();
     }
 
 
-    /**
-     * 解析 JWT 令牌
-     *
-     * @param token 要解析的 JWT 令牌字符串
-     * @return 包含令牌信息的 Claims 对象
-     * @throws Exception 如果令牌无效、过期或签名不匹配，则抛出异常
-     */
     public static Claims parseToken(String token) throws Exception {
         return Jwts.parserBuilder()
-                // 设置签名密钥
                 .setSigningKey(SECRET_KEY)
-                // 构建解析器
                 .build()
-                // 解析并验证令牌
                 .parseClaimsJws(token)
-                // 获取 Payload 部分的 Claims
                 .getBody();
     }
 }

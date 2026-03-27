@@ -1,3 +1,28 @@
+<!--
+  RewardSignature.vue - 文物收藏卡片组件
+  
+  功能说明：
+  1. 展示文物的详细信息（图片、名称、诗词、朝代、地点）
+  2. 支持图片预览（点击图片放大查看）
+  3. 收藏功能（收入藏经阁）
+  4. 保存图片功能
+  5. 显示获得的阅历值
+  
+  主要交互：
+  - 点击图片打开预览弹窗
+  - 点击"收入藏经阁"收藏文物
+  - 点击"保存图片"保存卡片图片
+  
+  Props：
+  - artifact: 文物数据对象（必需）
+  - poem: 自定义诗词（可选）
+  - experienceGained: 获得的阅历值（默认10）
+  - animateOnMount: 是否在挂载时播放动画（默认true）
+  
+  Events：
+  - collect: 收藏事件
+  - save: 保存事件
+-->
 <template>
   <div class="reward-signature">
     <PaperSurface class="signature-card" hoverable bordered>
@@ -96,68 +121,106 @@
 </template>
 
 <script setup>
+/**
+ * RewardSignature - 文物收藏卡片组件
+ * 
+ * 用于展示用户探索文物后获得的收藏卡片
+ * 包含文物图片、名称、诗词、朝代等信息
+ */
+
 import { ref, computed, onMounted } from 'vue'
 import PaperSurface from '@/components/atoms/PaperSurface.vue'
 import InkButton from '@/components/atoms/InkButton.vue'
 
+// ==================== Props 定义 ====================
 const props = defineProps({
+  /** 文物数据对象 */
   artifact: {
     type: Object,
     required: true,
     validator: (v) => v && v.id && v.name
   },
+  /** 自定义诗词 */
   poem: {
     type: String,
     default: ''
   },
+  /** 获得的阅历值 */
   experienceGained: {
     type: Number,
     default: 10
   },
+  /** 是否在挂载时播放动画 */
   animateOnMount: {
     type: Boolean,
     default: true
   }
 })
 
+// ==================== 事件定义 ====================
 const emit = defineEmits(['collect', 'save'])
 
-const animatePoem = ref(false)
-const showCollectedMessage = ref(false)
-const showPreview = ref(false)
-const imageError = ref(false)
+// ==================== 响应式状态 ====================
+const animatePoem = ref(false)        // 是否播放诗词动画
+const showCollectedMessage = ref(false) // 是否显示收藏成功提示
+const showPreview = ref(false)        // 是否显示图片预览
+const imageError = ref(false)         // 图片是否加载失败
 
+// ==================== 计算属性 ====================
+
+/**
+ * 显示的诗词文本
+ * 优先级：props.poem > artifact.poem > 默认文本
+ */
 const displayPoem = computed(() => {
   return props.poem || props.artifact.poem || '岁月无声，文物有灵'
 })
 
+// ==================== 方法定义 ====================
+
+/** 处理图片加载错误 */
 const handleImageError = () => {
   imageError.value = true
 }
 
+/** 打开图片预览弹窗 */
 const openImagePreview = () => {
   showPreview.value = true
-  document.body.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden' // 禁止页面滚动
 }
 
+/** 关闭图片预览弹窗 */
 const closeImagePreview = () => {
   showPreview.value = false
-  document.body.style.overflow = ''
+  document.body.style.overflow = '' // 恢复页面滚动
 }
 
+/**
+ * 处理收藏按钮点击
+ * 显示收藏成功提示并触发 collect 事件
+ */
 const handleCollect = () => {
   showCollectedMessage.value = true
   emit('collect', props.artifact)
   
+  // 2秒后自动隐藏提示
   setTimeout(() => {
     showCollectedMessage.value = false
   }, 2000)
 }
 
+/**
+ * 处理保存按钮点击
+ * 触发 save 事件，由父组件处理保存逻辑
+ */
 const handleSave = () => {
   emit('save', props.artifact)
 }
 
+/**
+ * 组件挂载时的初始化
+ * 延迟播放诗词动画
+ */
 onMounted(() => {
   if (props.animateOnMount) {
     setTimeout(() => {
