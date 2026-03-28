@@ -147,7 +147,7 @@
         {
           "id": "bg-simuwuding",
           "type": "background",
-          "src": "/images/simuwuding.jpg",
+          "src": "/images/bj2中国国家博物馆.jpg",
           "trigger": "auto",
           "zIndex": 1,
           "scale": 1.0,
@@ -181,7 +181,7 @@
         {
           "id": "bg-sijunzhang",
           "type": "background",
-          "src": "/images/sijunzhang.jpg",
+          "src": "/images/bj2中国国家博物馆.jpg",
           "trigger": "auto",
           "zIndex": 1,
           "scale": 1.0,
@@ -544,6 +544,244 @@
         "category": "金器",
         "museum": "金沙遗址博物馆",
         "tags": ["金器", "太阳崇拜", "古蜀文明"]
+      }
+    },
+    {
+      "id": "qy1-qingyuan-museum",
+      "name": "清远市博物馆",
+      "targetImage": "/targets/qy1.mind",
+      "description": "清远市博物馆是清远市重要的文化地标，展示了清远地区的历史文化和民俗风情，收藏有大量珍贵文物。",
+      "layers": [
+        {
+          "id": "bg-qy1",
+          "type": "background",
+          "src": "/images/qy1清远市博物馆.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/qy1-narration.mp3",
+        "duration": 45
+      },
+      "unlockReward": {
+        "experience": 150,
+        "points": 75,
+        "badge": "qingyuan-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "现代",
+        "location": "广东省清远市",
+        "category": "博物馆",
+        "museum": "清远市博物馆",
+        "tags": ["清远", "博物馆", "岭南文化"]
+      }
+    },
+    {
+      "id": "qy2-feilai-temple",
+      "name": "飞来寺",
+      "targetImage": "/targets/qy2.mind",
+      "description": "飞来寺位于清远市清城区，始建于南朝梁武帝时期，是岭南著名的佛教圣地，寺内保存有大量珍贵文物。",
+      "layers": [
+        {
+          "id": "bg-qy2",
+          "type": "background",
+          "src": "/images/qy2飞来寺.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/qy2-narration.mp3",
+        "duration": 50
+      },
+      "unlockReward": {
+        "experience": 180,
+        "points": 90,
+        "badge": "temple-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "南朝至今",
+        "location": "广东省清远市",
+        "category": "古建筑",
+        "museum": "飞来寺",
+        "tags": ["清远", "佛教", "古建筑"]
+      }
+    },
+    {
+      "id": "qy3-lianzhou-cave",
+      "name": "连州地下河",
+      "targetImage": "/targets/qy3.mind",
+      "description": "连州地下河位于清远连州市，是华南地区最大的地下河之一，洞内钟乳石千姿百态，被誉为“岭南第一洞”。",
+      "layers": [
+        {
+          "id": "bg-qy3",
+          "type": "background",
+          "src": "/images/qy3连州地下河.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/qy3-narration.mp3",
+        "duration": 55
+      },
+      "unlockReward": {
+        "experience": 200,
+        "points": 100,
+        "badge": "cave-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "自然景观",
+        "location": "广东省清远市连州市",
+        "category": "自然景观",
+        "museum": "连州地下河景区",
+        "tags": ["清远", "地下河", "自然景观"]
+      }
+    },
+    {
+      "id": "qy4-baojing-palace",
+      "name": "英德宝晶宫",
+      "targetImage": "/targets/qy4.mind",
+      "description": "英德宝晶宫位于清远英德市，是华南地区最大的溶洞之一，洞内石笋、石柱、石幔等喀斯特地貌景观丰富多样。",
+      "layers": [
+        {
+          "id": "bg-qy4",
+          "type": "background",
+          "src": "/images/qy4英德宝晶宫.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/qy4-narration.mp3",
+        "duration": 50
+      },
+      "unlockReward": {
+        "experience": 190,
+        "points": 95,
+        "badge": "karst-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "自然景观",
+        "location": "广东省清远市英德市",
+        "category": "自然景观",
+        "museum": "宝晶宫景区",
+        "tags": ["清远", "溶洞", "自然景观"]
+      }
+    },
+    {
+      "id": "qy5-yao-culture-museum",
+      "name": "瑶族文化博物馆",
+      "targetImage": "/targets/qy5.mind",
+      "description": "瑶族文化博物馆位于清远市连南瑶族自治县，展示了瑶族的历史、文化和民俗风情，是了解瑶族文化的重要窗口。",
+      "layers": [
+        {
+          "id": "bg-qy5",
+          "type": "background",
+          "src": "/images/qy5瑶族文化博物馆.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/qy5-narration.mp3",
+        "duration": 45
+      },
+      "unlockReward": {
+        "experience": 170,
+        "points": 85,
+        "badge": "yao-culture-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "现代",
+        "location": "广东省清远市连南瑶族自治县",
+        "category": "博物馆",
+        "museum": "瑶族文化博物馆",
+        "tags": ["清远", "瑶族", "民族文化"]
+      }
+    },
+    {
+      "id": "bj5-capital-museum",
+      "name": "首都博物馆",
+      "targetImage": "/targets/bj5.mind",
+      "description": "首都博物馆是北京地区大型综合性博物馆，收藏有大量珍贵的历史文物和艺术品，展示了北京三千多年的建城史和八百多年的建都史。",
+      "layers": [
+        {
+          "id": "bg-bj5",
+          "type": "background",
+          "src": "/images/bj5首都博物馆.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/bj5-narration.mp3",
+        "duration": 60
+      },
+      "unlockReward": {
+        "experience": 200,
+        "points": 100,
+        "badge": "capital-museum-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "现代",
+        "location": "北京市西城区",
+        "category": "博物馆",
+        "museum": "首都博物馆",
+        "tags": ["北京", "博物馆", "历史文化"]
+      }
+    },
+    {
+      "id": "bj6-yonghe-palace",
+      "name": "雍和宫",
+      "targetImage": "/targets/bj6.mind",
+      "description": "雍和宫是北京市内最大的藏传佛教寺院，原为清代雍正皇帝的府邸，后改为喇嘛庙，是北京地区重要的佛教活动场所。",
+      "layers": [
+        {
+          "id": "bg-bj6",
+          "type": "background",
+          "src": "/images/bj6雍和宫.jpg",
+          "trigger": "auto",
+          "zIndex": 1,
+          "scale": 1.0,
+          "offsetY": 0
+        }
+      ],
+      "audio": {
+        "narration": "/audio/bj6-narration.mp3",
+        "duration": 55
+      },
+      "unlockReward": {
+        "experience": 180,
+        "points": 90,
+        "badge": "yonghe-explorer",
+        "coupon": null
+      },
+      "metadata": {
+        "era": "清代至今",
+        "location": "北京市东城区",
+        "category": "宗教建筑",
+        "museum": "雍和宫",
+        "tags": ["北京", "佛教", "皇家建筑"]
       }
     }
   ],
