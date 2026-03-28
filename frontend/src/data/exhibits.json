@@ -113,7 +113,7 @@
         {
           "id": "bg-gugong",
           "type": "background",
-          "src": "/images/beijing1.jpg",
+          "src": "/images/beijing-gugong.jpg",
           "trigger": "auto",
           "zIndex": 1,
           "scale": 1.0,
