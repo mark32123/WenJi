@@ -685,11 +685,14 @@ const mockSeals = [
 const poemCollection = ref(mockPoems)
 const sealCollection = ref(mockSeals)
 
-const POEM_STORAGE_KEY = 'wenji_user_poems'// 用户诗词存储的键
+const getPoemStorageKey = () => {
+  const userId = authStore.isLoggedIn ? userStore.userId : 'guest'
+  return `wenji_user_poems_${userId}`
+}
 
 const loadUserPoems = () => {
   try {
-    const stored = localStorage.getItem(POEM_STORAGE_KEY)
+    const stored = localStorage.getItem(getPoemStorageKey())
     if (stored) {
       const userPoems = JSON.parse(stored)
       const existingIds = new Set(poemCollection.value.map(p => p.id))
@@ -707,7 +710,7 @@ const loadUserPoems = () => {
 const saveUserPoems = () => {
   try {
     const userPoems = poemCollection.value.filter(p => !p.id.startsWith('poem1') && !p.id.startsWith('poem2') && !p.id.startsWith('poem3') && !p.id.startsWith('poem4'))
-    localStorage.setItem(POEM_STORAGE_KEY, JSON.stringify(userPoems))
+    localStorage.setItem(getPoemStorageKey(), JSON.stringify(userPoems))
   } catch (error) {
     console.error('保存诗词失败:', error)
   }
@@ -1465,6 +1468,8 @@ watch(showArtifactCarousel, (val) => {
 const initPage = async () => {
   authStore.loadFromStorage()
   userStore.loadFromStorage()
+  
+  poemCollection.value = [...mockPoems]
   
   loadUserPoems()
   
