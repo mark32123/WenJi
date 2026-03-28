@@ -16,7 +16,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public Result<Void> handleBusinessException(BusinessException e) {
         e.printStackTrace();
-        return Result.error(e.getMessage(), e.getCode());
+        return Result.errorWithCode(e.getMessage(), e.getCode());
     }
     
     /**
@@ -28,6 +28,6 @@ public class GlobalExceptionHandler {
     public Result<Void> handleException(Exception e) {
         e.printStackTrace();
         //如果有异常就返回异常信息，反之就返回操作失败
-        return Result.error(StringUtils.hasLength(e.getMessage()) ? e.getMessage() : "操作失败", 500);
+        return Result.errorWithCode(StringUtils.hasLength(e.getMessage()) ? e.getMessage() : "操作失败", 500);
     }
 }
