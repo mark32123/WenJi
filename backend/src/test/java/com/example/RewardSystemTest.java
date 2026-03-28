@@ -28,33 +28,41 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * 奖励系统测试类
+ * 使用Spring Boot测试框架，配置自动MockMvc
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 public class RewardSystemTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private MockMvc mockMvc;  // 用于模拟HTTP请求
 
     @Autowired
-    private UserMapper userMapper;
+    private UserMapper userMapper;  // 用户数据访问层
 
     @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+    private StringRedisTemplate stringRedisTemplate;  // Redis操作模板
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;  // JSON对象映射器
 
+    /**
+     * 测试获取用户徽章接口
+     * @throws Exception 可能抛出的异常
+     */
     @Test
     void testGetMyBadges() throws Exception {
         // 1. 创建测试用户并存入数据库
-        String username = "u" + UUID.randomUUID().toString().substring(0, 8);
+        String username = "u" + UUID.randomUUID().toString().substring(0, 8);  // 生成随机用户名
         User user = new User();
-        user.setUserId((long) (Math.random() * 1000000 + 20000));
+        user.setUserId((long) (Math.random() * 1000000 + 20000));  // 生成随机用户ID
         user.setUsername(username);
-        user.setPassword(Md5Util.getMD5String("123456"));
-        user.setPhone("139" + UUID.randomUUID().toString().substring(0, 8));
-        user.setStatus("1");
-        userMapper.insert(user);
+        user.setPassword(Md5Util.getMD5String("123456"));  // 密码MD5加密
+        user.setPhone("139" + UUID.randomUUID().toString().substring(0, 8));  // 生成随机手机号
+        user.setStatus("1");  // 设置用户状态为启用
+        userMapper.insert(user);  // 插入用户数据到数据库
 
         // 2. 模拟登录并存入 Redis 缓存 (RefreshTokenInterceptor 逻辑)
         Map<String, Object> claims = new HashMap<>();

@@ -8,10 +8,15 @@ import com.example.Service.BadgeService;
 import com.example.Service.PointService;
 import com.example.Service.TravelBlogService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import static com.example.Common.Constants.RedisConstants.*;
 
 @Service
 public class TravelBlogServiceImpl implements TravelBlogService {
@@ -24,22 +29,52 @@ public class TravelBlogServiceImpl implements TravelBlogService {
 
     @Autowired
     private BadgeService badgeService;
+    
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 发布旅游博客
+     * <p>
+     * 该方法处理博客发布的核心逻辑，包括分布式锁控制、博客入库、积分奖励及徽章发放。
+     * 使用 Redis 分布式锁防止用户频繁操作，确保数据一致性。
+     * </p>
+     *
+     * @param blog 待发布的旅游博客对象，包含用户信息及博客内容
+     * @return void 无返回值
+     * @throws BusinessException 当获取锁失败（操作频繁）时抛出
+     */
     @Override
     @Transactional
     public void publishBlog(TravelBlog blog) {
-        // 1. 保存博客
-        // 假设发布一篇博客获得 10 积分
-        int points = 10;
-        blog.setPointsEarned(points);
-        travelBlogMapper.insert(blog);
+        String lockKey = LOCK_PREFIX + "blog:" + blog.getUserId();
+        String lockValue = UUID.randomUUID().toString();
+        
+        Boolean acquired = false;
+        try {
+            acquired = stringRedisTemplate.opsForValue()
+                    .setIfAbsent(lockKey, lockValue, BLOG_LOCK_EXPIRE, TimeUnit.SECONDS);
+            
+            if (Boolean.FALSE.equals(acquired)) {
+                throw new BusinessException(429, "操作太频繁，请稍后再试");
+            }
+            
+            int points = 10;
+            blog.setPointsEarned(points);
+            travelBlogMapper.insert(blog);
 
-        // 2. 增加积分
-        pointService.addPoints(blog.getUserId(), points, "blog", "发布旅游心得打卡");
+            pointService.addPoints(blog.getUserId(), points, "blog", "发布旅游心得打卡");
 
-        // 3. 异步/同步检查徽章 (此处演示同步调用)
-        badgeService.checkAndDistributeBadges(blog.getUserId(), "blog");
-        badgeService.checkAndDistributeBadges(blog.getUserId(), "footprint");
+            badgeService.checkAndDistributeBadges(blog.getUserId(), "blog");
+            badgeService.checkAndDistributeBadges(blog.getUserId(), "footprint");
+        } finally {
+            if (Boolean.TRUE.equals(acquired)) {
+                String currentValue = stringRedisTemplate.opsForValue().get(lockKey);
+                if (lockValue.equals(currentValue)) {
+                    stringRedisTemplate.delete(lockKey);
+                }
+            }
+        }
     }
 
     @Override

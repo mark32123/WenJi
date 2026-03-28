@@ -16,4 +16,10 @@ public class RedisConstants {
     public static final long AI_CHAT_HISTORY_EXPIRE=7 * 24 * 60 * 60;       //用户对话历史过期时间
 
     public static final  String CHAT_HISTORY_PREFIX = "chat:";  //用户存储对话前缀
+
+    // 分布式锁前缀
+    public static final String LOCK_PREFIX = "lock:";
+    
+    // 发布游记锁过期时间（秒）
+    public static final long BLOG_LOCK_EXPIRE = 10;
 }
