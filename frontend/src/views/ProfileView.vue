@@ -277,6 +277,27 @@
     </Teleport>
     
     <Teleport to="body">
+      <transition name="poem-modal">
+        <div v-if="selectedSeal" class="seal-modal-overlay" @click.self="selectedSeal = null">
+          <div class="seal-modal">
+            <div class="seal-modal-header">
+              <div class="seal-modal-title">{{ selectedSeal.name }}</div>
+              <button class="seal-modal-close" @click="selectedSeal = null">×</button>
+            </div>
+            <div class="seal-modal-body">
+              <div class="seal-modal-stamp">
+                <span class="seal-modal-text font-serif">{{ selectedSeal.text }}</span>
+              </div>
+              <div class="seal-modal-desc">
+                <p>{{ getSealDescription(selectedSeal.name) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </Teleport>
+
+    <Teleport to="body">
       <transition name="modal">
         <div v-if="showAddPoemModal" class="add-poem-overlay" @click.self="showAddPoemModal = false">
           <div class="add-poem-modal">
@@ -571,6 +592,7 @@ const activeTab = ref('poems')
 const showEditModal = ref(false)
 const loading = ref(false)
 const selectedPoem = ref(null)
+const selectedSeal = ref(null)
 const showAddPoemModal = ref(false)
 const aiGenerating = ref(false)
 const imageInput = ref(null)
@@ -956,8 +978,21 @@ const handleCardClick = (item) => {
   if (!item.unlocked) return
 }
 
+const getSealDescription = (sealName) => {
+  const descriptions = {
+    '初识': '初识文坛，踏上探索传统文化之旅的第一步。',
+    '登堂': '登堂入室，对传统文化有了更深入的理解。',
+    '入室': '入室求索，已能领略传统文化的精髓所在。',
+    '登峰': '登峰造极，对传统文化的研究已达到较高境界。',
+    '造极': '造极登峰，在传统文化领域已有独到见解。',
+    '大成': '大成之境，已成为传统文化领域的大家。'
+  }
+  return descriptions[sealName] || ''
+}
+
 const handleSealClick = (item) => {
   if (!item.unlocked) return
+  selectedSeal.value = item
 }
 
 const viewArtifact = (artifact) => {
@@ -2399,6 +2434,105 @@ onUnmounted(() => {
 .poem-modal-enter-from .poem-modal,
 .poem-modal-leave-to .poem-modal {
   transform: scale(0.9);
+}
+
+.seal-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.seal-modal {
+  width: 100%;
+  max-width: 300px;
+  background: linear-gradient(145deg, #FFF 0%, #F8F6F1 100%);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.seal-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #E8D5B7, #C9A227, #E8D5B7);
+}
+
+.seal-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(45, 64, 89, 0.08);
+}
+
+.seal-modal-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2D4059;
+}
+
+.seal-modal-close {
+  width: 28px;
+  height: 28px;
+  background: rgba(45, 64, 89, 0.06);
+  border: none;
+  border-radius: 50%;
+  color: #8B9A9C;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.seal-modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.seal-modal-stamp {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #C43C3C 0%, #8B2323 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-3deg);
+  box-shadow: 0 4px 12px rgba(196, 60, 60, 0.3);
+}
+
+.seal-modal-text {
+  font-size: 24px;
+  color: #FFF;
+  writing-mode: vertical-rl;
+  letter-spacing: 0.2em;
+}
+
+.seal-modal-desc {
+  text-align: center;
+}
+
+.seal-modal-desc p {
+  font-size: 14px;
+  color: #2D4059;
+  line-height: 1.6;
+  margin: 0;
 }
 
 .poem-section {

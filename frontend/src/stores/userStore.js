@@ -256,10 +256,10 @@ export const useUserStore = defineStore('user', () => {
             qinghuaci: { name: '青花瓷瓶', imageUrl: '/images/qinghuaci.jpg', dynasty: '明代', location: '景德镇', date: '2024.03.15' },
             fencaici: { name: '粉彩瓷瓶', imageUrl: '/images/fencaici.jpg', dynasty: '清代', location: '景德镇', date: '2024.03.16' },
             qinghuacimianju: { name: '青花瓷面具', imageUrl: '/images/qinghuacimianju.jpg', dynasty: '明代', location: '景德镇', date: '2024.03.17' },
-            beijing1: { name: '故宫太和殿', imageUrl: '/images/beijing1.jpg', dynasty: '明清', location: '北京', date: '2024.03.18' },
-            beijing2: { name: '长城烽火台', imageUrl: '/images/beijing2.jpg', dynasty: '明代', location: '北京', date: '2024.03.19' },
-            beijing3: { name: '天坛祈年殿', imageUrl: '/images/beijing3.jpg', dynasty: '明代', location: '北京', date: '2024.03.20' },
-            beijing4: { name: '颐和园长廊', imageUrl: '/images/beijing4.jpg', dynasty: '清代', location: '北京', date: '2024.03.21' }
+            beijing1: { name: '故宫太和殿', imageUrl: '/images/gugong-taihedian.jpg', dynasty: '明清', location: '北京', date: '2024.03.18' },
+            beijing2: { name: '长城烽火台', imageUrl: '/images/changcheng-fenghuotai.jpg', dynasty: '明代', location: '北京', date: '2024.03.19' },
+            beijing3: { name: '天坛祈年殿', imageUrl: '/images/tiantan-qiniandian.jpg', dynasty: '明代', location: '北京', date: '2024.03.20' },
+            beijing4: { name: '颐和园长廊', imageUrl: '/images/yiheyuan-changlang.jpg', dynasty: '清代', location: '北京', date: '2024.03.21' }
           }
           return {
             id: a.id,
@@ -271,8 +271,8 @@ export const useUserStore = defineStore('user', () => {
           { id: 'qinghuaci', name: '青花瓷瓶', imageUrl: '/images/qinghuaci.jpg', dynasty: '明代', location: '景德镇', date: '2024.03.15', collectedAt: Date.now() },
           { id: 'fencaici', name: '粉彩瓷瓶', imageUrl: '/images/fencaici.jpg', dynasty: '清代', location: '景德镇', date: '2024.03.16', collectedAt: Date.now() },
           { id: 'qinghuacimianju', name: '青花瓷面具', imageUrl: '/images/qinghuacimianju.jpg', dynasty: '明代', location: '景德镇', date: '2024.03.17', collectedAt: Date.now() },
-          { id: 'beijing1', name: '故宫太和殿', imageUrl: '/images/beijing1.jpg', dynasty: '明清', location: '北京', date: '2024.03.18', collectedAt: Date.now() },
-          { id: 'beijing2', name: '长城烽火台', imageUrl: '/images/beijing2.jpg', dynasty: '明代', location: '北京', date: '2024.03.19', collectedAt: Date.now() }
+          { id: 'beijing1', name: '故宫太和殿', imageUrl: '/images/gugong-taihedian.jpg', dynasty: '明清', location: '北京', date: '2024.03.18', collectedAt: Date.now() },
+          { id: 'beijing2', name: '长城烽火台', imageUrl: '/images/changcheng-fenghuotai.jpg', dynasty: '明代', location: '北京', date: '2024.03.19', collectedAt: Date.now() }
         ]
       }
     } catch (e) {

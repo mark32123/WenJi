@@ -13,12 +13,15 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
+import { useUserStore } from '@/stores/userStore'
 import LoginModal from '@/components/organisms/LoginModal.vue'
 
 const authStore = useAuthStore()
+const userStore = useUserStore()
 
 onMounted(() => {
   authStore.loadFromStorage()
+  userStore.loadFromStorage()
 })
 </script>
 
