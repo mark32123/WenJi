@@ -147,7 +147,7 @@
         {
           "id": "bg-simuwuding",
           "type": "background",
-          "src": "/images/bj2中国国家博物馆.jpg",
+          "src": "/images/simuwuding.jpg",
           "trigger": "auto",
           "zIndex": 1,
           "scale": 1.0,
