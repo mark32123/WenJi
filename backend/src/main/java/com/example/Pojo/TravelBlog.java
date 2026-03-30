@@ -23,7 +23,7 @@ public class TravelBlog {
     private String title;
     private String content;
     private String images; // JSON 字符串
-    private Integer pointsEarned;
+    private Integer experienceEarned;
     private Integer status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;

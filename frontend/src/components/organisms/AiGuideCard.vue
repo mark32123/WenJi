@@ -303,11 +303,29 @@ const isCorrect = computed(() => {
 
 let typewriterTimer = null
 
+const getArtifactIntro = () => {
+  const { name, dynasty, category } = props.artifact
+  
+  if (category === '自然景观') {
+    return `${name}是一处令人叹为观止的自然奇观。它形成于${dynasty || '遥远的地质年代'}，是大自然鬼斧神工的杰作。这里的每一处景观都凝聚着亿万年的地质变迁，展现了自然界的神奇力量。漫步其中，仿佛穿越时空，感受大自然的壮美与神秘。`
+  }
+  
+  if (category === '博物馆') {
+    return `${name}是一座承载着历史记忆的文化殿堂。${dynasty === '现代' ? '它建于现代，' : `它始建于${dynasty}，`}收藏了众多珍贵文物，是了解中华文明的重要窗口。馆内每一件展品都诉说着一段历史，等待着您去探索和发现。`
+  }
+  
+  if (category === '古建筑') {
+    return `${name}是一座极具历史价值的古建筑。它建于${dynasty || '古代'}，见证了无数历史风云的变幻。从其精妙的建筑结构和独特的艺术风格中，我们可以窥见古人的智慧与审美追求。每一根梁柱、每一片瓦当，都承载着厚重的历史。`
+  }
+  
+  return `这件${name}是一件极具历史价值的珍贵文物。它诞生于${dynasty || '古代'}，见证了那个时代的辉煌与沧桑。从其精美的工艺和独特的造型中，我们可以窥见古人的智慧与审美追求。每一道纹路、每一处细节，都诉说着跨越千年的故事。`
+}
+
 const fetchAiGuide = async () => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
-        intro: `这件${props.artifact.name}是一件极具历史价值的珍贵文物。它诞生于${props.artifact.dynasty || '古代'}，见证了那个时代的辉煌与沧桑。从其精美的工艺和独特的造型中，我们可以窥见古人的智慧与审美追求。每一道纹路、每一处细节，都诉说着跨越千年的故事。`,
+        intro: getArtifactIntro(),
         question: `${props.artifact.name}最显著的艺术特征是什么？`,
         options: [
           '造型优美，线条流畅',
@@ -405,9 +423,21 @@ const sendChatMessage = async () => {
   
   chatState.value.streaming = true
   
+  const { name, dynasty, category } = props.artifact
+  let artifactDesc = `${name}`
+  if (category === '自然景观') {
+    artifactDesc += `（自然景观，形成于${dynasty || '地质年代'}）`
+  } else if (category === '博物馆') {
+    artifactDesc += `（博物馆，${dynasty === '现代' ? '现代建筑' : `始建于${dynasty}`}）`
+  } else if (category === '古建筑') {
+    artifactDesc += `（古建筑，建于${dynasty || '古代'}）`
+  } else {
+    artifactDesc += `（${dynasty || '古代'}，${category || '文物'}）`
+  }
+  
   try {
     const response = await aiApi.chat(
-      `关于${props.artifact.name}（${props.artifact.dynasty || '古代'}，${props.artifact.category || '文物'}）：${message}`,
+      `关于${artifactDesc}：${message}`,
       chatState.value.chatId
     )
     

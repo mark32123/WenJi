@@ -19,9 +19,9 @@ public class PointRecord {
     @TableId(type = IdType.AUTO)
     private Long recordId;
     private Integer userId;
-    private Integer type; // 1-获得, 2-消耗
+    private Integer type; // 1-获得，2-消耗
     private String source; // blog/badge/mall_exchange
-    private Integer points;
+    private Integer experience;
     private String description;
     private LocalDateTime createTime;
 }

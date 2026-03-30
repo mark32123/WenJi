@@ -2,7 +2,7 @@
   <div class="mind-ar-viewer">
     <div class="ar-scene" ref="sceneRef">
       <a-scene
-        v-if="arMode === 'image' && hasMindFiles && currentTarget"
+        v-if="hasMindFiles && currentTarget"
         :mindar-image="`imageTargetSrc: ${currentTarget};`"
         color-space="sRGB"
         renderer="colorManagement: true, physicallyCorrectLights"
@@ -32,26 +32,16 @@
         </a-entity>
       </a-scene>
       
-      <video ref="videoRef" class="ar-video" playsinline autoplay muted v-show="arMode !== 'image' || !hasMindFiles"></video>
+      <video ref="videoRef" class="ar-video" playsinline autoplay muted v-show="!hasMindFiles"></video>
       
-      <div v-if="!isTracking && arMode === 'qrcode'" class="scanning-overlay">
+      <div v-if="!isTracking" class="scanning-overlay">
         <div class="scan-frame">
           <div class="corner tl"></div>
           <div class="corner tr"></div>
           <div class="corner bl"></div>
           <div class="corner br"></div>
         </div>
-        <p class="scan-hint font-serif">将二维码放入框内</p>
-      </div>
-      
-      <div v-if="!isTracking && arMode === 'image' && !hasMindFiles" class="scanning-overlay">
-        <div class="scan-frame">
-          <div class="corner tl"></div>
-          <div class="corner tr"></div>
-          <div class="corner bl"></div>
-          <div class="corner br"></div>
-        </div>
-        <p class="scan-hint font-serif">将摄像头对准文物图片</p>
+        <p class="scan-hint font-serif">{{ scanHint }}</p>
       </div>
       
       <div v-if="isTracking && currentExhibit" class="ar-content">
@@ -60,7 +50,7 @@
           <p class="exhibit-era">{{ currentExhibit.metadata?.era }}</p>
         </div>
         
-        <div class="ar-layers">
+        <div class="ar-layers" v-if="!hasMindFiles">
           <div v-if="backgroundLayers.length === 0" class="no-image">
             <span class="no-image-icon">🖼️</span>
             <span class="no-image-text">暂无图片</span>
@@ -100,12 +90,8 @@
           <polyline points="15 18 9 12 15 6"/>
         </svg>
       </button>
-      <h2 class="header-title font-serif">{{ modeTitle }}</h2>
-      <button class="switch-btn" @click="switchMode">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-        </svg>
-      </button>
+      <h2 class="header-title font-serif">AR鉴赏</h2>
+      <div class="placeholder"></div>
     </div>
     
     <div v-if="loading" class="loading-overlay">
@@ -123,59 +109,26 @@
       <button class="retry-btn" @click="initAR">重试</button>
     </div>
     
-    <div v-if="!loading && !isTracking" class="mode-selector">
-      <div class="mode-tabs">
-        <button 
-          class="mode-tab" 
-          :class="{ active: arMode === 'qrcode' }"
-          @click="setMode('qrcode')"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7"/>
-            <rect x="14" y="3" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/>
-          </svg>
-          扫码识别
-        </button>
-        <button 
-          class="mode-tab" 
-          :class="{ active: arMode === 'image' }"
-          @click="setMode('image')"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <circle cx="8.5" cy="8.5" r="1.5"/>
-            <polyline points="21 15 16 10 5 21"/>
-          </svg>
-          图片识别
-        </button>
-      </div>
-      
-      <div v-if="arMode === 'image' && !hasMindFiles" class="demo-section">
-        <p class="demo-hint">暂无识别文件，可使用演示模式</p>
-        <button class="demo-btn" @click="simulateRecognition">
-          演示识别
-        </button>
-      </div>
+    <div v-if="!loading && !isTracking" class="demo-section">
+      <p class="demo-hint">{{ hasMindFiles ? '将摄像头对准文物图片' : '扫描文物二维码或使用演示模式' }}</p>
+      <button class="demo-btn" @click="simulateRecognition">
+        演示：青花瓷瓶
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useUserStore } from '@/stores/userStore'
 import exhibitsData from '@/data/exhibits.json'
 import jsQR from 'jsqr'
 
 const router = useRouter()
 const route = useRoute()
-const userStore = useUserStore()
 
 const sceneRef = ref(null)
 const videoRef = ref(null)
-const canvasRef = ref(null)
 
 const loading = ref(true)
 const loadingText = ref('正在初始化...')
@@ -185,14 +138,15 @@ const currentExhibit = ref(null)
 const currentTarget = ref(null)
 const facingMode = ref('environment')
 const hasMindFiles = ref(false)
-const arMode = ref('qrcode')
 
 let stream = null
-let availableTargets = []
 let qrScanInterval = null
 
-const modeTitle = computed(() => {
-  return arMode.value === 'qrcode' ? '扫码识别' : '图片识别'
+const scanHint = computed(() => {
+  if (hasMindFiles.value) {
+    return '将摄像头对准文物图片'
+  }
+  return '将二维码放入框内'
 })
 
 const backgroundLayers = computed(() => {
@@ -209,37 +163,29 @@ const getLayerStyle = (layer) => {
 
 const checkMindFiles = async () => {
   loadingText.value = '检查识别文件...'
-  const exhibits = exhibitsData.exhibits
   
-  for (const exhibit of exhibits) {
-    if (exhibit.targetImage) {
-      try {
-        const response = await fetch(exhibit.targetImage, { method: 'GET' })
-        if (response.ok) {
-          const buffer = await response.arrayBuffer()
-          if (buffer.byteLength > 1000) {
-            const header = new Uint8Array(buffer, 0, 4)
-            if (header[0] === 0x4D && header[1] === 0x49 && header[2] === 0x4E && header[3] === 0x44) {
-              availableTargets.push({
-                exhibit,
-                mindFile: exhibit.targetImage
-              })
-            }
+  try {
+    const response = await fetch('/targets/targets.mind', { method: 'GET' })
+    if (response.ok) {
+      const buffer = await response.arrayBuffer()
+      if (buffer.byteLength > 1000) {
+        const header = new Uint8Array(buffer, 0, 4)
+        if (header[0] === 0x4D && header[1] === 0x49 && header[2] === 0x4E && header[3] === 0x44) {
+          hasMindFiles.value = true
+          currentTarget.value = '/targets/targets.mind'
+          const qinghuaci = exhibitsData.exhibits.find(e => e.id === 'qinghuaci')
+          if (qinghuaci) {
+            currentExhibit.value = qinghuaci
           }
+          console.log('MindAR 识别文件加载成功')
+          return true
         }
-      } catch (e) {
-        console.warn(`识别文件不存在: ${exhibit.targetImage}`)
       }
     }
+  } catch (e) {
+    console.warn('MindAR 识别文件不存在:', e)
   }
-  
-  hasMindFiles.value = availableTargets.length > 0
-  console.log(`可用识别目标: ${availableTargets.length} 个`)
-  
-  if (hasMindFiles.value) {
-    currentTarget.value = availableTargets[0].mindFile
-    currentExhibit.value = availableTargets[0].exhibit
-  }
+  return false
 }
 
 const initAR = async () => {
@@ -247,18 +193,20 @@ const initAR = async () => {
   error.value = null
   
   try {
-    await checkMindFiles()
+    const mindFilesExist = await checkMindFiles()
     
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw new Error('您的设备不支持摄像头访问')
     }
     
-    if (arMode.value === 'image' && hasMindFiles.value && availableTargets.length > 0) {
+    if (mindFilesExist) {
       loadingText.value = '正在加载 AR 引擎...'
+      await startCamera()
       await initAFrameAR()
     } else {
       loadingText.value = '正在启动摄像头...'
       await startCamera()
+      startQRScan()
     }
     
     loading.value = false
@@ -282,10 +230,6 @@ const startCamera = async () => {
   if (videoRef.value) {
     videoRef.value.srcObject = stream
     await videoRef.value.play()
-  }
-  
-  if (arMode.value === 'qrcode') {
-    startQRScan()
   }
 }
 
@@ -337,10 +281,6 @@ const handleQRCode = (data) => {
       stopQRScan()
       currentExhibit.value = exhibit
       isTracking.value = true
-      
-      if (exhibit.unlockReward) {
-        userStore.addExperience(exhibit.unlockReward.experience || 0)
-      }
     }
   }
 }
@@ -365,10 +305,6 @@ const initAFrameAR = async () => {
         target.addEventListener('targetFound', () => {
           console.log('识别到目标')
           isTracking.value = true
-          
-          if (currentExhibit.value?.unlockReward) {
-            userStore.addExperience(currentExhibit.value.unlockReward.experience || 0)
-          }
         })
         
         target.addEventListener('targetLost', () => {
@@ -380,36 +316,18 @@ const initAFrameAR = async () => {
   }
 }
 
-const setMode = (mode) => {
-  if (arMode.value === mode) return
-  arMode.value = mode
-  cleanup()
-  initAR()
-}
-
-const switchMode = () => {
-  const newMode = arMode.value === 'qrcode' ? 'image' : 'qrcode'
-  setMode(newMode)
-}
-
 const simulateRecognition = () => {
-  const exhibits = exhibitsData.exhibits
-  if (exhibits.length > 0) {
-    const randomExhibit = exhibits[Math.floor(Math.random() * exhibits.length)]
-    currentExhibit.value = randomExhibit
+  const qinghuaci = exhibitsData.exhibits.find(e => e.id === 'qinghuaci')
+  if (qinghuaci) {
+    currentExhibit.value = qinghuaci
     isTracking.value = true
-    
-    if (randomExhibit.unlockReward) {
-      userStore.addExperience(randomExhibit.unlockReward.experience || 0)
-    }
   }
 }
 
 const closeTracking = () => {
   isTracking.value = false
-  currentExhibit.value = null
   
-  if (arMode.value === 'qrcode') {
+  if (!hasMindFiles.value) {
     startQRScan()
   }
 }
@@ -681,8 +599,7 @@ onUnmounted(() => {
   z-index: 10;
 }
 
-.back-btn,
-.switch-btn {
+.back-btn {
   width: 44px;
   height: 44px;
   background: rgba(255, 255, 255, 0.15);
@@ -693,6 +610,10 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+
+.placeholder {
+  width: 44px;
 }
 
 .header-title {
@@ -747,47 +668,12 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-.mode-selector {
+.demo-section {
   position: absolute;
-  bottom: 20px;
+  bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.mode-tabs {
-  display: flex;
-  gap: 12px;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 6px;
-  border-radius: 30px;
-  backdrop-filter: blur(10px);
-}
-
-.mode-tab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  background: transparent;
-  border: none;
-  border-radius: 24px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mode-tab.active {
-  background: linear-gradient(135deg, #C9A227, #D4AF37);
-  color: #fff;
-}
-
-.demo-section {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -798,6 +684,7 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.7);
   font-size: 13px;
   margin: 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .demo-btn {

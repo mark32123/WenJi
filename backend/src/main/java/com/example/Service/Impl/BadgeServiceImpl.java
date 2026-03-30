@@ -82,9 +82,9 @@ public class BadgeServiceImpl implements BadgeService {
                         .badgeId(badge.getBadgeId())
                         .build());
                 
-                // 增加奖励积分
-                if (badge.getPointsBonus() > 0) {
-                    pointService.addPoints(userId, badge.getPointsBonus(), "badge", "获得徽章奖励：" + badge.getName());
+                // 增加奖励阅历
+                if (badge.getExperienceBonus() > 0) {
+                    pointService.addPoints(userId, badge.getExperienceBonus(), "badge", "获得徽章奖励：" + badge.getName());
                 }
             }
         }

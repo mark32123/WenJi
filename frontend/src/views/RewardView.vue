@@ -35,23 +35,10 @@
     <RewardSignature
       v-if="artifact"
       :artifact="artifact"
-      :poem="currentPoem"
       :experience-gained="experienceGained"
       @collect="handleCollect"
       @save="handleSave"
     />
-    
-    <div v-if="artifact" class="poem-actions">
-      <button 
-        class="generate-poem-btn" 
-        @click="generatePoem"
-        :disabled="generatingPoem || poemGenerationsLeft <= 0"
-      >
-        <span v-if="generatingPoem" class="loading-spinner"></span>
-        <span v-else>✨ AI赋诗</span>
-      </button>
-      <span class="generations-left">剩余 {{ poemGenerationsLeft }} 次</span>
-    </div>
     
     <div v-else class="empty-state">
       <PaperSurface class="empty-card" padding="lg">
@@ -67,61 +54,31 @@
 </template>
 
 <script setup>
-/**
- * RewardView - 文物收藏/得趣页面
- * 
- * 核心功能：
- * 1. 展示文物收藏卡片
- * 2. AI 赋诗功能（每日限次）
- * 3. 收藏与保存功能
- */
-
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
 import { RewardSignature } from '@/components'
-import { aiApi } from '@/api'
 import PaperSurface from '@/components/atoms/PaperSurface.vue'
 import InkButton from '@/components/atoms/InkButton.vue'
+import exhibitsData from '@/data/exhibits.json'
 
-// ==================== 路由与状态管理 ====================
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-// ==================== 响应式状态 ====================
-const artifact = ref(null)            // 当前展示的文物
-const experienceGained = ref(10)      // 获得的阅历值
-const currentPoem = ref('')           // 当前显示的诗词
-const generatingPoem = ref(false)     // 是否正在生成诗词
-const MAX_POEM_GENERATIONS = 5        // 每日最大生成次数
-const poemGenerationsLeft = ref(MAX_POEM_GENERATIONS) // 剩余生成次数
+const artifact = ref(null)
+const experienceGained = ref(10)
 
-// ==================== 导航方法 ====================
-
-/** 返回上一页 */
 const handleBack = () => {
   router.back()
 }
 
-// ==================== 业务方法 ====================
-
-/**
- * 处理收藏事件
- * 将文物添加到用户收藏，增加阅历值
- * @param {Object} collectedArtifact - 被收藏的文物
- */
 const handleCollect = (collectedArtifact) => {
   userStore.collectArtifact(collectedArtifact)
   userStore.addExperience(experienceGained.value)
   userStore.saveToStorage()
 }
 
-/**
- * 处理保存事件
- * 将文物卡片保存为图片
- * @param {Object} savedArtifact - 要保存的文物
- */
 const handleSave = async (savedArtifact) => {
   if (!savedArtifact) return
   
@@ -147,89 +104,33 @@ const handleSave = async (savedArtifact) => {
   }
 }
 
-/** 跳转到探索页面 */
 const goExplore = () => {
   router.push('/')
 }
 
-/**
- * 调用 AI 生成诗词
- * 使用流式响应接收 AI 生成的诗词
- */
-const generatePoem = async () => {
-  if (generatingPoem.value || poemGenerationsLeft.value <= 0 || !artifact.value) return
-  
-  generatingPoem.value = true
-  
-  try {
-    // 构建提示词
-    const prompt = `请为${artifact.value.name}（${artifact.value.dynasty || '古代'}${artifact.value.category ? '，' + artifact.value.category : ''}）创作一首七言绝句或五言绝句，要求：1. 突出文物的历史韵味 2. 体现其艺术特色 3. 语言典雅优美。只输出诗句，不要其他解释。`
-    
-    // 调用 AI API（流式响应）
-    const response = await aiApi.chat(prompt, `poem_${artifact.value.id}`)
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let poem = ''
-    let buffer = ''
-    
-    // 读取流式响应
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
-      
-      for (const line of lines) {
-        if (line.startsWith('data:')) {
-          const content = line.slice(5).trim()
-          if (content && content !== '[DONE]') {
-            poem += content
-          }
-        } else if (line.trim() && !line.startsWith(':')) {
-          poem += line
-        }
-      }
-    }
-    
-    // 更新诗词并减少剩余次数
-    if (poem.trim()) {
-      currentPoem.value = poem.trim()
-      poemGenerationsLeft.value--
-      // 保存到本地存储
-      localStorage.setItem('wenji_poem_generations', JSON.stringify({
-        date: new Date().toDateString(),
-        left: poemGenerationsLeft.value
-      }))
-    }
-  } catch (error) {
-    console.error('生成诗词失败:', error)
-  } finally {
-    generatingPoem.value = false
-  }
-}
-
-// ==================== 生命周期钩子 ====================
-
-/**
- * 组件挂载时初始化
- * 1. 从路由参数获取文物 ID
- * 2. 从用户收藏中查找文物
- * 3. 恢复每日生成次数
- */
 onMounted(() => {
   const artifactId = route.query.id
   
-  // 尝试从用户收藏中查找文物
   if (artifactId) {
-    const found = userStore.artifacts.find(a => a.id === artifactId)
-    if (found) {
-      artifact.value = found
+    const exhibit = exhibitsData.exhibits.find(e => e.id === artifactId)
+    if (exhibit) {
+      artifact.value = {
+        id: exhibit.id,
+        name: exhibit.name,
+        dynasty: exhibit.metadata?.era || '',
+        category: exhibit.metadata?.category || '',
+        location: exhibit.metadata?.location || '',
+        museum: exhibit.metadata?.museum || '',
+        imageUrl: exhibit.layers?.[0]?.src || ''
+      }
+    } else {
+      const found = userStore.artifacts.find(a => a.id === artifactId)
+      if (found) {
+        artifact.value = found
+      }
     }
   }
   
-  // 如果没有找到，使用默认演示文物
   if (!artifact.value) {
     artifact.value = {
       id: 'demo-artifact',
@@ -237,27 +138,12 @@ onMounted(() => {
       dynasty: '明朝',
       category: '瓷器',
       location: '景德镇',
-      imageUrl: '/images/qinghuaci.jpg',
-      poem: '素胚勾勒出青花笔锋浓转淡，瓶身描绘的牡丹一如你初妆'
+      imageUrl: '/images/qinghuaci.jpg'
     }
   }
   
-  // 设置初始诗词
-  currentPoem.value = artifact.value.poem || '岁月无声，文物有灵'
-  
-  // 从路由参数获取阅历值
   if (route.query.exp) {
     experienceGained.value = parseInt(route.query.exp) || 10
-  }
-  
-  // 恢复每日生成次数
-  const saved = localStorage.getItem('wenji_poem_generations')
-  if (saved) {
-    const data = JSON.parse(saved)
-    // 检查是否是同一天
-    if (data.date === new Date().toDateString()) {
-      poemGenerationsLeft.value = data.left
-    }
   }
 })
 </script>
@@ -330,57 +216,6 @@ onMounted(() => {
   font-size: 14px;
   color: #8B9A9C;
   margin: 0;
-}
-
-.poem-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-top: -8px;
-}
-
-.generate-poem-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #2D4059 0%, #3D5A80 100%);
-  border: none;
-  border-radius: 24px;
-  color: #F5F2EB;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.generate-poem-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(45, 64, 89, 0.3);
-}
-
-.generate-poem-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.loading-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.generations-left {
-  font-size: 12px;
-  color: #8B9A9C;
 }
 
 @media (max-width: 428px) {

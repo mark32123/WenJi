@@ -14,7 +14,6 @@ export const useUserStore = defineStore('user', () => {
   const birthday = ref(null)
   
   const experience = ref(0)
-  const points = ref(0)
   const level = ref('初识')
   const poems = ref([])
   const seals = ref([])
@@ -76,8 +75,7 @@ export const useUserStore = defineStore('user', () => {
         location.value = data.location || ''
         birthday.value = data.birthday || null
         avatar.value = data.avatarUrl || ''
-        experience.value = data.experience || data.points || 0
-        points.value = data.points || data.experience || 0
+        experience.value = data.experience || 0
         level.value = data.level || '初识'
         
         return { success: true, data }
@@ -110,8 +108,7 @@ export const useUserStore = defineStore('user', () => {
         location.value = data.location || location.value
         birthday.value = data.birthday || birthday.value
         avatar.value = data.avatarUrl || avatar.value
-        experience.value = data.experience || data.points || experience.value
-        points.value = data.points || data.experience || points.value
+        experience.value = data.experience || experience.value
         level.value = data.level || level.value
         
         return { success: true, data }
@@ -229,7 +226,6 @@ export const useUserStore = defineStore('user', () => {
     location.value = ''
     birthday.value = null
     experience.value = 0
-    points.value = 0
     level.value = '初识'
   }
 
@@ -249,17 +245,18 @@ export const useUserStore = defineStore('user', () => {
         totalDistance.value = data.totalDistance || 0
         
         const validArtifacts = (data.artifacts || []).filter(a => {
-          const validIds = ['qinghuaci', 'fencaici', 'qinghuacimianju', 'beijing1', 'beijing2', 'beijing3', 'beijing4']
+          const validIds = ['qinghuaci', 'fencaici', 'qinghuacimianju', 'beijing-gugong', 'simuwuding', 'sijunzhang', 'dunhuang-feitian', 'sanxingdui-mask']
           return validIds.includes(a.id)
         }).map(a => {
           const artifactData = {
             qinghuaci: { name: '青花瓷瓶', imageUrl: '/images/qinghuaci.jpg', dynasty: '明代', location: '景德镇', date: '2024.03.15' },
             fencaici: { name: '粉彩瓷瓶', imageUrl: '/images/fencaici.jpg', dynasty: '清代', location: '景德镇', date: '2024.03.16' },
             qinghuacimianju: { name: '青花瓷面具', imageUrl: '/images/qinghuacimianju.jpg', dynasty: '明代', location: '景德镇', date: '2024.03.17' },
-            beijing1: { name: '故宫太和殿', imageUrl: '/images/gugong-taihedian.jpg', dynasty: '明清', location: '北京', date: '2024.03.18' },
-            beijing2: { name: '长城烽火台', imageUrl: '/images/changcheng-fenghuotai.jpg', dynasty: '明代', location: '北京', date: '2024.03.19' },
-            beijing3: { name: '天坛祈年殿', imageUrl: '/images/tiantan-qiniandian.jpg', dynasty: '明代', location: '北京', date: '2024.03.20' },
-            beijing4: { name: '颐和园长廊', imageUrl: '/images/yiheyuan-changlang.jpg', dynasty: '清代', location: '北京', date: '2024.03.21' }
+            'beijing-gugong': { name: '故宫博物院', imageUrl: '/images/beijing-gugong.jpg', dynasty: '明清', location: '北京', date: '2024.03.18' },
+            simuwuding: { name: '后母戊鼎', imageUrl: '/images/bj2中国国家博物馆.jpg', dynasty: '商代', location: '河南安阳', date: '2024.03.19' },
+            sijunzhang: { name: '四羊方尊', imageUrl: '/images/bj2中国国家博物馆.jpg', dynasty: '商代', location: '湖南宁乡', date: '2024.03.20' },
+            'dunhuang-feitian': { name: '敦煌飞天', imageUrl: '/images/feitian.jpg', dynasty: '北魏至元代', location: '甘肃敦煌', date: '2024.03.21' },
+            'sanxingdui-mask': { name: '三星堆青铜面具', imageUrl: '/images/sanxingdui.jpg', dynasty: '商代', location: '四川广汉', date: '2024.03.22' }
           }
           return {
             id: a.id,
@@ -271,8 +268,8 @@ export const useUserStore = defineStore('user', () => {
           { id: 'qinghuaci', name: '青花瓷瓶', imageUrl: '/images/qinghuaci.jpg', dynasty: '明代', location: '景德镇', date: '2024.03.15', collectedAt: Date.now() },
           { id: 'fencaici', name: '粉彩瓷瓶', imageUrl: '/images/fencaici.jpg', dynasty: '清代', location: '景德镇', date: '2024.03.16', collectedAt: Date.now() },
           { id: 'qinghuacimianju', name: '青花瓷面具', imageUrl: '/images/qinghuacimianju.jpg', dynasty: '明代', location: '景德镇', date: '2024.03.17', collectedAt: Date.now() },
-          { id: 'beijing1', name: '故宫太和殿', imageUrl: '/images/gugong-taihedian.jpg', dynasty: '明清', location: '北京', date: '2024.03.18', collectedAt: Date.now() },
-          { id: 'beijing2', name: '长城烽火台', imageUrl: '/images/changcheng-fenghuotai.jpg', dynasty: '明代', location: '北京', date: '2024.03.19', collectedAt: Date.now() }
+          { id: 'beijing-gugong', name: '故宫博物院', imageUrl: '/images/beijing-gugong.jpg', dynasty: '明清', location: '北京', date: '2024.03.18', collectedAt: Date.now() },
+          { id: 'simuwuding', name: '后母戊鼎', imageUrl: '/images/bj2中国国家博物馆.jpg', dynasty: '商代', location: '河南安阳', date: '2024.03.19', collectedAt: Date.now() }
         ]
       }
     } catch (e) {
@@ -311,7 +308,6 @@ export const useUserStore = defineStore('user', () => {
     location,
     birthday,
     experience,
-    points,
     level,
     poems,
     seals,

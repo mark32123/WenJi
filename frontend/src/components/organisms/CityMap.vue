@@ -22,18 +22,6 @@
 -->
 <template>
   <div class="city-map">
-    <div class="city-selector">
-      <button 
-        v-for="city in cities" 
-        :key="city.id"
-        class="city-btn"
-        :class="{ active: currentCity?.id === city.id }"
-        @click="switchCity(city)"
-      >
-        {{ city.name }}
-      </button>
-    </div>
-    
     <div class="map-wrapper" ref="mapContainer"></div>
     
     <div class="map-controls">
@@ -211,14 +199,19 @@ const getMarkerColor = (category) => {
  */
 const fetchSites = async (lng, lat) => {
   try {
+    console.log('开始获取景点数据，经纬度:', lng, lat)
     const result = await heritageApi.getNearbySites(lng, lat)
+    console.log('景点 API 返回结果:', result)
     
     if (result.success && result.data && result.data.length > 0) {
       sites.value = result.data
+      console.log('成功获取到', result.data.length, '个景点')
       return result.data
+    } else {
+      console.warn('未获取到景点数据，原因:', result.message || 'API 返回失败')
     }
   } catch (error) {
-    console.error('获取景点失败')
+    console.error('获取景点失败:', error)
   }
   return []
 }
@@ -599,43 +592,7 @@ onUnmounted(() => {
   min-height: 300px;
 }
 
-.city-selector {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  display: flex;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 6px;
-  border-radius: 24px;
-  box-shadow: 0 2px 12px rgba(45, 64, 89, 0.15);
-}
-
-.city-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: transparent;
-  color: #8B9A9C;
-}
-
-.city-btn.active {
-  background: linear-gradient(135deg, #2D4059 0%, #3D5A80 100%);
-  color: #F5F2EB;
-}
-
-.city-btn:hover:not(.active) {
-  background: #E8ECEF;
-}
-
 .map-wrapper {
-  position: relative;
   width: 100%;
   height: 100%;
   min-height: 400px;

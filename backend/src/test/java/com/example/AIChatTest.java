@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.example.Common.Constants.RedisConstants.USER_LOGIN_KEY;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 

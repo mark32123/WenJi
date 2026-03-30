@@ -64,6 +64,18 @@ const request = async (url, options = {}, skipAuth = false) => {
   try {
     const response = await fetch(fullUrl, config)
     
+    if (response.status === 401 && !skipAuth) {
+      const { useAuthStore } = await import('@/stores/authStore')
+      const authStore = useAuthStore()
+      authStore.showLoginModal = true
+      return {
+        success: false,
+        code: 401,
+        message: '请先登录',
+        data: null
+      }
+    }
+    
     let data
     try {
       const text = await response.text()
@@ -228,7 +240,22 @@ export const heritageApi = {
 }
 
 export const aiApi = {
-  chat(prompt, chatId, images) {
+  async chat(prompt, chatId, images) {
+    const { useAuthStore } = await import('@/stores/authStore')
+    const authStore = useAuthStore()
+    
+    authStore.checkAndResetDailyCount()
+    
+    if (!authStore.canUseAi) {
+      return {
+        success: false,
+        code: 403,
+        message: `今日AI对话次数已用完（${authStore.aiLimit}次），请明天再来或登录获取更多次数`,
+        data: null,
+        limitExceeded: true
+      }
+    }
+    
     const formData = new FormData()
     formData.append('prompt', prompt)
     if (chatId) {
@@ -240,13 +267,32 @@ export const aiApi = {
       })
     }
     
-    return fetch('/api/ai/chat', {
+    const token = getToken()
+    const headers = {}
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    } else {
+      headers['X-User-Type'] = 'GUEST'
+      headers['X-User-Id'] = authStore.guestId
+    }
+    
+    const response = await fetch('/api/ai/chat', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${getToken()}`
-      },
+      headers,
       body: formData
     })
+    
+    if (response.status === 401) {
+      authStore.showLoginModal = true
+      return null
+    }
+    
+    if (response.ok) {
+      authStore.incrementAiCount()
+    }
+    
+    return response
   },
   
   getChatIds(type = 'chat') {

@@ -206,10 +206,10 @@
         </div>
         <div class="artifacts-preview">
           <div 
-            v-for="artifact in latestArtifacts" 
+            v-for="(artifact, idx) in latestArtifacts" 
             :key="artifact.id"
             class="artifact-card"
-            @click="showArtifactCarousel = true"
+            @click="openCarouselAt(idx)"
           >
             <div class="artifact-image">
               <img v-if="artifact.imageUrl" :src="artifact.imageUrl" :alt="artifact.name" />
@@ -685,13 +685,43 @@ const mockSeals = [
 const poemCollection = ref(mockPoems)
 const sealCollection = ref(mockSeals)
 
+const GUEST_DATA_EXPIRE_DAYS = 3
+
 const getPoemStorageKey = () => {
   const userId = authStore.isLoggedIn ? userStore.userId : 'guest'
   return `wenji_user_poems_${userId}`
 }
 
+const getGuestExpireKey = () => 'wenji_guest_expire'
+
+const isGuestDataExpired = () => {
+  const expireTime = localStorage.getItem(getGuestExpireKey())
+  if (!expireTime) return true
+  
+  const now = Date.now()
+  const expire = parseInt(expireTime, 10)
+  return now > expire
+}
+
+const clearGuestData = () => {
+  const keysToRemove = []
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (key && key.startsWith('wenji_user_poems_guest')) {
+      keysToRemove.push(key)
+    }
+  }
+  keysToRemove.forEach(key => localStorage.removeItem(key))
+  localStorage.removeItem(getGuestExpireKey())
+}
+
 const loadUserPoems = () => {
   try {
+    if (!authStore.isLoggedIn && isGuestDataExpired()) {
+      clearGuestData()
+      return
+    }
+    
     const stored = localStorage.getItem(getPoemStorageKey())
     if (stored) {
       const userPoems = JSON.parse(stored)
@@ -711,6 +741,11 @@ const saveUserPoems = () => {
   try {
     const userPoems = poemCollection.value.filter(p => !p.id.startsWith('poem1') && !p.id.startsWith('poem2') && !p.id.startsWith('poem3') && !p.id.startsWith('poem4'))
     localStorage.setItem(getPoemStorageKey(), JSON.stringify(userPoems))
+    
+    if (!authStore.isLoggedIn) {
+      const expireTime = Date.now() + GUEST_DATA_EXPIRE_DAYS * 24 * 60 * 60 * 1000
+      localStorage.setItem(getGuestExpireKey(), expireTime.toString())
+    }
   } catch (error) {
     console.error('保存诗词失败:', error)
   }
@@ -833,6 +868,18 @@ const generateAiPoem = async () => {
     const prompt = `请为"${newPoem.value.location}"这个地点创作一首七言绝句，要求：1. 突出该地点的特色和意境 2. 语言典雅优美 3. 只输出四句诗，不要其他解释。`
     
     const response = await aiApi.chat(prompt, `poem_profile_${Date.now()}`)
+    
+    if (!response) {
+      authStore.showLoginModal = true
+      aiGenerating.value = false
+      return
+    }
+    
+    if (response.limitExceeded) {
+      aiGenerating.value = false
+      return
+    }
+    
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
     let poem = ''
@@ -1057,6 +1104,11 @@ const stopAutoPlay = () => {
     clearInterval(autoPlayTimer)
     autoPlayTimer = null
   }
+}
+
+const openCarouselAt = (idx) => {
+  carouselIndex.value = idx
+  showArtifactCarousel.value = true
 }
 
 const closeCarousel = () => {
@@ -1455,7 +1507,6 @@ const closeARViewer = () => {
 
 watch(showArtifactCarousel, (val) => {
   if (val) {
-    carouselIndex.value = 0
     nextTick(() => {
       initMap()
       startAutoPlay()

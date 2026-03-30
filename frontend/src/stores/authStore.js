@@ -2,6 +2,19 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { userApi } from '@/api'
 
+const GUEST_AI_LIMIT = 3
+const USER_AI_LIMIT = 5
+const EXPERIENCE_COST_PER_AI = 50
+const GUEST_AI_COUNT_KEY = 'wenji_guest_ai_count'
+const GUEST_AI_DATE_KEY = 'wenji_guest_ai_date'
+const USER_AI_COUNT_KEY = 'wenji_user_ai_count'
+const USER_AI_DATE_KEY = 'wenji_user_ai_date'
+const EXTRA_AI_COUNT_KEY = 'wenji_extra_ai_count'
+
+const getTodayDate = () => {
+  return new Date().toISOString().split('T')[0]
+}
+
 const generateUUID = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = Math.random() * 16 | 0
@@ -17,6 +30,9 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(null)
   const showLoginModal = ref(false)
   const pendingAction = ref(null)
+  const guestAiCount = ref(0)
+  const userAiCount = ref(0)
+  const extraAiCount = ref(0)
 
   const isGuest = computed(() => !isLoggedIn.value && guestId.value)
   
@@ -29,6 +45,46 @@ export const useAuthStore = defineStore('auth', () => {
     return guestId.value
   })
 
+  const aiLimit = computed(() => isLoggedIn.value ? USER_AI_LIMIT : GUEST_AI_LIMIT)
+
+  const guestAiRemaining = computed(() => {
+    return Math.max(0, GUEST_AI_LIMIT - guestAiCount.value)
+  })
+
+  const userAiRemaining = computed(() => {
+    return Math.max(0, USER_AI_LIMIT - userAiCount.value)
+  })
+
+  const aiRemaining = computed(() => {
+    const baseRemaining = isLoggedIn.value ? userAiRemaining.value : guestAiRemaining.value
+    return baseRemaining + extraAiCount.value
+  })
+
+  const canUseAi = computed(() => {
+    if (isLoggedIn.value) {
+      return userAiCount.value < USER_AI_LIMIT || extraAiCount.value > 0
+    }
+    return guestAiCount.value < GUEST_AI_LIMIT || extraAiCount.value > 0
+  })
+
+  const checkAndResetDailyCount = () => {
+    const today = getTodayDate()
+    
+    const guestDate = localStorage.getItem(GUEST_AI_DATE_KEY)
+    if (guestDate !== today) {
+      guestAiCount.value = 0
+      localStorage.setItem(GUEST_AI_DATE_KEY, today)
+      localStorage.setItem(GUEST_AI_COUNT_KEY, '0')
+    }
+    
+    const userDate = localStorage.getItem(USER_AI_DATE_KEY)
+    if (userDate !== today) {
+      userAiCount.value = 0
+      localStorage.setItem(USER_AI_DATE_KEY, today)
+      localStorage.setItem(USER_AI_COUNT_KEY, '0')
+    }
+  }
+
   const initGuest = () => {
     const savedGuestId = localStorage.getItem('wenji_guest_id')
     if (savedGuestId) {
@@ -37,6 +93,58 @@ export const useAuthStore = defineStore('auth', () => {
       const newGuestId = `guest_${generateUUID()}`
       guestId.value = newGuestId
       localStorage.setItem('wenji_guest_id', newGuestId)
+    }
+    
+    checkAndResetDailyCount()
+    
+    const savedGuestAiCount = localStorage.getItem(GUEST_AI_COUNT_KEY)
+    if (savedGuestAiCount) {
+      guestAiCount.value = parseInt(savedGuestAiCount, 10) || 0
+    }
+    
+    const savedUserAiCount = localStorage.getItem(USER_AI_COUNT_KEY)
+    if (savedUserAiCount) {
+      userAiCount.value = parseInt(savedUserAiCount, 10) || 0
+    }
+    
+    const savedExtraAiCount = localStorage.getItem(EXTRA_AI_COUNT_KEY)
+    if (savedExtraAiCount) {
+      extraAiCount.value = parseInt(savedExtraAiCount, 10) || 0
+    }
+  }
+
+  const incrementAiCount = () => {
+    if (extraAiCount.value > 0) {
+      extraAiCount.value--
+      localStorage.setItem(EXTRA_AI_COUNT_KEY, extraAiCount.value.toString())
+    } else if (isLoggedIn.value) {
+      userAiCount.value++
+      localStorage.setItem(USER_AI_COUNT_KEY, userAiCount.value.toString())
+    } else {
+      guestAiCount.value++
+      localStorage.setItem(GUEST_AI_COUNT_KEY, guestAiCount.value.toString())
+    }
+  }
+
+  const exchangeExperienceForAi = (userStore, count = 1) => {
+    const totalCost = EXPERIENCE_COST_PER_AI * count
+    if (userStore.experience < totalCost) {
+      return { 
+        success: false, 
+        message: `阅历不足，需要 ${totalCost} 阅历兑换 ${count} 次 AI 对话` 
+      }
+    }
+    
+    userStore.experience -= totalCost
+    extraAiCount.value += count
+    localStorage.setItem(EXTRA_AI_COUNT_KEY, extraAiCount.value.toString())
+    userStore.saveToStorage()
+    
+    return { 
+      success: true, 
+      message: `成功兑换 ${count} 次 AI 对话`,
+      costExperience: totalCost,
+      extraAiCount: extraAiCount.value
     }
   }
 
@@ -144,7 +252,21 @@ export const useAuthStore = defineStore('auth', () => {
     userId,
     showLoginModal,
     pendingAction,
+    guestAiCount,
+    userAiCount,
+    extraAiCount,
+    guestAiRemaining,
+    userAiRemaining,
+    aiRemaining,
+    aiLimit,
+    canUseAi,
+    GUEST_AI_LIMIT,
+    USER_AI_LIMIT,
+    EXPERIENCE_COST_PER_AI,
     initGuest,
+    incrementAiCount,
+    exchangeExperienceForAi,
+    checkAndResetDailyCount,
     getAuthHeaders,
     requireLogin,
     login,

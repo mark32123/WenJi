@@ -6,7 +6,7 @@ CREATE TABLE travel_blog (
     title VARCHAR(200) NOT NULL COMMENT '博客标题',
     content TEXT NOT NULL COMMENT '心得体会内容',
     images JSON COMMENT '图片URL列表 (JSON数组)',
-    points_earned INT DEFAULT 0 COMMENT '本次获得积分',
+    experience_earned INT DEFAULT 0 COMMENT '本次获得阅历',
     status TINYINT DEFAULT 1 COMMENT '状态: 1-正常, 0-禁用',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -21,7 +21,7 @@ CREATE TABLE badge (
     icon_url VARCHAR(500) COMMENT '徽章图标URL',
     type VARCHAR(20) COMMENT '徽章类型: footprint/blog/level',
     threshold INT COMMENT '获得阈值(如打卡次数)',
-    points_bonus INT DEFAULT 0 COMMENT '获得徽章奖励积分',
+    experience_bonus INT DEFAULT 0 COMMENT '获得徽章奖励阅历',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='徽章定义表';
 
@@ -40,7 +40,7 @@ CREATE TABLE point_record (
     user_id INT NOT NULL,
     type TINYINT NOT NULL COMMENT '类型: 1-获得, 2-消耗',
     source VARCHAR(50) NOT NULL COMMENT '来源: blog/badge/mall_exchange',
-    points INT NOT NULL COMMENT '变动积分值',
+    experience INT NOT NULL COMMENT '变动阅历值',
     description VARCHAR(200) COMMENT '描述',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分流水表';
@@ -58,7 +58,7 @@ CREATE TABLE mall_item (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分商城奖品表';
 
 -- 7. 填充初始数据
-INSERT INTO badge (name, description, type, threshold, points_bonus) VALUES 
+INSERT INTO badge (name, description, type, threshold, experience_bonus) VALUES 
 ('初试啼声', '发布第一篇旅游心得', 'blog', 1, 50),
 ('足迹遍布', '在5个不同的景点打卡', 'footprint', 5, 200),
 ('资深驴友', '累计发布10篇旅游心得', 'blog', 10, 500),

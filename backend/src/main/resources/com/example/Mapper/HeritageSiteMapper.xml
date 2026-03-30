@@ -14,7 +14,7 @@
         FROM heritage_sites
         WHERE status = 1
         ORDER BY
-        <if test="cityCode != null">
+        <if test="cityCode != null and cityCode != ''">
             (city_code = #{cityCode}) DESC,
         </if>
         CASE level

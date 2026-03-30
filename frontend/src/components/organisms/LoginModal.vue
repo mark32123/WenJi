@@ -87,9 +87,12 @@
             <button class="switch-btn" @click="toggleMode">
               {{ isRegister ? '已有账号？去登录' : '没有账号？去注册' }}
             </button>
-            <button class="guest-btn" @click="handleClose">
-              暂不登录，继续浏览
-            </button>
+            <div class="guest-section">
+              <button class="guest-btn" @click="handleGuestMode">
+                游客体验（今日剩余 {{ authStore.guestAiRemaining }} 次 AI 对话）
+              </button>
+              <p class="guest-hint">登录后每日可使用 {{ authStore.USER_AI_LIMIT }} 次 AI 功能</p>
+            </div>
           </div>
         </div>
       </div>
@@ -197,6 +200,12 @@ const handleSubmit = async () => {
 }
 
 const handleClose = () => {
+  authStore.closeLoginModal()
+  emit('close')
+}
+
+const handleGuestMode = () => {
+  authStore.initGuest()
   authStore.closeLoginModal()
   emit('close')
 }
@@ -405,15 +414,31 @@ watch(() => props.visible, (newVal) => {
 
 .guest-btn {
   background: transparent;
-  border: none;
-  color: #8B9A9C;
-  font-size: 13px;
+  border: 1px solid rgba(45, 64, 89, 0.2);
+  border-radius: 8px;
+  color: #2D4059;
+  font-size: 14px;
   cursor: pointer;
-  padding: 8px 16px;
+  padding: 12px 16px;
+  transition: all 0.3s ease;
 }
 
 .guest-btn:hover {
-  color: #2D4059;
+  background: rgba(45, 64, 89, 0.05);
+  border-color: rgba(45, 64, 89, 0.3);
+}
+
+.guest-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.guest-hint {
+  font-size: 12px;
+  color: #8B9A9C;
+  margin: 0;
 }
 
 .modal-enter-active,

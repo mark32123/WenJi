@@ -3,7 +3,6 @@ package com.example;
 import com.example.Common.Result;
 import com.example.DTO.LoginFormDTO;
 import com.example.Service.UserService;
-import com.example.VO.UserLoginVO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +17,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.example.Common.Constants.RedisConstants.CAPTCHA_PREFIX;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;

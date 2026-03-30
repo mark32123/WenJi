@@ -59,19 +59,24 @@ public class TravelBlogServiceImpl implements TravelBlogService {
                 throw new BusinessException(429, "操作太频繁，请稍后再试");
             }
             
-            int points = 10;
-            blog.setPointsEarned(points);
+            int experience = 10;
+            blog.setExperienceEarned(experience);
             travelBlogMapper.insert(blog);
 
-            pointService.addPoints(blog.getUserId(), points, "blog", "发布旅游心得打卡");
+            pointService.addPoints(blog.getUserId(), experience, "blog", "发布旅游心得打卡");
 
             badgeService.checkAndDistributeBadges(blog.getUserId(), "blog");
             badgeService.checkAndDistributeBadges(blog.getUserId(), "footprint");
         } finally {
+            // 只在当前线程持有锁的情况下释放锁
             if (Boolean.TRUE.equals(acquired)) {
-                String currentValue = stringRedisTemplate.opsForValue().get(lockKey);
-                if (lockValue.equals(currentValue)) {
-                    stringRedisTemplate.delete(lockKey);
+                try {
+                    String currentValue = stringRedisTemplate.opsForValue().get(lockKey);
+                    if (lockValue.equals(currentValue)) {
+                        stringRedisTemplate.delete(lockKey);
+                    }
+                } catch (Exception e) {
+                    // 释放锁失败不影响主业务流程，记录日志即可
                 }
             }
         }

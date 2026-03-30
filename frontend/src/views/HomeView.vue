@@ -140,14 +140,31 @@
             </div>
             
             <div class="ai-panel-input">
-              <input 
-                v-model="aiInput" 
-                placeholder="问我任何关于传统文化的问题..."
-                @keyup.enter="sendAiMessage"
-              />
-              <button class="send-btn" @click="sendAiMessage" :disabled="!aiInput.trim() || isAiTyping">
-                发送
-              </button>
+              <div class="ai-usage-info">
+                <span class="usage-text">
+                  今日剩余: <strong>{{ authStore.aiRemaining }}</strong> 次
+                  <span v-if="authStore.extraAiCount > 0" class="extra-count">(+{{ authStore.extraAiCount }}兑换)</span>
+                </span>
+                <button v-if="userStore.experience >= authStore.EXPERIENCE_COST_PER_AI" 
+                        class="exchange-btn" 
+                        @click="showExchangeDialog = true"
+                        :title="`使用 ${authStore.EXPERIENCE_COST_PER_AI} 阅历兑换 1 次 AI 对话`">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                  兑换
+                </button>
+              </div>
+              <div class="input-row">
+                <input 
+                  v-model="aiInput" 
+                  placeholder="问我任何关于传统文化的问题..."
+                  @keyup.enter="sendAiMessage"
+                />
+                <button class="send-btn" @click="sendAiMessage" :disabled="!aiInput.trim() || isAiTyping">
+                  发送
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -175,6 +192,36 @@
         </div>
       </div>
     </transition>
+    
+    <transition name="fade">
+      <div v-if="showExchangeDialog" class="confirm-overlay" @click.self="showExchangeDialog = false">
+        <div class="confirm-dialog exchange-dialog">
+          <div class="confirm-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <h3 class="confirm-title">兑换 AI 对话次数</h3>
+          <p class="confirm-message">
+            当前阅历: <strong>{{ userStore.experience }}</strong><br>
+            兑换消耗: <strong>{{ authStore.EXPERIENCE_COST_PER_AI }}</strong> 阅历/次<br>
+            可兑换: <strong>{{ Math.floor(userStore.experience / authStore.EXPERIENCE_COST_PER_AI) }}</strong> 次
+          </p>
+          <div class="exchange-count-selector">
+            <button class="count-btn" @click="exchangeCount = Math.max(1, exchangeCount - 1)">-</button>
+            <span class="count-display">{{ exchangeCount }}</span>
+            <button class="count-btn" @click="exchangeCount = Math.min(Math.floor(userStore.experience / authStore.EXPERIENCE_COST_PER_AI), exchangeCount + 1)">+</button>
+          </div>
+          <p class="exchange-cost">消耗: {{ exchangeCount * authStore.EXPERIENCE_COST_PER_AI }} 阅历</p>
+          <div class="confirm-actions">
+            <button class="confirm-btn cancel" @click="showExchangeDialog = false">取消</button>
+            <button class="confirm-btn confirm" @click="confirmExchange" :disabled="isExchanging">
+              {{ isExchanging ? '兑换中...' : '确认兑换' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -194,6 +241,7 @@ import { useUserStore } from '@/stores/userStore'
 import { useAuthStore } from '@/stores/authStore'
 import { heritageApi, aiApi } from '@/api'
 import { CityMap, AiGuideCard } from '@/components'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -220,6 +268,11 @@ const currentSessionId = ref(null)
 const showDeleteConfirm = ref(false)
 const deleteTargetId = ref(null)
 const isDeleting = ref(false)
+
+// ==================== 阅历兑换弹窗 ====================
+const showExchangeDialog = ref(false)
+const exchangeCount = ref(1)
+const isExchanging = ref(false)
 
 /**
  * 预设文物节点数据
@@ -545,6 +598,26 @@ const confirmDelete = async () => {
   }
 }
 
+const confirmExchange = () => {
+  if (isExchanging.value) return
+  
+  isExchanging.value = true
+  
+  try {
+    const result = authStore.exchangeExperienceForAi(userStore, exchangeCount.value)
+    
+    if (result.success) {
+      ElMessage.success(result.message)
+      showExchangeDialog.value = false
+      exchangeCount.value = 1
+    } else {
+      ElMessage.warning(result.message)
+    }
+  } finally {
+    isExchanging.value = false
+  }
+}
+
 /**
  * 格式化时间显示
  * 将时间戳转换为友好的相对时间格式
@@ -570,8 +643,12 @@ const formatTime = (time) => {
 const sendAiMessage = async () => {
   if (!aiInput.value.trim() || isAiTyping.value) return
   
-  if (!authStore.isLoggedIn) {
-    aiMessages.value.push({ text: '请先登录后再与小游进行沟通~', fromUser: false })
+  if (!authStore.canUseAi) {
+    aiMessages.value.push({ 
+      text: `今日AI对话次数已用完（${authStore.aiLimit}次），请明天再来或登录获取更多次数`, 
+      fromUser: false 
+    })
+    authStore.showLoginModal = true
     return
   }
   
@@ -589,6 +666,17 @@ const sendAiMessage = async () => {
   try {
     // 调用 AI API，使用流式响应
     const response = await aiApi.chat(userMessage, currentSessionId.value)
+    
+    if (!response) {
+      aiMessages.value[aiMessageIndex].text = '请先登录后再与小游进行沟通~'
+      return
+    }
+    
+    if (response.limitExceeded) {
+      aiMessages.value[aiMessageIndex].text = response.message
+      authStore.showLoginModal = true
+      return
+    }
     
     if (response.status === 401) {
       aiMessages.value[aiMessageIndex].text = '登录已过期，请重新登录'
@@ -1061,11 +1149,55 @@ watch(() => authStore.isLoggedIn, (isLoggedIn) => {
 
 .ai-panel-input {
   display: flex;
-  gap: 12px;
-  padding: 16px;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
   background: #F5F2EB;
   border-top: 1px solid rgba(45, 64, 89, 0.1);
+}
+
+.ai-usage-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #8B9A9C;
+}
+
+.usage-text strong {
+  color: #C9A227;
+  font-weight: 600;
+}
+
+.extra-count {
+  color: #C9A227;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+.exchange-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #C9A227, #D4AF37);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.exchange-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(201, 162, 39, 0.4);
+}
+
+.input-row {
+  display: flex;
+  gap: 12px;
 }
 
 .ai-panel-input input {
@@ -1196,6 +1328,71 @@ watch(() => authStore.isLoggedIn, (isLoggedIn) => {
 .confirm-btn.delete:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.confirm-btn.confirm {
+  background: linear-gradient(135deg, #C9A227, #D4AF37);
+  color: #fff;
+}
+
+.confirm-btn.confirm:hover {
+  box-shadow: 0 4px 12px rgba(201, 162, 39, 0.4);
+}
+
+.confirm-btn.confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.exchange-dialog .confirm-message {
+  text-align: left;
+  padding: 12px;
+  background: rgba(45, 64, 89, 0.05);
+  border-radius: 8px;
+}
+
+.exchange-dialog .confirm-message strong {
+  color: #C9A227;
+}
+
+.exchange-count-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.count-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #C9A227;
+  background: transparent;
+  color: #C9A227;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.count-btn:hover {
+  background: #C9A227;
+  color: #fff;
+}
+
+.count-display {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2D4059;
+  min-width: 40px;
+  text-align: center;
+}
+
+.exchange-cost {
+  font-size: 14px;
+  color: #C9A227;
+  margin: 0 0 16px 0;
+  font-weight: 500;
 }
 
 .fade-enter-active,

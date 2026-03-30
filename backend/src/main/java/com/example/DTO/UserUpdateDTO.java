@@ -28,8 +28,6 @@ public class UserUpdateDTO {
     private String avatarUrl;// 头像
     private String location;// 常驻之地
     private String level;// 等级 见习学徒
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate birthday;// 生日
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private String updateTime; // 更新时间
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

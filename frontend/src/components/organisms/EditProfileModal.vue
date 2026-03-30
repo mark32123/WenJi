@@ -257,8 +257,12 @@ const handleClose = () => {
   emit('close')
 }
 
-watch(() => props.visible, (newVal) => {
+watch(() => props.visible, async (newVal) => {
   if (newVal) {
+    if (!userStore.username && userStore.phone) {
+      await userStore.fetchUserInfo()
+    }
+    
     formData.username = userStore.username || ''
     formData.phone = userStore.phone || ''
     formData.email = userStore.email || ''

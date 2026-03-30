@@ -23,6 +23,6 @@ public class Badge {
     private String iconUrl;
     private String type;
     private Integer threshold;
-    private Integer pointsBonus;
+    private Integer experienceBonus;
     private LocalDateTime createTime;
 }

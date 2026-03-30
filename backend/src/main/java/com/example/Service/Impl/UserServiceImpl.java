@@ -122,14 +122,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private static Map<String, Object> getStringObjectMap(User user) {
         Map<String,Object>userInfo = new HashMap<>();
         userInfo.put("userId", user.getUserId().toString());
-        //使用putAll这个方法时是会将所有key转变成String，因为userId是int类型，需要转换成字符串
+        //使用 putAll 这个方法时是会将所有 key 转变成 String，因为 userId 是 int 类型，需要转换成字符串
         //否则会导致
 // java.lang.ClassCastException: class java.lang.Integer cannot be cast to class java.lang.String (java.lang.Integer and java.lang.String are in module java.base of loader 'bootstrap')
         userInfo.put("username", user.getUsername());
         userInfo.put("phone", user.getPhone());
         userInfo.put("avatarUrl", user.getAvatarUrl());
         userInfo.put("location", user.getLocation());
-        userInfo.put("points", user.getPoints() == null ? "0" : user.getPoints().toString());
+        userInfo.put("experience", user.getExperience() == null ? "0" : user.getExperience().toString());
         return userInfo;
     }
 
@@ -207,11 +207,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 userInfoVO.setPhone((String) userInfo.get("phone"));
                 userInfoVO.setAvatarUrl((String) userInfo.get("avatarUrl"));
                 userInfoVO.setLocation((String) userInfo.get("location"));
-                Object pointsObj = userInfo.get("points");
-                if (pointsObj != null) {
-                    userInfoVO.setPoints(Integer.parseInt(pointsObj.toString()));
+                Object expObj = userInfo.get("experience");
+                if (expObj != null) {
+                    userInfoVO.setExperience(Integer.parseInt(expObj.toString()));
                 }
-                log.info("从redis中获取用户信息成功，用户ID：{}",userId);
+                log.info("从 redis 中获取用户信息成功，用户 ID：{}",userId);
                 return Result.success(userInfoVO);
             }
 
@@ -262,7 +262,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     userMap.put("avatarUrl", updatedUser.getAvatarUrl());
                     userMap.put("location", updatedUser.getLocation());
                     userMap.put("phone", updatedUser.getPhone());
-                    userMap.put("points", updatedUser.getPoints() == null ? "0" : updatedUser.getPoints().toString());
+                    userMap.put("experience", updatedUser.getExperience() == null ? "0" : updatedUser.getExperience().toString());
                     
                     // 这里注意：MyBatis-Plus 的 selectById 返回的是 User 对象
                     // 我们需要同步更新 Redis 中的哈希表
