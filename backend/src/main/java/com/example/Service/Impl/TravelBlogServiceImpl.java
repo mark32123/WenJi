@@ -41,7 +41,6 @@ public class TravelBlogServiceImpl implements TravelBlogService {
      * </p>
      *
      * @param blog 待发布的旅游博客对象，包含用户信息及博客内容
-     * @return void 无返回值
      * @throws BusinessException 当获取锁失败（操作频繁）时抛出
      */
     @Override
