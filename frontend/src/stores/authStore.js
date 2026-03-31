@@ -16,11 +16,16 @@ const getTodayDate = () => {
 }
 
 const generateUUID = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = Math.random() * 16 | 0
-    const v = c === 'x' ? r : (r & 0x3 | 0x8)
-    return v.toString(16)
-  })
+  const crypto = window.crypto || window.msCrypto
+  const buf = new Uint8Array(16)
+  crypto.getRandomValues(buf)
+
+  // 设置版本号 (Version 4) 和变体 (Variant 2)
+  buf[6] = (buf[6] & 0x0f) | 0x40
+  buf[8] = (buf[8] & 0x3f) | 0x80
+
+  const idx = (b) => b.toString(16).padStart(2, '0')
+  return `${idx(buf[0])}${idx(buf[1])}${idx(buf[2])}${idx(buf[3])}-${idx(buf[4])}${idx(buf[5])}-${idx(buf[6])}${idx(buf[7])}-${idx(buf[8])}${idx(buf[9])}-${idx(buf[10])}${idx(buf[11])}${idx(buf[12])}${idx(buf[13])}${idx(buf[14])}${idx(buf[15])}`
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -86,6 +91,13 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const initGuest = () => {
+    let newGuestId
+    do {
+      newGuestId = `guest_${generateUUID()}`
+    } while (localStorage.getItem('wenji_guest_id') === newGuestId) // 简单冲突检测
+
+    guestId.value = newGuestId
+    localStorage.setItem('wenji_guest_id', newGuestId)
     const savedGuestId = localStorage.getItem('wenji_guest_id')
     if (savedGuestId) {
       guestId.value = savedGuestId
