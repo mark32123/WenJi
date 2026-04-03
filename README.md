@@ -1,195 +1,421 @@
-# 文迹 (WenJi) - 文化遗产探索应用
+# 文迹 (WenJi) - 文化遗产探索App
+
+<div align="center">
+
+![Version](https://img.shields.io/badge/version-1.0.0--beta-blue)
+![Vue](https://img.shields.io/badge/Vue-3.5-brightgreen)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+**基于地理位置的传统文化探索应用**
+
+[功能特性](#功能特性) • [快速开始](#快速开始) • [配置说明](#配置说明) • [项目结构](#项目结构) • [技术架构](#技术架构)
+
+</div>
+
+---
 
 ## 项目简介
 
-文迹是一款基于地理位置的传统文化探索应用，通过"行走+体验+奖励"的模式，让用户在探索文化遗产的过程中获得沉浸式体验。应用融合了AR技术、AI智能讲解和游戏化激励机制，旨在降低文化接触门槛，吸引年轻用户深度参与非遗文化的传承与传播。
+文迹App是一款融合**AR增强现实**、**AI智能讲解**、**地理定位**技术的文化遗产探索应用。用户可通过手机探索周边文化地标，体验AR文物展示，与AI书生进行智能对话，在行走中感受传统文化的魅力。
 
-## 核心功能
+### 核心亮点
 
-### 1. 山河卷（首页）
-- 基于高德地图的文化遗产地图展示
-- 景点标记与详情查看
-- AI智能助手对话功能
-- 城市切换与定位服务
+- 🗺️ **文化地图点亮** - 到访文化地标即可点亮地图，形成个人文化足迹
+- 📱 **WebAR展示** - 无需下载App，浏览器即可体验AR文物展示
+- 🤖 **AI智能讲解** - 大模型驱动的个性化文化讲解与诗词创作
+- 🎮 **游戏化激励** - 经验值、徽章、等级体系，提升用户粘性
 
-### 2. AR鉴赏
-- 图片扫描识别模式（MindAR）
-- 二维码扫描触发模式
-- 3D文物模型展示
-- 文物信息AR叠加显示
+---
 
-### 3. 诗词创作与游记打卡
-- AI生成诗词（基于地点）
-- 自定义诗词创作
-- 游记撰写与发布
-- 图片上传与保存
-- 数据持久化存储
+## 功能特性
 
-### 4. 藏经阁（个人中心）
-- 用户信息展示与编辑
-- 诗词/游记收藏管理
-- 文物收藏展示
-- 印章成就系统
-- 阅历等级体系
+| 模块 | 功能 | 描述 |
+|------|------|------|
+| 🗺️ 地图探索 | 周边景点 | 基于GPS定位展示周边文化遗产 |
+| | 地图点亮 | 进入景点范围自动点亮，记录文化足迹 |
+| 📱 AR体验 | 文物识别 | 扫描文物图片触发AR展示 |
+| | 3D模型 | Three.js渲染文物3D模型 |
+| 🤖 AI书生 | 智能对话 | 大模型驱动的文化问答 |
+| | 诗词创作 | 根据地理位置生成个性化诗词 |
+| 👤 用户系统 | 登录注册 | 手机号验证码登录 |
+| | 个人中心 | 经验值、等级、徽章管理 |
+| 📝 游记系统 | 发布游记 | 记录文化探索心得 |
+| | 经验奖励 | 发布游记获得经验值 |
 
-### 5. 激励体系
-- 打卡获得阅历值
-- 等级晋升系统（初识→登堂→入室→登峰→造极→大成）
-- 徽章收集
-- 积分奖励
-
-## 技术栈
-
-### 前端
-- **框架**: Vue 3 + Vite
-- **状态管理**: Pinia
-- **路由**: Vue Router 4
-- **地图服务**: 高德地图 JavaScript API
-- **AR技术**: MindAR + A-Frame
-- **3D渲染**: Three.js
-- **样式**: SCSS + Tailwind CSS
-
-### 后端
-- **框架**: Spring Boot 3.x
-- **数据库**: MySQL + MyBatis Plus
-- **缓存**: Redis
-- **认证**: JWT (JSON Web Token)
-- **API文档**: Swagger/OpenAPI
-
-## 项目结构
-
-```
-demo/
-├── frontend/                 # 前端项目
-│   ├── src/
-│   │   ├── api/             # API接口封装
-│   │   ├── components/      # 组件库
-│   │   │   ├── atoms/       # 原子组件
-│   │   │   ├── molecules/   # 分子组件
-│   │   │   └── organisms/   # 有机组件
-│   │   ├── data/            # 静态数据
-│   │   ├── router/          # 路由配置
-│   │   ├── stores/          # Pinia状态管理
-│   │   └── views/           # 页面视图
-│   ├── public/              # 静态资源
-│   │   ├── images/          # 图片资源
-│   │   ├── models/          # 3D模型
-│   │   └── targets/         # AR识别文件
-│   └── package.json
-│
-├── backend/                  # 后端项目
-│   ├── src/main/java/com/example/
-│   │   ├── Controller/      # 控制器层
-│   │   ├── Service/         # 服务层
-│   │   ├── Mapper/          # 数据访问层
-│   │   ├── Pojo/            # 实体类
-│   │   ├── Config/          # 配置类
-│   │   └── Common/          # 公共工具类
-│   └── pom.xml
-│
-└── 开发文档.md               # 详细开发文档
-```
+---
 
 ## 快速开始
 
 ### 环境要求
-- Node.js >= 20.19.0
-- JDK 17+
-- MySQL 8.0+
-- Redis
 
-### 前端启动
+| 软件 | 版本要求 |
+|------|---------|
+| Docker | 20.0+ |
+| Docker Compose | 2.0+ |
+| （可选）Node.js | 20.0+ |
+| （可选）Java | 17+ |
+
+### 方式一：Docker一键部署（推荐）
+
+#### 1. 启动服务
 
 ```bash
-cd frontend
-npm install
-npm run dev
+# 进入项目目录
+cd WenJi
+
+# 启动所有服务
+docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
 ```
 
-### 后端启动
+#### 2. 访问应用
+
+| 服务 | 地址 |
+|------|------|
+| 前端应用 | http://localhost |
+| 后端API | http://localhost:8080 |
+| API文档 | http://localhost:8080/doc.html |
+
+#### 3. 默认测试账号
+
+```
+手机号：13800138000
+验证码：123456
+```
+
+### 方式二：手动部署
+
+#### 后端启动
 
 ```bash
+# 进入后端目录
 cd backend
-mvn spring-boot:run
+
+# 打包（跳过测试）
+mvn clean package -DskipTests
+
+# 启动（需先启动MySQL和Redis）
+java -jar target/backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=docker
 ```
 
-### 配置说明
+#### 前端启动
 
-1. 配置数据库连接（backend/src/main/resources/application.yml）
-2. 配置Redis连接
-3. 配置高德地图API Key（frontend/src/views/HomeView.vue）
+```bash
+# 进入前端目录
+cd frontend
 
-## 主要API接口
+# 安装依赖
+npm install
 
-### 用户模块
-| 接口 | 方法 | 说明 |
-|------|------|------|
-| /user/login | POST | 用户登录 |
-| /user/captcha | GET | 获取验证码 |
-| /user/currentUserInfo | GET | 获取当前用户信息 |
-| /user/updateUserInfo | PUT | 更新用户信息 |
+# 开发模式
+npm run dev
 
-### 游记模块
-| 接口 | 方法 | 说明 |
-|------|------|------|
-| /travel/publish | POST | 发布游记 |
-| /travel/myBlogs | GET | 获取我的游记列表 |
-| /travel/delete/{blogId} | DELETE | 删除游记 |
+# 生产构建
+npm run build
+```
 
-### 地图模块
-| 接口 | 方法 | 说明 |
-|------|------|------|
-| /map/initial | GET | 获取附近景点 |
-| /map/{id} | GET | 获取景点详情 |
+---
 
-### AI模块
-| 接口 | 方法 | 说明 |
-|------|------|------|
-| /ai/chat | POST | AI对话（流式响应） |
-| /ai/history/{type}/list | GET | 获取会话列表 |
+## 服务管理
 
-## 数据库表结构
+### 启动服务
 
-### 用户表 (user)
-- 用户基本信息
-- 登录凭证
-- 个人设置
+```bash
+# 启动所有服务
+docker-compose up -d
 
-### 游记表 (travel_blog)
-- 游记内容
-- 关联景点
-- 图片信息
+# 仅启动特定服务
+docker-compose up -d mysql redis
+docker-compose up -d backend
+docker-compose up -d frontend
+```
 
-### 景点表 (heritage_site)
-- 景点信息
-- 地理位置
-- 开放时间
+### 停止服务
 
-### 徽章表 (badge)
-- 徽章定义
-- 获取条件
+```bash
+# 停止所有服务
+docker-compose down
 
-## 特色功能说明
+# 停止并删除数据卷（清除所有数据）
+docker-compose down -v
 
-### AR识别
-- 支持图片扫描识别（需要.mind文件）
-- 支持二维码快速触发
-- 3D模型实时渲染
+# 仅停止特定服务
+docker-compose stop backend
+```
 
-### AI诗词生成
-- 基于地点的智能创作
-- 流式响应输出
-- 支持自定义修改
+### 重启服务
 
-### 数据持久化
-- 游记数据存储到数据库
-- 诗词数据存储到localStorage
-- 用户状态Redis缓存
+```bash
+# 重启所有服务
+docker-compose restart
 
-## 开发团队
+# 重启特定服务
+docker-compose restart backend
+```
 
-本项目为文化遗产数字化传播的创新尝试，旨在通过技术手段让传统文化"活"起来。
+### 查看日志
+
+```bash
+# 查看所有服务日志
+docker-compose logs
+
+# 实时查看特定服务日志
+docker-compose logs -f backend
+
+# 查看最近100行日志
+docker-compose logs --tail=100 backend
+```
+
+---
+
+## 配置说明
+
+### 环境变量配置
+
+创建 `.env` 文件（可选）：
+
+```env
+# MySQL配置
+MYSQL_ROOT_PASSWORD=123456
+MYSQL_DATABASE=wenji
+
+# Redis配置
+REDIS_PASSWORD=123321
+
+# OpenAI API配置（AI功能必需）
+OPENAI_API_KEY=your-api-key-here
+OPENAI_BASE_URL=https://api.openai.com
+
+# 服务端口
+BACKEND_PORT=8080
+FRONTEND_PORT=80
+```
+
+### 数据库配置
+
+数据库配置文件：`mysql.cnf`
+
+```ini
+[mysqld]
+character-set-server=utf8mb4
+collation-server=utf8mb4_unicode_ci
+default-time-zone='+08:00'
+
+[client]
+default-character-set=utf8mb4
+```
+
+### 后端配置
+
+配置文件：`backend/src/main/resources/application-docker.yml`
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://mysql:3306/wenji
+    username: root
+    password: 123456
+  
+  redis:
+    host: redis
+    port: 6379
+    password: 123321
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+```
+
+### 前端配置
+
+高德地图API配置：`frontend/src/api/index.js`
+
+```javascript
+// 高德地图API Key（需替换为自己的Key）
+window._AMapSecurityConfig = {
+  securityJsCode: 'your-security-code',
+}
+```
+
+---
+
+## 项目结构
+
+```
+WenJi/
+├── backend/                          # 后端项目
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/example/
+│   │   │   │   ├── Controller/       # 控制器层
+│   │   │   │   ├── Service/          # 服务层
+│   │   │   │   ├── Repository/       # 存储层
+│   │   │   │   ├── Mapper/           # MyBatis映射
+│   │   │   │   ├── Pojo/             # 实体类
+│   │   │   │   ├── DTO/              # 数据传输对象
+│   │   │   │   ├── VO/               # 视图对象
+│   │   │   │   ├── Config/           # 配置类
+│   │   │   │   ├── Interceptor/      # 拦截器
+│   │   │   │   └── Common/           # 公共组件
+│   │   │   └── resources/
+│   │   │       ├── db/               # 数据库脚本
+│   │   │       ├── application.yml   # 主配置
+│   │   │       └── application-docker.yml
+│   │   └── test/                     # 测试代码
+│   ├── Dockerfile
+│   └── pom.xml
+│
+├── frontend/                         # 前端项目
+│   ├── src/
+│   │   ├── api/                      # API请求
+│   │   ├── components/               # 组件库
+│   │   │   ├── atoms/                # 基础组件
+│   │   │   ├── molecules/            # 组合组件
+│   │   │   └── organisms/            # 业务组件
+│   │   ├── stores/                   # 状态管理
+│   │   ├── views/                    # 页面视图
+│   │   ├── data/                     # 静态数据
+│   │   └── router/                   # 路由配置
+│   ├── public/
+│   │   ├── images/                   # 静态图片
+│   │   ├── models/                   # 3D模型
+│   │   └── targets/                  # AR目标库
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── package.json
+│
+├── docker-compose.yml                # Docker编排配置
+├── mysql.cnf                         # MySQL配置
+│
+├── 项目介绍.md                        # 项目背景介绍
+├── 项目与技术性分析报告.md             # 技术分析报告
+├── 设计及创新性分析报告.md             # 创新性分析报告
+└── 文迹测试文档.docx                  # 测试报告
+```
+
+---
+
+## 技术架构
+
+### 技术栈
+
+| 层级 | 技术 |
+|------|------|
+| 前端框架 | Vue 3.5 + Vite 7 |
+| 状态管理 | Pinia 3 |
+| UI组件 | Element Plus + Tailwind CSS |
+| 地图服务 | 高德地图 API + Leaflet |
+| AR引擎 | MindAR.js + Three.js |
+| 后端框架 | Spring Boot 3.3.5 |
+| ORM框架 | MyBatis-Plus 3.5.7 |
+| AI集成 | Spring AI 1.0.0-M6 |
+| 数据库 | MySQL 8.0 |
+| 缓存 | Redis 7 |
+| 认证 | JWT |
+| 容器化 | Docker + Docker Compose |
+
+### 系统架构图
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      用户层 (Client)                         │
+│              H5 / PWA / Capacitor 打包                       │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      网关层 (Nginx)                          │
+│              反向代理 / 静态资源 / 负载均衡                    │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     应用层 (Spring Boot)                     │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│  │Controller│  │ Service  │  │Repository│  │   AI     │    │
+│  │   层     │→ │    层    │→ │    层    │  │ Advisor │    │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
+└─────────────────────────────────────────────────────────────┘
+                              │
+              ┌───────────────┼───────────────┐
+              ▼               ▼               ▼
+        ┌──────────┐   ┌──────────┐   ┌──────────┐
+        │  MySQL   │   │  Redis   │   │ OpenAI   │
+        │   8.0    │   │    7     │   │   API    │
+        └──────────┘   └──────────┘   └──────────┘
+```
+
+---
+
+## 测试报告
+
+项目已完成完整的测试覆盖：
+
+| 测试类型 | 覆盖范围 | 结果 |
+|---------|---------|------|
+| 单元测试 | 用户登录、游记幂等性 | 通过 |
+| 功能测试 | AR识别、AI对话流式响应 | 通过 |
+| 压力测试 | 100并发，吞吐量28.5 req/sec | 通过 |
+| 异常率 | 0% | 通过 |
+
+详细测试报告见：`文迹测试文档.docx`
+
+---
+
+## 常见问题
+
+### Q1: 启动后无法访问？
+
+检查服务状态：
+```bash
+docker-compose ps
+```
+
+确保所有服务状态为 `Up`。
+
+### Q2: 数据库连接失败？
+
+等待MySQL完全启动（约30秒），查看日志：
+```bash
+docker-compose logs mysql
+```
+
+### Q3: AI对话无响应？
+
+检查OpenAI API配置：
+```bash
+docker-compose exec backend env | grep OPENAI
+```
+
+### Q4: 如何重置数据库？
+
+```bash
+docker-compose down -v
+docker-compose up -d
+```
+
+---
+
+## 版本信息
+
+- **版本号**: v1.0.0-beta
+- **发布日期**: 2026年3月
+- **开发团队**: 文迹开发组
+
+---
 
 ## 许可证
 
-MIT License
+本项目仅供学习和研究使用。
+
+---
+
+<div align="center">
+
+**文迹 - 让传统文化触手可及**
+
+</div>
